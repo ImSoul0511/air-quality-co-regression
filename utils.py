@@ -1,4 +1,4 @@
-from .config import RANDOM_STATE
+from config import RANDOM_STATE
 import random
 import math 
 
@@ -197,6 +197,35 @@ def identity_matrix(n: int) -> list[list[float]]:
     for i in range(n):
         I[i][i] = 1.0
     return I
+
+def inverse(A: list[list[float]]) -> list[list[float]]:
+    """
+    Calculate matrix inverse using Gauss-Jordan elimination.
+    """
+    n = len(A)
+    # Tạo ma trận bổ sung [A | I]
+    augmented = [row[:] + [1.0 if i == j else 0.0 for j in range(n)] for i, row in enumerate(A)]
+
+    for i in range(n):
+        # Tìm phần tử trục (pivot)
+        pivot = augmented[i][i]
+        if abs(pivot) < 1e-12:
+            raise ValueError("Matrix is singular and cannot be inverted")
+
+        # Chia dòng i cho pivot
+        for j in range(2 * n):
+            augmented[i][j] /= pivot
+
+        # Loại bỏ các phần tử khác ở cột i
+        for k in range(n):
+            if k != i:
+                factor = augmented[k][i]
+                for j in range(2 * n):
+                    augmented[k][j] -= factor * augmented[i][j]
+
+    # Tách ma trận nghịch đảo
+    inv = [row[n:] for row in augmented]
+    return inv
     
 # =========================================================
 # DATASET GENERATORS
