@@ -1,3 +1,7 @@
+from .config import RANDOM_STATE
+import random
+import math 
+
 def dot(x: list, y: list) -> float: 
     """
     Calculate dot product of two vectors:   
@@ -193,4 +197,288 @@ def identity_matrix(n: int) -> list[list[float]]:
     for i in range(n):
         I[i][i] = 1.0
     return I
+    
+# =========================================================
+# DATASET GENERATORS
+# =========================================================
 
+# Sinh dataset tuyến tính y = X·beta + noise
+def make_linear_data(
+    n: int = 50,
+    beta: list = None,
+    sigma: float = 0.0,
+    seed: int = RANDOM_STATE,
+) -> tuple:
+    """
+    Generate linear regression dataset:
+
+        y = X * beta + noise
+
+    Args:
+        n: number of samples
+        beta: true coefficients
+        sigma: standard deviation of Gaussian noise
+        seed: random seed
+
+    Returns:
+        tuple: (X, y, beta)
+    """
+
+    random.seed(seed)
+
+    if beta is None:
+        beta = [1.0, 2.0]
+
+    p = len(beta)
+
+    X = []
+    y = []
+
+    for _ in range(n):
+        row = []
+
+        for _ in range(p):
+            row.append(random.uniform(-10, 10))
+
+        noise = random.gauss(0, sigma)
+
+        target = 0.0
+        for j in range(p):
+            target += row[j] * beta[j]
+
+        target += noise
+
+        X.append(row)
+        y.append(target)
+
+    return X, y, beta
+
+
+# Sinh dataset hồi quy nhiều biến ngẫu nhiên
+def make_multifeature_data(
+    n: int = 100,
+    p: int = 4,
+    sigma: float = 1.0,
+    seed: int = RANDOM_STATE,
+) -> tuple:
+    """
+    Generate multifeature regression dataset.
+
+    Args:
+        n: number of samples
+        p: number of features
+        sigma: noise standard deviation
+        seed: random seed
+
+    Returns:
+        tuple: (X, y, beta)
+    """
+
+    random.seed(seed)
+
+    beta = []
+
+    for _ in range(p):
+        beta.append(random.uniform(-5, 5))
+
+    return make_linear_data(
+        n=n,
+        beta=beta,
+        sigma=sigma,
+        seed=seed,
+    )
+
+
+# Sinh dataset có đa cộng tuyến
+# x3 ≈ x1 + x2
+def make_collinear_data(
+    n: int = 100,
+    seed: int = RANDOM_STATE,
+) -> tuple:
+    """
+    Generate dataset with multicollinearity.
+
+    x3 ≈ x1 + x2
+
+    Returns:
+        tuple: (X, y)
+    """
+
+    random.seed(seed)
+
+    X = []
+    y = []
+
+    beta = [2.0, -1.0, 0.5]
+
+    for _ in range(n):
+        x1 = random.uniform(-10, 10)
+        x2 = random.uniform(-10, 10)
+
+        # gần phụ thuộc tuyến tính
+        x3 = x1 + x2 + random.gauss(0, 0.01)
+
+        row = [x1, x2, x3]
+
+        target = (
+            beta[0] * x1 +
+            beta[1] * x2 +
+            beta[2] * x3
+        )
+
+        target += random.gauss(0, 1)
+
+        X.append(row)
+        y.append(target)
+
+    return X, y
+
+
+# =========================================================
+# ASSERT HELPERS
+# =========================================================
+
+# So sánh hai giá trị/array với sai số cho phép
+def assert_close(
+    actual,
+    expected,
+    label: str = "",
+    rtol: float = 1e-5,
+    atol: float = 1e-8,
+) -> bool:
+    """
+    Assert approximate equality.
+    """
+
+    def is_close(a, b):
+        return abs(a - b) <= atol + rtol * abs(b)
+
+    if isinstance(actual, list) and isinstance(expected, list):
+
+        if len(actual) != len(expected):
+            raise AssertionError(
+                f"{label}: length mismatch "
+                f"{len(actual)} != {len(expected)}"
+            )
+
+        for i in range(len(actual)):
+            if not is_close(actual[i], expected[i]):
+                raise AssertionError(
+                    f"{label}: mismatch at index {i}: "
+                    f"{actual[i]} != {expected[i]}"
+                )
+
+    else:
+        if not is_close(actual, expected):
+            raise AssertionError(
+                f"{label}: {actual} != {expected}"
+            )
+
+    return True
+
+
+# So sánh bằng nhau
+def assert_equal(
+    actual,
+    expected,
+    label: str = ""
+) -> bool:
+    """
+    Assert exact equality.
+    """
+
+    if actual != expected:
+        raise AssertionError(
+            f"{label}: {actual} != {expected}"
+        )
+
+    return True
+
+
+# Kiểm tra điều kiện Boolean
+def assert_true(
+    condition: bool,
+    label: str = "",
+    details: str = ""
+) -> bool:
+    """
+    Assert condition is True.
+    """
+
+    if not condition:
+        raise AssertionError(
+            f"{label}: condition is False. {details}"
+        )
+
+    return True
+
+
+# Kiểm tra shape của array/list
+def assert_shape(
+    arr,
+    expected_shape: tuple,
+    label: str = ""
+) -> bool:
+    """
+    Assert shape of list/matrix.
+    """
+
+    if isinstance(arr[0], list):
+        actual_shape = (len(arr), len(arr[0]))
+    else:
+        actual_shape = (len(arr),)
+
+    if actual_shape != expected_shape:
+        raise AssertionError(
+            f"{label}: shape {actual_shape} "
+            f"!= {expected_shape}"
+        )
+
+    return True
+
+
+# Kiểm tra lo ≤ val ≤ hi
+def assert_in_range(
+    val: float,
+    lo: float,
+    hi: float,
+    label: str = ""
+) -> bool:
+    """
+    Assert value is within range.
+    """
+
+    if not (lo <= val <= hi):
+        raise AssertionError(
+            f"{label}: {val} not in range [{lo}, {hi}]"
+        )
+
+    return True
+
+
+# Kiểm tra fn(*args) ném đúng exception
+def assert_raises(
+    exc_type: type,
+    fn,
+    *args,
+    label: str = "",
+    **kwargs
+) -> bool:
+    """
+    Assert function raises expected exception.
+    """
+
+    try:
+        fn(*args, **kwargs)
+
+    except exc_type:
+        return True
+
+    except Exception as e:
+        raise AssertionError(
+            f"{label}: raised wrong exception {type(e)}"
+        )
+
+    raise AssertionError(
+        f"{label}: expected exception {exc_type.__name__}"
+    )

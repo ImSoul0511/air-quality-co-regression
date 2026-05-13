@@ -1,5 +1,3 @@
-from .utils import *
-
 RANDOM_STATE: int = 42 
 EPSILON: float = 1e-12
 
@@ -14,6 +12,7 @@ def zero_rectify(value: float) -> float:
     return 0.0 if is_zero(value) else value
 
 def calculate_relative_error(A: list, x_hat: list, b: list) -> float:
+    from .utils import matvec, vector_sub, norm
     """
     Tính relative error của nghiệm gần đúng x_hat
     đối với hệ phương trình tuyến tính:
