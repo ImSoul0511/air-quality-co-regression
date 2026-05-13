@@ -138,6 +138,47 @@ def transpose(A: list[list[float]]) -> list[list[float]]:
             
     return AT
 
+def inverse(A: list[list[float]]) -> list[list[float]]:
+    from .config import zero_rectify, is_zero, identity_matrix
+    n = len(A)
+
+    if n == 0 or len(A[0]) != n:
+        raise ValueError("A phải là ma trận vuông")
+
+    I = identity_matrix(n)
+    M = [A[i][:] + I[i][:] for i in range(n)]
+
+    for col in range(n):
+        pivot = col
+
+        for r in range(col + 1, n):
+            if abs(M[r][col]) > abs(M[pivot][col]):
+                pivot = r
+
+        if is_zero(abs(M[pivot][col])):
+            raise ValueError("Ma trận không khả nghịch")
+
+        M[col], M[pivot] = M[pivot], M[col]
+
+        pivot_val = M[col][col]
+        for j in range(2 * n):
+            M[col][j] /= pivot_val
+
+        for r in range(n):
+            if r != col:
+                factor = M[r][col]
+                for j in range(2 * n):
+                    M[r][j] -= factor * M[col][j]
+
+    A_inv = []
+    for i in range(n):
+        row = []
+        for j in range(n, 2 * n):
+            row.append(zero_rectify(M[i][j]))
+        A_inv.append(row)
+
+    return A_inv
+
 def matmul(A: list[list[float]], B: list[list[float]]) -> list[list[float]]:
     """
     Calculate matrix multiplication: 
@@ -197,7 +238,7 @@ def identity_matrix(n: int) -> list[list[float]]:
     for i in range(n):
         I[i][i] = 1.0
     return I
-    
+
 # =========================================================
 # DATASET GENERATORS
 # =========================================================
