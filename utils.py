@@ -1,4 +1,4 @@
-from .config import RANDOM_STATE
+from config import RANDOM_STATE
 import random
 import math 
 
@@ -139,7 +139,7 @@ def transpose(A: list[list[float]]) -> list[list[float]]:
     return AT
 
 def inverse(A: list[list[float]]) -> list[list[float]]:
-    from .config import zero_rectify, is_zero, identity_matrix
+    from config import zero_rectify, is_zero
     n = len(A)
 
     if n == 0 or len(A[0]) != n:
