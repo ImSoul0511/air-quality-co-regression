@@ -1,76 +1,59 @@
 class TestLogger:
+    """Plain-text logger for unit-test output."""
 
-    # ANSI color codes
-    _GREEN  = "\033[92m"
-    _RED    = "\033[91m"
-    _YELLOW = "\033[93m"
-    _CYAN   = "\033[96m"
-    _GRAY   = "\033[90m"
-    _BOLD   = "\033[1m"
-    _RESET  = "\033[0m"
+    _WIDTH = 72
+    _LABEL_WIDTH = 18
 
-    # In tiêu đề lớn - gọi một lần đầu mỗi hàm/nhóm test.
-    def print_suite_header(cls, suite_name: str) -> None:
-        line = "=" * 60
-        print(f"\n{cls._BOLD}{cls._CYAN}{line}")
-        print(f"  {suite_name}")
-        print(f"{line}{cls._RESET}\n")
+    def print_suite_header(self, suite_name: str) -> None:
+        line = "=" * self._WIDTH
+        print(f"\n{line}")
+        print(f"{suite_name.center(self._WIDTH)}")
+        print(f"{line}\n")
 
-    # In tiêu đề nhóm nhỏ, gọi trước một nhóm test liên quan.
-    def print_group(cls, group_name: str) -> None:
-        print(f"\n{cls._BOLD}{cls._YELLOW}--- {group_name} ---{cls._RESET}")
+    def print_group(self, group_name: str) -> None:
+        print(f"\n{group_name}")
+        print("-" * min(len(group_name), self._WIDTH))
 
-    # In một dòng kết quả PASSED / FAILED.
-    def print_result(cls, test_name: str, passed: bool, details: str = "") -> None:
-        if passed:
-            status = f"{cls._GREEN}PASSED{cls._RESET}"
-        else:
-            status = f"{cls._RED}FAILED{cls._RESET}"
-
-        msg = f"  [{status}] {test_name}"
+    def print_result(self, test_name: str, passed: bool, details: str = "") -> None:
+        status = "PASSED" if passed else "FAILED"
+        msg = f"  {'Result':<{self._LABEL_WIDTH}}: [{status}] {test_name}"
 
         if details:
-            msg += f"  {cls._GRAY}({details}){cls._RESET}"
+            msg += f"  ({details})"
 
         print(msg)
 
-    # In giá trị actual (và expected nếu có) - tiện debug.
-    def print_value(cls, label: str, actual, expected=None) -> None:
-        print(f"  {cls._GRAY}{label}:{cls._RESET}  {actual}", end="")
+    def print_field(self, label: str, value) -> None:
+        print(f"  {label:<{self._LABEL_WIDTH}}: {value}")
+
+    def print_value(self, label: str, actual, expected=None) -> None:
+        msg = f"  {label:<{self._LABEL_WIDTH}}: {actual}"
 
         if expected is not None:
-            print(f"  {cls._GRAY}(expected: {expected}){cls._RESET}", end="")
-
-        print()
-
-    # In cảnh báo
-    def print_warning(cls, message: str, detail: str = "") -> None:
-        msg = f"  {cls._YELLOW}WARNING: {message}{cls._RESET}"
-
-        if detail:
-            msg += f"  {cls._GRAY}{detail}{cls._RESET}"
+            msg += f"  (expected: {expected})"
 
         print(msg)
 
-    # In thông tin phụ - màu xám nhạt
-    def print_info(cls, message: str) -> None:
-        print(f"  {cls._GRAY}{message}{cls._RESET}")
+    def print_warning(self, message: str, detail: str = "") -> None:
+        msg = f"  Warning          : {message}"
 
-    # In tổng kết cuối suite - gọi sau khi chạy hết test.
-    def print_summary(cls, passed_count: int, total_count: int) -> None:
-        failed = total_count - passed_count
-        line = "=" * 60
+        if detail:
+            msg += f"  {detail}"
 
-        print(f"\n{cls._BOLD}{line}")
+        print(msg)
 
-        if failed == 0:
-            color = cls._GREEN
-        else:
-            color = cls._RED
+    def print_info(self, message: str) -> None:
+        print(f"  {message}")
 
-        print(
-            f"  {color}{passed_count}/{total_count} passed"
-            f"  |  {failed} failed{cls._RESET}"
-        )
+    def print_summary(self, passed_count: int, total_count: int) -> None:
+        failed_count = total_count - passed_count
+        percent = passed_count / total_count * 100 if total_count > 0 else 0.0
+        line = "=" * self._WIDTH
 
-        print(f"{cls._BOLD}{line}{cls._RESET}\n")
+        print(f"\n{line}")
+        print("  Summary")
+        print(f"  {'Passed':<{self._LABEL_WIDTH}}: {passed_count}")
+        print(f"  {'Failed':<{self._LABEL_WIDTH}}: {failed_count}")
+        print(f"  {'Accuracy':<{self._LABEL_WIDTH}}: {percent:.1f}%")
+        print(f"  {'Total':<{self._LABEL_WIDTH}}: {passed_count}/{total_count} passed")
+        print(f"{line}\n")

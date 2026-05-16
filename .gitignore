@@ -1,3 +1,5 @@
 venv/
-CLAUDE.md
-docs/
+__pycache__/
+explanation.md
+TOAN UDTK_Project_2-Data Fitting va OLS.pdf
+pdf_content.txt

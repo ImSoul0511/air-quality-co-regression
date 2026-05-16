@@ -13,6 +13,7 @@ def zero_rectify(value: float) -> float:
 
 def calculate_relative_error(A: list, x_hat: list, b: list) -> float:
     from utils import matvec, vector_sub, norm
+    from utils import matvec, vector_sub, norm
     """
     Tính relative error của nghiệm gần đúng x_hat
     đối với hệ phương trình tuyến tính:
