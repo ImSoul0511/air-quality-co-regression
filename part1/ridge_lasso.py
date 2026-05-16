@@ -411,16 +411,56 @@ def lasso_trace(
 
 def run_ridge_tests() -> tuple[int, int]:
     """Run ridge_fit unit tests from part1/test_case.py."""
-    from part1.test_case import run_ridge_test_cases
+    from part1.test_case import (
+        _log,
+        run_test_cases,
+        test_ridge_empty_X_raises,
+        test_ridge_lambda_zero_matches_ols,
+        test_ridge_large_lambda_shrinks_coefficients,
+        test_ridge_negative_lambda_raises,
+        test_ridge_output_shape,
+        test_ridge_prediction_accuracy,
+    )
 
-    return run_ridge_test_cases()
+    _log.print_suite_header("RIDGE FIT - UNIT TESTS")
+    passed_count, total_count = run_test_cases(
+        [
+            test_ridge_lambda_zero_matches_ols,
+            test_ridge_large_lambda_shrinks_coefficients,
+            test_ridge_output_shape,
+            test_ridge_negative_lambda_raises,
+            test_ridge_empty_X_raises,
+            test_ridge_prediction_accuracy,
+        ]
+    )
+    _log.print_summary(passed_count, total_count)
+    return passed_count, total_count
 
 
 def run_lasso_tests() -> tuple[int, int]:
     """Run lasso_fit unit tests from part1/test_case.py."""
-    from part1.test_case import run_lasso_test_cases
+    from part1.test_case import (
+        _log,
+        run_test_cases,
+        test_lasso_handles_constant_feature,
+        test_lasso_large_lambda_sets_slopes_to_zero,
+        test_lasso_low_lambda_recovers_linear_signal,
+        test_lasso_negative_lambda_raises,
+        test_lasso_output_shape_and_iterations,
+    )
 
-    return run_lasso_test_cases()
+    _log.print_suite_header("LASSO FIT - UNIT TESTS")
+    passed_count, total_count = run_test_cases(
+        [
+            test_lasso_output_shape_and_iterations,
+            test_lasso_large_lambda_sets_slopes_to_zero,
+            test_lasso_low_lambda_recovers_linear_signal,
+            test_lasso_negative_lambda_raises,
+            test_lasso_handles_constant_feature,
+        ]
+    )
+    _log.print_summary(passed_count, total_count)
+    return passed_count, total_count
 
 
 if __name__ == "__main__":

@@ -147,8 +147,6 @@ def hat_matrix(X: list[list[float]]) -> dict:
     #            Gợi ý: H = matmul(matmul(X_bias, A_inv), transpose(X_bias))
     H = matmul(matmul(X_bias, A_inv), transpose(X_bias))
 
-    # TODO F2-5: Kiểm tra idempotent: H_sq = H @ H, so sánh từng phần tử với H
-    #            Dùng sai số EPSILON = 1e-8
     H_sq = matmul(H, H)
     is_idempotent = True
     for i in range(n):
@@ -157,7 +155,6 @@ def hat_matrix(X: list[list[float]]) -> dict:
                 is_idempotent = False
                 break
 
-    # TODO F2-6: Kiểm tra symmetric: so sánh H[i][j] với H[j][i]
     is_symmetric = True
     for i in range(n):
         for j in range(i+1, n):
@@ -300,203 +297,160 @@ def plot_hat_matrix(H: list[list[float]], eigenvalues: list[float], save_path: s
 
 
 # ---------------------------------------------------------------------------
-# Unit Tests — F1: ols_fit  (≥ 4 tests)
+# Test runners - call test cases from test_case.py
 # ---------------------------------------------------------------------------
 
-def test_ols_perfect_fit():
-    """Khi sigma=0, beta_hat phải trùng khớp với TRUE_BETA."""
-    feat_beta = [1.0, 2.0, -3.0]   # weights cho 3 features (không có intercept)
-    X, y, _ = make_linear_data(n=50, beta=feat_beta, sigma=0.0, seed=RANDOM_STATE)
-    result = ols_fit(X, y)
-    true_beta_full = [0.0] + feat_beta  # intercept=0, rồi feature weights
-    assert_close(result['beta_hat'], true_beta_full, label="beta_hat vs TRUE_BETA")
-    assert_close(sum(r**2 for r in result['residuals']), 0.0, label="RSS ≈ 0")
+def run_ols_tests() -> tuple[int, int]:
+    """Run ols_fit unit tests from part1/test_case.py."""
+    from part1.test_case import (
+        _log,
+        run_test_cases,
+        test_ols_output_shapes,
+        test_ols_perfect_fit,
+        test_ols_residuals_sum_zero,
+        test_ols_sigma2_positive,
+        test_ols_verify_with_sklearn,
+    )
 
-
-def test_ols_output_shapes():
-    """Kiểm tra shape của tất cả output."""
-    n, p = 30, 3
-    X, y, _ = make_multifeature_data(n=n, p=p, sigma=1.0, seed=RANDOM_STATE)
-    result = ols_fit(X, y)
-    assert_shape(result['beta_hat'], (p + 1,), label="beta_hat shape")
-    assert_shape(result['y_hat'], (n,), label="y_hat shape")
-    assert_shape(result['residuals'], (n,), label="residuals shape")
-    assert_true(isinstance(result['sigma2_hat'], float), label="sigma2_hat is float")
-
-
-def test_ols_sigma2_positive():
-    """sigma2_hat phải luôn dương."""
-    X, y, _ = make_multifeature_data(n=40, p=2, sigma=2.0, seed=RANDOM_STATE)
-    result = ols_fit(X, y)
-    assert_true(result['sigma2_hat'] > 0, label="sigma2_hat > 0")
-
-
-def test_ols_residuals_sum_zero():
-    """Với OLS chuẩn, tổng phần dư Σeᵢ = 0 (intercept included)."""
-    X, y, _ = make_multifeature_data(n=50, p=3, sigma=1.0, seed=RANDOM_STATE)
-    result = ols_fit(X, y)
-    assert_close(sum(result['residuals']), 0.0, atol=1e-6, label="sum(residuals) ≈ 0")
-
-
-def test_ols_verify_with_sklearn():
-    """So sánh beta_hat với sklearn.LinearRegression."""
-    from sklearn.linear_model import LinearRegression
-    import numpy as np
-    X, y, _ = make_multifeature_data(n=60, p=4, sigma=1.5, seed=RANDOM_STATE)
-    result = ols_fit(X, y)
-    lr = LinearRegression().fit(np.array(X), np.array(y))
-    sklearn_beta = [lr.intercept_] + list(lr.coef_)
-    assert_close(result['beta_hat'], sklearn_beta, rtol=1e-4, label="beta_hat vs sklearn")
-
-
-# ---------------------------------------------------------------------------
-# Unit Tests — F2: hat_matrix  (≥ 4 tests)
-# ---------------------------------------------------------------------------
-
-def test_hat_matrix_idempotent():
-    """H @ H phải xấp xỉ H (H² = H)."""
-    X, *_ = make_linear_data(n=20, beta=[1.0, 2.0], sigma=0.0, seed=RANDOM_STATE)
-    result = hat_matrix(X)
-    assert_true(result['is_idempotent'], label="H is idempotent")
-
-
-def test_hat_matrix_symmetric():
-    """H phải symmetric: H[i][j] == H[j][i]."""
-    X, *_ = make_multifeature_data(n=15, p=3, sigma=0.0, seed=RANDOM_STATE)
-    result = hat_matrix(X)
-    assert_true(result['is_symmetric'], label="H is symmetric")
-
-
-def test_hat_matrix_rank():
-    """rank(H) phải bằng p+1."""
-    p = 3
-    X, *_ = make_multifeature_data(n=20, p=p, sigma=0.0, seed=RANDOM_STATE)
-    result = hat_matrix(X)
-    assert_equal(result['rank'], p + 1, label="rank(H) = p+1")
-
-
-def test_hat_matrix_eigenvalues_binary():
-    """Tất cả eigenvalue phải xấp xỉ 0 hoặc 1."""
-    X, *_ = make_multifeature_data(n=15, p=2, sigma=0.0, seed=RANDOM_STATE)
-    result = hat_matrix(X)
-    for ev in result['eigenvalues']:
-        near_zero = abs(ev) < 1e-6
-        near_one  = abs(ev - 1.0) < 1e-6
-        assert_true(near_zero or near_one, label=f"eigenvalue {ev:.4f} near 0 or 1")
-
-
-def test_hat_matrix_output_shape():
-    """H phải có shape (n, n)."""
-    n = 12
-    X, *_ = make_multifeature_data(n=n, p=2, sigma=0.0, seed=RANDOM_STATE)
-    result = hat_matrix(X)
-    assert_shape(result['H'], (n, n), label="H shape (n, n)")
-
-
-# ---------------------------------------------------------------------------
-# Unit Tests — F3: model_metrics  (≥ 4 tests)
-# ---------------------------------------------------------------------------
-
-def test_metrics_perfect_prediction():
-    """Khi y_hat = y thì RSS=0, R2=1, MAE=0, RMSE=0."""
-    y = [1.0, 2.0, 3.0, 4.0, 5.0]
-    y_hat = y[:]
-    metrics = model_metrics(y, y_hat, p=1)
-    assert_close(metrics['RSS'],  0.0, label="RSS = 0")
-    assert_close(metrics['R2'],   1.0, label="R2 = 1")
-    assert_close(metrics['MAE'],  0.0, label="MAE = 0")
-    assert_close(metrics['RMSE'], 0.0, label="RMSE = 0")
-
-
-def test_metrics_r2_range():
-    """R² phải nằm trong [-∞, 1] (thực tế test [-1, 1] với data tốt)."""
-    X, y, _ = make_multifeature_data(n=50, p=3, sigma=1.0, seed=RANDOM_STATE)
-    result = ols_fit(X, y)
-    metrics = model_metrics(y, result['y_hat'], p=3)
-    assert_in_range(metrics['R2'], -1.0, 1.0, label="R2 in [-1, 1]")
-    assert_in_range(metrics['R2_adj'], -2.0, 1.0, label="R2_adj reasonable")
-
-
-def test_metrics_mss_identity():
-    """MSS = TSS - RSS phải đúng."""
-    y = [1.0, 3.0, 2.0, 5.0, 4.0]
-    y_hat = [1.5, 2.5, 2.5, 4.5, 3.5]
-    metrics = model_metrics(y, y_hat, p=1)
-    assert_close(metrics['MSS'], metrics['TSS'] - metrics['RSS'], label="MSS = TSS - RSS")
-
-
-def test_metrics_f_pvalue():
-    """p-value của F-test phải nằm trong [0, 1]."""
-    X, y, _ = make_multifeature_data(n=50, p=3, sigma=1.0, seed=RANDOM_STATE)
-    result = ols_fit(X, y)
-    metrics = model_metrics(y, result['y_hat'], p=3)
-    assert_in_range(metrics['F_pvalue'], 0.0, 1.0, label="F_pvalue in [0, 1]")
-
-
-def test_metrics_verify_r2_with_sklearn():
-    """So sánh R² với sklearn.metrics.r2_score."""
-    from sklearn.metrics import r2_score
-    import numpy as np
-    X, y, _ = make_multifeature_data(n=50, p=3, sigma=1.0, seed=RANDOM_STATE)
-    result = ols_fit(X, y)
-    metrics = model_metrics(y, result['y_hat'], p=3)
-    sklearn_r2 = r2_score(np.array(y), np.array(result['y_hat']))
-    assert_close(metrics['R2'], sklearn_r2, rtol=1e-5, label="R2 vs sklearn")
-
-
-# ---------------------------------------------------------------------------
-# Test runner
-# ---------------------------------------------------------------------------
-
-def run_all_tests():
-    logger = TestLogger()
-    passed = 0
-    total  = 0
-
-    suites = [
-        ("F1 - ols_fit", [
+    _log.print_suite_header("OLS FIT - UNIT TESTS")
+    passed_count, total_count = run_test_cases(
+        [
             test_ols_perfect_fit,
             test_ols_output_shapes,
             test_ols_sigma2_positive,
             test_ols_residuals_sum_zero,
             test_ols_verify_with_sklearn,
-        ]),
-        ("F2 - hat_matrix", [
+        ]
+    )
+    _log.print_summary(passed_count, total_count)
+    return passed_count, total_count
+
+
+def run_hat_matrix_tests() -> tuple[int, int]:
+    """Run hat_matrix unit tests from part1/test_case.py."""
+    from part1.test_case import (
+        _log,
+        run_test_cases,
+        test_hat_matrix_eigenvalues_binary,
+        test_hat_matrix_idempotent,
+        test_hat_matrix_output_shape,
+        test_hat_matrix_rank,
+        test_hat_matrix_symmetric,
+    )
+
+    _log.print_suite_header("HAT MATRIX - UNIT TESTS")
+    passed_count, total_count = run_test_cases(
+        [
             test_hat_matrix_idempotent,
             test_hat_matrix_symmetric,
             test_hat_matrix_rank,
             test_hat_matrix_eigenvalues_binary,
             test_hat_matrix_output_shape,
-        ]),
-        ("F3 - model_metrics", [
+        ]
+    )
+    _log.print_summary(passed_count, total_count)
+    return passed_count, total_count
+
+
+def run_metrics_tests() -> tuple[int, int]:
+    """Run model_metrics unit tests from part1/test_case.py."""
+    from part1.test_case import (
+        _log,
+        run_test_cases,
+        test_metrics_f_pvalue,
+        test_metrics_mss_identity,
+        test_metrics_perfect_prediction,
+        test_metrics_r2_range,
+        test_metrics_verify_r2_with_sklearn,
+    )
+
+    _log.print_suite_header("MODEL METRICS - UNIT TESTS")
+    passed_count, total_count = run_test_cases(
+        [
             test_metrics_perfect_prediction,
             test_metrics_r2_range,
             test_metrics_mss_identity,
             test_metrics_f_pvalue,
             test_metrics_verify_r2_with_sklearn,
-        ]),
-    ]
+        ]
+    )
+    _log.print_summary(passed_count, total_count)
+    return passed_count, total_count
 
-    for suite_name, tests in suites:
-        logger.print_suite_header(suite_name)
-        for test_fn in tests:
-            total += 1
-            try:
-                test_fn()
-                logger.print_result(test_fn.__name__, True)
-                passed += 1
-            except NotImplementedError as e:
-                logger.print_result(test_fn.__name__, False, f"NotImplemented: {e}")
-            except Exception as e:
-                logger.print_result(test_fn.__name__, False, str(e))
 
-    logger.print_summary(passed, total)
+def run_coef_inference_tests() -> tuple[int, int]:
+    """Run coef_inference unit tests from part1/test_case.py."""
+    from part1.test_case import (
+        _log,
+        run_test_cases,
+        test_coef_inference_coefficients_match_input,
+        test_coef_inference_output_structure,
+        test_coef_inference_p_values_and_ci_valid,
+        test_coef_inference_sigma2_scales_standard_errors,
+        test_coef_inference_standard_errors_positive,
+        test_coef_inference_t_stat_formula,
+    )
+
+    _log.print_suite_header("COEFFICIENT INFERENCE - UNIT TESTS")
+    passed_count, total_count = run_test_cases(
+        [
+            test_coef_inference_output_structure,
+            test_coef_inference_coefficients_match_input,
+            test_coef_inference_standard_errors_positive,
+            test_coef_inference_t_stat_formula,
+            test_coef_inference_p_values_and_ci_valid,
+            test_coef_inference_sigma2_scales_standard_errors,
+        ]
+    )
+    _log.print_summary(passed_count, total_count)
+    return passed_count, total_count
+
+
+def run_vif_tests() -> tuple[int, int]:
+    """Run vif unit tests from part1/test_case.py."""
+    from part1.test_case import (
+        _log,
+        run_test_cases,
+        test_vif_near_collinearity_is_large,
+        test_vif_orthogonal_features_are_one,
+        test_vif_output_keys,
+        test_vif_perfect_collinearity_is_infinite,
+        test_vif_single_feature_is_one,
+        test_vif_values_are_at_least_one,
+    )
+
+    _log.print_suite_header("VIF - UNIT TESTS")
+    passed_count, total_count = run_test_cases(
+        [
+            test_vif_output_keys,
+            test_vif_orthogonal_features_are_one,
+            test_vif_perfect_collinearity_is_infinite,
+            test_vif_near_collinearity_is_large,
+            test_vif_single_feature_is_one,
+            test_vif_values_are_at_least_one,
+        ]
+    )
+    _log.print_summary(passed_count, total_count)
+    return passed_count, total_count
+
+
+def run_all_tests():
+    """Run all tests for functions defined in this module."""
+    run_ols_tests()
+    run_hat_matrix_tests()
+    run_metrics_tests()
+    run_coef_inference_tests()
+    run_vif_tests()
+
 
 def coef_inference(X, y, beta_hat, sigma2):
     """
     F4: Tính toán các chỉ số thống kê cho các hệ số.
     Quy tắc: X chưa có bias, hàm tự thêm bên trong.
     """
+    from scipy import stats as scipy_stats
+    import pandas as pd
+
     n = len(X)
     p = len(X[0]) # số lượng features
     
@@ -524,10 +478,10 @@ def coef_inference(X, y, beta_hat, sigma2):
     dof = n - p - 1
     
     # p-value = 2 * (1 - CDF(|t|))
-    p_values = [2 * stats.t.sf(abs(t), dof) for t in t_stats]
+    p_values = [2 * scipy_stats.t.sf(abs(t), dof) for t in t_stats]
     
     # t_critical cho khoảng tin cậy 95% (alpha = 0.05)
-    t_crit = stats.t.ppf(0.975, dof)
+    t_crit = scipy_stats.t.ppf(0.975, dof)
     
     ci_lower = [b - t_crit * se for b, se in zip(beta_hat, std_errs)]
     ci_upper = [b + t_crit * se for b, se in zip(beta_hat, std_errs)]
@@ -552,6 +506,10 @@ def vif(X):
     """
     n = len(X)
     p = len(X[0])
+
+    if p == 1:
+        return {"x1": 1.0}
+
     vif_dict = {}
     
     for j in range(p):
@@ -562,9 +520,7 @@ def vif(X):
         X_others = [[row[i] for i in range(p) if i != j] for row in X]
         
         # 3. Hồi quy y_j theo X_others 
-        # Sử dụng hàm ols_fit bạn đã viết (nó sẽ tự thêm bias cho X_others)
-        from .ols_implementation import ols_fit, model_metrics
-        
+        # ols_fit và model_metrics đã được định nghĩa trong cùng file này
         result_j = ols_fit(X_others, y_j)
         
         # 4. Tính R-squared của mô hình phụ này

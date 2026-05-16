@@ -228,8 +228,10 @@ def select_lambda_cv(
 
 
 def run_cv_tests() -> tuple[int, int]:
+    """Run kfold_cv unit tests from part1/test_case.py."""
     from part1.test_case import (
         _log,
+        run_test_cases,
         test_cv_invalid_model_fn,
         test_cv_k_out_of_bounds,
         test_cv_mismatched_lengths_raises,
@@ -237,29 +239,19 @@ def run_cv_tests() -> tuple[int, int]:
         test_cv_perfect_fit,
     )
 
-    test_functions = [
-        test_cv_output_shape_and_keys,
-        test_cv_k_out_of_bounds,
-        test_cv_perfect_fit,
-        test_cv_mismatched_lengths_raises,
-        test_cv_invalid_model_fn,
-    ]
-
-    passed_count = 0
-    total_count = len(test_functions)
-
     _log.print_suite_header("CROSS VALIDATION - UNIT TESTS")
-    for test_fn in test_functions:
-        try:
-            test_fn()
-            passed_count += 1
-        except AssertionError:
-            pass
-        except Exception as exc:
-            _log.print_result(test_fn.__name__, False, details=str(exc))
-
+    passed_count, total_count = run_test_cases(
+        [
+            test_cv_output_shape_and_keys,
+            test_cv_k_out_of_bounds,
+            test_cv_perfect_fit,
+            test_cv_mismatched_lengths_raises,
+            test_cv_invalid_model_fn,
+        ]
+    )
     _log.print_summary(passed_count, total_count)
     return passed_count, total_count
+
 
 if __name__ == "__main__":
     run_cv_tests()
