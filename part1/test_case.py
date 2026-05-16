@@ -367,12 +367,12 @@ def test_cv_perfect_fit():
     name = "test_cv_perfect_fit"
     _print_case(
         name,
-        "CV with lam=0 on strictly linear noiseless data should yield MSE ≈ 0.",
+        "CV with lam=0 on strictly linear noiseless data should yield MSE approximately 0.",
         "mean_cv_score < 1e-5",
         None,
     )
 
-    X = [[float(i), float(i)*0.5] for i in range(20)]
+    X = [[float(i), float(i * i)] for i in range(20)]
     y = [1.0 + 2.0 * row[0] - 1.0 * row[1] for row in X]
     
     result = kfold_cv(X, y, k=4, model_fn=ridge_fit, lam=0.0)
@@ -380,6 +380,26 @@ def test_cv_perfect_fit():
     passed = result["mean_cv_score"] < 1e-5
     _log.print_value("mean_cv_score", round(result["mean_cv_score"], 8))
     return _finish_case(name, passed)
+
+
+def test_cv_mismatched_lengths_raises():
+    name = "test_cv_mismatched_lengths_raises"
+    _print_case(
+        name,
+        "Passing X and y with different numbers of rows should raise ValueError.",
+        None,
+        "ValueError",
+    )
+
+    X = [[1.0], [2.0], [3.0]]
+    y = [2.0, 4.0]
+
+    try:
+        kfold_cv(X, y, k=2, model_fn=ridge_fit)
+    except ValueError:
+        return _finish_case(name, True)
+
+    return _finish_case(name, False, "ValueError was not raised")
 
 
 def test_cv_invalid_model_fn():
@@ -410,6 +430,7 @@ def run_cv_test_cases() -> tuple[int, int]:
             test_cv_output_shape_and_keys,
             test_cv_k_out_of_bounds,
             test_cv_perfect_fit,
+            test_cv_mismatched_lengths_raises,
             test_cv_invalid_model_fn,
         ]
     )

@@ -1,6 +1,6 @@
 import os
 import sys
-from statistics import NormalDist
+
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -81,13 +81,9 @@ def hat_matrix(X: list[list[float]]) -> dict:
 
 
 def _normal_quantiles(n: int) -> list[float]:
-    try:
-        from scipy.stats import norm
+    from scipy.stats import norm
 
-        return [float(norm.ppf((i - 0.5) / n)) for i in range(1, n + 1)]
-    except ImportError:
-        normal = NormalDist()
-        return [normal.inv_cdf((i - 0.5) / n) for i in range(1, n + 1)]
+    return [float(norm.ppf((i - 0.5) / n)) for i in range(1, n + 1)]
 
 
 def _compute_cooks_distance(
@@ -144,7 +140,6 @@ def residual_diagnostics(
     y: list[float],
     y_hat: list[float],
     X: list[list[float]] | None = None,
-    show: bool = True,
 ) -> tuple:
     """
     Draw four residual diagnostic plots and return (fig, metrics).
@@ -156,11 +151,6 @@ def residual_diagnostics(
         4. Cook's Distance
     """
     _validate_inputs(y, y_hat, X)
-
-    if not show:
-        import matplotlib
-
-        matplotlib.use("Agg")
 
     import matplotlib.pyplot as plt
 
@@ -242,9 +232,7 @@ def residual_diagnostics(
     ax_cooks.legend()
 
     plt.tight_layout()
-
-    if show:
-        plt.show()
+    plt.show()
 
     metrics = {
         "residuals": residuals,
