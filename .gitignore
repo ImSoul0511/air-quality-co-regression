@@ -6,3 +6,5 @@ pdf_content.txt
 implementation_plan.md
 rule.md
 plots/
+check.md
+test.py
