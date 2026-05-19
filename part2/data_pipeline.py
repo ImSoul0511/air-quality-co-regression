@@ -5,6 +5,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import RANDOM_STATE
 import pandas as pd
 
+MIN_COMMON_FEATURES = 3
+
 class DataPipeline:
     """Pipeline tiền xử lý dữ liệu AirQualityUCI."""
 
@@ -16,6 +18,59 @@ class DataPipeline:
         self.stds_ = {}
         self.medians_ = {}
         self.models_ = {}
+
+    def _knn_impute(self, X: pd.DataFrame, n_neighbors: int = 5) -> pd.DataFrame:
+        """Thực hiện KNN Imputation dùng hoàn toàn bằng Pandas."""
+        if 'knn_train_data' not in self.models_:
+            return X
+            
+        X_train_scaled = self.models_['knn_train_data']
+        X_train_raw = self.models_['knn_train_raw']
+        knn_means = self.models_['knn_means']
+        knn_stds = self.models_['knn_stds']
+        
+        X_out = X.copy()
+        
+        X_input_scaled = (X - knn_means) / knn_stds
+        
+        missing_rows = X_out[X_out.isna().any(axis=1)]
+        
+        for idx, row_scaled in X_input_scaled.loc[missing_rows.index].iterrows():
+            valid_features = row_scaled.dropna().index
+            if len(valid_features) < MIN_COMMON_FEATURES:
+                for col in X_out.loc[idx][X_out.loc[idx].isna()].index:
+                    if col in self.medians_:
+                        X_out.loc[idx, col] = self.medians_[col]
+                continue
+                
+            diff = X_train_scaled[valid_features] - row_scaled[valid_features]
+            sq_dist = (diff ** 2).sum(axis=1)
+            
+            valid_counts = diff.notna().sum(axis=1)
+            valid_counts = valid_counts.replace(0, 1)
+            weighted_dist = sq_dist / valid_counts
+            
+            row_raw = X_out.loc[idx]
+            for col in row_raw[row_raw.isna()].index:
+                if col not in X_train_raw.columns:
+                    continue
+                train_valid_for_col = X_train_raw[X_train_raw[col].notna()].index
+                if len(train_valid_for_col) == 0:
+                    continue
+                    
+                dist_for_col = weighted_dist.loc[train_valid_for_col]
+                if idx in dist_for_col.index:
+                    dist_for_col = dist_for_col.drop(idx)
+                    
+                k_nearest = dist_for_col.nsmallest(n_neighbors).index
+                if len(k_nearest) > 0:
+                    X_out.loc[idx, col] = X_train_raw.loc[k_nearest, col].mean()
+        
+        for col in X_out.columns:
+            if X_out[col].isna().any() and col in self.medians_:
+                X_out[col] = X_out[col].fillna(self.medians_[col])
+                    
+        return X_out
 
     def load_data(self, filepath: str) -> pd.DataFrame:
         """Đọc CSV, xử lý cột rỗng, parse Date/Time."""
@@ -104,15 +159,178 @@ class DataPipeline:
         eda_results['figures'] = figures
         return eda_results
 
-    def fit(self, X_train: pd.DataFrame, y_train: pd.Series):
+    def fit(self, X_train: pd.DataFrame, y_train: pd.Series = None):
         """Tính toán thống kê từ train set (mean, std, median...)."""
-        pass
+        
+        if y_train is not None:
+            valid_mask = y_train.notna()
+            X_train = X_train.loc[valid_mask].copy()
+            y_train = y_train.loc[valid_mask].copy()
+            
+        # Tách X và y nếu X_train truyền vào thực chất là df_train (chứa cột target)
+        if self.target_col in X_train.columns:
+            X_tmp = X_train.drop(columns=[self.target_col])
+        else:
+            X_tmp = X_train.copy()
+            
+        # Loại bỏ cột datetime (không phải feature cho regression)
+        datetime_cols = X_tmp.select_dtypes(include=['datetime64']).columns.tolist()
 
-    def transform(self, X: pd.DataFrame) -> list[list[float]]:
-        """Áp dụng pipeline đã fit lên data mới."""
-        pass
+        # Xác định và loại bỏ các cột có tỷ lệ missing > 70%
+        missing_pct = X_tmp.isnull().mean()
+        high_missing_cols = missing_pct[missing_pct > 0.7].index.tolist()
 
-    def fit_transform(self, X_train: pd.DataFrame, y_train: pd.Series) -> list[list[float]]:
+        cols_to_drop = datetime_cols + high_missing_cols
+        self.models_['drop_cols'] = cols_to_drop
+        X_tmp = X_tmp.drop(columns=cols_to_drop)
+            
+        numeric_cols = X_tmp.select_dtypes(include=['float64', 'int64']).columns
+        cat_cols = X_tmp.select_dtypes(include=['object', 'category']).columns
+
+        # Tính thống kê imputation từ X_train
+        for col in numeric_cols:
+            self.medians_[col] = X_tmp[col].median()
+            self.means_[col] = X_tmp[col].mean()
+            
+        if len(numeric_cols) > 0:
+            self.models_['knn_means'] = X_tmp[numeric_cols].mean()
+            knn_stds = X_tmp[numeric_cols].std()
+            knn_stds = knn_stds.replace(0, 1)
+            self.models_['knn_stds'] = knn_stds
+            
+            X_scaled = (X_tmp[numeric_cols] - self.models_['knn_means']) / self.models_['knn_stds']
+            self.models_['knn_train_data'] = X_scaled.copy()
+            
+            self.models_['knn_train_raw'] = X_tmp[numeric_cols].copy()
+            
+            X_tmp[numeric_cols] = self._knn_impute(X_tmp[numeric_cols], n_neighbors=5)
+            
+        # Tính ngưỡng Winsorize từ train
+        self.models_['winsorize'] = {}
+        for col in numeric_cols:
+            q01 = X_tmp[col].quantile(0.01)
+            q99 = X_tmp[col].quantile(0.99)
+            self.models_['winsorize'][col] = (q01, q99)
+            X_tmp[col] = X_tmp[col].clip(lower=q01, upper=q99)
+            
+        # One-hot encoding cho categorical cols
+        if len(cat_cols) > 0:
+            X_tmp = pd.get_dummies(X_tmp, columns=cat_cols, drop_first=False, dtype=float)
+        self.models_['encoded_cols'] = X_tmp.columns.tolist()
+        
+        # Tính mean_X và std_X trên train (sau khi impute + encode)
+        self.models_['scale_means'] = {}
+        self.models_['scale_stds'] = {}
+        for col in X_tmp.columns:
+            self.models_['scale_means'][col] = X_tmp[col].mean()
+            std_val = X_tmp[col].std(ddof=1)
+            self.models_['scale_stds'][col] = std_val if pd.notnull(std_val) and std_val != 0 else 1.0
+            
+        # Lưu degree cho PolynomialFeatures
+        self.models_['poly_degree'] = 2
+            
+        return self
+
+    def transform(self, X: pd.DataFrame, y: pd.Series = None) -> tuple:
+        """Áp dụng pipeline đã fit lên data mới.
+        
+        Returns:
+            tuple: (X_processed: list[list[float]], y_list: list[float] hoặc None)
+        """
+        if y is not None:
+            valid_mask = y.notna()
+            X_clean = X.loc[valid_mask].copy()
+            y_clean = y.loc[valid_mask].copy()
+        else:
+            X_clean = X.copy()
+            y_clean = None
+
+        # Tách target nếu còn trong X
+        if self.target_col in X_clean.columns:
+            if y_clean is None:
+                y_clean = X_clean[self.target_col].copy()
+            X_out = X_clean.drop(columns=[self.target_col]).copy()
+        else:
+            X_out = X_clean.copy()
+
+        # Bước 1: Drop các cột đã đánh dấu từ fit
+        if 'drop_cols' in self.models_:
+            X_out = X_out.drop(columns=self.models_['drop_cols'], errors='ignore')
+
+        # Bước 2: KNN Impute (dùng thống kê từ train)
+        numeric_cols = X_out.select_dtypes(include=['float64', 'int64']).columns
+        cat_cols = X_out.select_dtypes(include=['object', 'category']).columns
+
+        if len(numeric_cols) > 0 and 'knn_train_data' in self.models_:
+            X_out[numeric_cols] = self._knn_impute(X_out[numeric_cols], n_neighbors=5)
+
+        # Bước 3: Winsorize dùng ngưỡng từ fit
+        if 'winsorize' in self.models_:
+            for col, (lower, upper) in self.models_['winsorize'].items():
+                if col in X_out.columns:
+                    X_out[col] = X_out[col].clip(lower=lower, upper=upper)
+
+        # Bước 4: One-hot encode + align với train columns
+        if len(cat_cols) > 0:
+            X_out = pd.get_dummies(X_out, columns=cat_cols, drop_first=False, dtype=float)
+
+        if 'encoded_cols' in self.models_:
+            X_out = X_out.reindex(columns=self.models_['encoded_cols'], fill_value=0.0)
+
+        # Bước 5: Standardize = (X - mean) / std
+        if 'scale_means' in self.models_ and 'scale_stds' in self.models_:
+            for col in X_out.columns:
+                mean_val = self.models_['scale_means'].get(col, 0.0)
+                std_val = self.models_['scale_stds'].get(col, 1.0)
+                X_out[col] = (X_out[col] - mean_val) / std_val
+
+        # Bước 6: Check NaN
+        remaining_nan = X_out.isna().sum().sum()
+        if remaining_nan > 0:
+            print(f"WARNING: {remaining_nan} NaN values remain after pipeline!")
+            X_out = X_out.fillna(0.0)
+
+        # Chuyển sang list[list[float]]
+        X_result = X_out.values.tolist()
+
+        # Bước 7: Polynomial features (nếu degree > 1)
+        poly_degree = self.models_.get('poly_degree', 1)
+        if poly_degree > 1:
+            X_result = self.add_polynomial_features(X_result, degree=poly_degree)
+
+        # Xử lý y
+        y_result = None
+        if y_clean is not None:
+            y_result = y_clean.tolist()
+
+        return X_result, y_result
+
+    def fit_transform(self, X_train: pd.DataFrame, y_train: pd.Series = None) -> tuple:
         """Fit rồi transform."""
         self.fit(X_train, y_train)
-        return self.transform(X_train)
+        return self.transform(X_train, y_train)
+
+    def add_polynomial_features(self, X: list[list[float]], degree: int = 2) -> list[list[float]]:
+        """Thêm polynomial features (tương tác giữa các biến).
+        
+        Với degree=2: thêm x_i^2 và x_i*x_j cho mọi cặp (i, j).
+        """
+        result = []
+        for row in X:
+            new_row = list(row)
+            n = len(row)
+            for i in range(n):
+                # x_i^2
+                new_row.append(row[i] ** 2)
+                # x_i * x_j (interaction terms)
+                if degree >= 2:
+                    for j in range(i + 1, n):
+                        new_row.append(row[i] * row[j])
+            result.append(new_row)
+        return result
+
+if __name__ == "__main__":
+    """Ví dụ sử dụng DataPipeline."""
+    pipeline = DataPipeline()
+    df = pipeline.load_data("part2/data/AirQualityUCI.csv")
+    eda_results = pipeline.eda(df)
