@@ -298,14 +298,14 @@ class EDAToolkit:
         else:
             raise ValueError(f"Không thể trích xuất trọng số từ model: {model_name}. Hãy đảm bảo truyền đúng kết quả trả về của hàm fit.")
 
-        # 2. Xử lý hệ số chặn (Intercept)
+        # Xử lý hệ số chặn (Intercept)
         # Các hàm Part 1 trả về [intercept, beta_1, ..., beta_p] nên mảng dài hơn feature_names 1 đơn vị
         if len(coeffs) == len(feature_names) + 1:
             coeffs = coeffs[1:]  # Loại bỏ phần tử đầu tiên (intercept)
         elif len(coeffs) != len(feature_names):
             raise ValueError(f"Số lượng trọng số ({len(coeffs)}) không khớp với số đặc trưng ({len(feature_names)}).")
 
-        # 3. Vẽ biểu đồ
+        # Vẽ biểu đồ
         importance_df = pd.DataFrame({
             'Feature': feature_names, 
             'Weight': coeffs, 
@@ -410,17 +410,9 @@ class DataPipeline:
         
         return df
 
-    def eda(self, df: pd.DataFrame, show_plots: bool = True) -> dict:
-        """EDA: thống kê mô tả, missing %, correlation, outliers."""
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-        import os
-
-        # Đảm bảo thư mục tồn tại để lưu ảnh
-        os.makedirs("part2/data/plots", exist_ok=True)
-
+    def eda(self, df: pd.DataFrame) -> dict:
+        """EDA: thống kê mô tả, missing %, correlation."""
         eda_results = {}
-        figures = {}
         
         # Thống kê mô tả
         eda_results['describe'] = df.describe()
@@ -430,48 +422,10 @@ class DataPipeline:
         missing_pct = (missing_counts / len(df)) * 100
         eda_results['missing_pct'] = missing_pct
 
-        fig_missing = plt.figure(figsize=(12, 6))
-        missing_pct[missing_pct > 0].sort_values(ascending=False).plot(kind='bar', color='salmon')
-        plt.title('Tỉ lệ dữ liệu bị thiếu (Missing Values Percentage)')
-        plt.ylabel('Phần trăm (%)')
-        plt.xlabel('Tên biến')
-        plt.tight_layout()
-        plt.savefig("part2/data/plots/missing_values.png")
-        if show_plots:
-            plt.show()
-        else:
-            plt.close(fig_missing)
-        figures['missing_values'] = fig_missing
-
         # Ma trận tương quan (Correlation Matrix)
         numeric_df = df.select_dtypes(include=['float64', 'int64'])
         eda_results['correlation'] = numeric_df.corr()
 
-        fig_corr = plt.figure(figsize=(12, 10))
-        sns.heatmap(eda_results['correlation'], annot=True, cmap='coolwarm', fmt=".2f", vmin=-1, vmax=1)
-        plt.title('Ma trận tương quan giữa các biến')
-        plt.tight_layout()
-        plt.savefig("part2/data/plots/correlation_matrix.png")
-        if show_plots:
-            plt.show()
-        else:
-            plt.close(fig_corr)
-        figures['correlation_matrix'] = fig_corr
-
-        # Vẽ histogram cho các biến số
-        fig_hist = plt.figure(figsize=(15, 12))
-        ax = fig_hist.gca()
-        numeric_df.hist(bins=30, ax=ax, color='skyblue', edgecolor='black')
-        plt.suptitle('Phân phối của các biến số', y=1.02)
-        plt.tight_layout()
-        plt.savefig("part2/data/plots/histograms.png")
-        if show_plots:
-            plt.show()
-        else:
-            plt.close(fig_hist)
-        figures['histograms'] = fig_hist
-
-        eda_results['figures'] = figures
         return eda_results
 
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series = None):
