@@ -3,3 +3,8 @@ __pycache__/
 explanation.md
 TOAN UDTK_Project_2-Data Fitting va OLS.pdf
 pdf_content.txt
+implementation_plan.md
+rule.md
+plots/
+check.md
+test.py

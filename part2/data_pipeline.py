@@ -1,8 +1,11 @@
 import os
 import sys
+<<<<<<< HEAD
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+=======
+>>>>>>> main
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import RANDOM_STATE
@@ -10,6 +13,7 @@ import pandas as pd
 
 MIN_COMMON_FEATURES = 3
 
+<<<<<<< HEAD
 class EDAToolkit:
     @staticmethod
     def get_raw_data_summary(file_path: str, target_col: str = 'CO(GT)') -> dict:
@@ -322,6 +326,8 @@ class EDAToolkit:
         plt.show()
 
 
+=======
+>>>>>>> main
 class DataPipeline:
     """Pipeline tiền xử lý dữ liệu AirQualityUCI."""
 
@@ -644,9 +650,16 @@ class DataPipeline:
             result.append(new_row)
         return result
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> main
 if __name__ == "__main__":
     """Ví dụ sử dụng DataPipeline."""
     pipeline = DataPipeline()
     df = pipeline.load_data("part2/data/AirQualityUCI.csv")
+<<<<<<< HEAD
     eda_results = pipeline.eda(df)
+=======
+    eda_results = pipeline.eda(df)
+>>>>>>> main
