@@ -398,6 +398,9 @@ class DataPipeline:
         # Loại bỏ các dòng hoàn toàn trống ở cuối file
         df.dropna(how='all', inplace=True)
         
+        # Chuyển đổi giá trị -200 thành rỗng (None) thay vì dùng numpy
+        df.replace(-200, None, inplace=True)
+        
         # Định dạng lại cột Date_Time
         if 'Date' in df.columns and 'Time' in df.columns:
             df = df.dropna(subset=['Date', 'Time'])
@@ -431,11 +434,6 @@ class DataPipeline:
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series = None):
         """Tính toán thống kê từ train set (mean, std, median...)."""
         
-        if y_train is not None:
-            valid_mask = y_train.notna()
-            X_train = X_train.loc[valid_mask].copy()
-            y_train = y_train.loc[valid_mask].copy()
-            
         # Tách X và y nếu X_train truyền vào thực chất là df_train (chứa cột target)
         if self.target_col in X_train.columns:
             X_tmp = X_train.drop(columns=[self.target_col])
@@ -512,25 +510,25 @@ class DataPipeline:
         Returns:
             tuple: (X_processed: list[list[float]], y_list: list[float] hoặc None)
         """
-        if y is not None:
-            valid_mask = y.notna()
-            X_clean = X.loc[valid_mask].copy()
-            y_clean = y.loc[valid_mask].copy()
-        else:
-            X_clean = X.copy()
-            y_clean = None
-
         # Tách target nếu còn trong X
-        if self.target_col in X_clean.columns:
-            if y_clean is None:
-                y_clean = X_clean[self.target_col].copy()
-            X_out = X_clean.drop(columns=[self.target_col]).copy()
+        if self.target_col in X.columns:
+            if y is None:
+                y_clean = X[self.target_col].copy()
+            else:
+                y_clean = y.copy()
+            X_out = X.drop(columns=[self.target_col]).copy()
         else:
-            X_out = X_clean.copy()
+            X_out = X.copy()
+            y_clean = y.copy() if y is not None else None
 
-        # Bước 1: Drop các cột đã đánh dấu từ fit
+        # Bước 1: Drop các cột đã đánh dấu từ fit và drop dòng missing target
         if 'drop_cols' in self.models_:
             X_out = X_out.drop(columns=self.models_['drop_cols'], errors='ignore')
+            
+        if y_clean is not None:
+            valid_mask = y_clean.notna()
+            X_out = X_out.loc[valid_mask].copy()
+            y_clean = y_clean.loc[valid_mask].copy()
 
         # Bước 2: KNN Impute (dùng thống kê từ train)
         numeric_cols = X_out.select_dtypes(include=['float64', 'int64']).columns

@@ -6,7 +6,9 @@ from part1.ols_implementation import ols_fit, model_metrics, coef_inference, vif
 from part1.ridge_lasso import ridge_fit, lasso_fit
 from part1.cross_validation import kfold_cv, predict, select_lambda_cv
 from part2.data_pipeline import DataPipeline
+from part2.advanced_methods import KernelRidgeRegression, BayesianLinearRegression, sample_rows
 import pandas as pd
+# pyrefly: ignore [missing-import]
 import numpy as np
 import math
 
@@ -450,6 +452,157 @@ class ModelComparator:
         )
 
     # -------------------------------------------------------------------------
+    # KRR: train_kernel_ridge_optimal
+    # -------------------------------------------------------------------------
+
+    def train_kernel_ridge_optimal(self, k: int = 5, config_path: str = None):
+        """Train Kernel Ridge Regression với lambda và length_scale tối ưu qua k-Fold CV.
+        
+        Sử dụng subset dữ liệu nếu số lượng dòng quá lớn để tránh treo máy.
+        """
+        import json
+        model_name = 'Kernel Ridge'
+
+        # KRR không cần polynomial features vì RBF kernel tự ánh xạ phi tuyến
+        print(f"[{model_name}] Trích xuất đặc trưng thuần (poly=False, Features = {len(self.feature_names)})...")
+        X_krr_train, _ = self.pipeline.transform(self.df_train, poly=False)
+        X_krr_test,  _ = self.pipeline.transform(self.df_test, poly=False)
+
+        # 1. Tìm siêu tham số
+        if config_path and os.path.exists(config_path):
+            with open(config_path, 'r') as f:
+                cfg = json.load(f)
+            best_lam = cfg['best_lam']
+            best_ls = cfg['best_length_scale']
+            print(f"[{model_name}] Đọc config từ cache: lam={best_lam:.6g}, ls={best_ls:.6g}")
+        else:
+            X_cv, y_cv = X_krr_train, self.y_train
+            if len(X_krr_train) > 800:
+                print(f"[{model_name}] Dữ liệu train lớn ({len(X_krr_train)}). Lấy mẫu 800 dòng chạy CV...")
+                X_cv, y_cv = sample_rows(X_krr_train, self.y_train, max_rows=800)
+                
+            lam_grid = [0.01, 0.1, 1.0, 10.0]
+            ls_grid = [0.1, 1.0, 5.0, 10.0]
+            
+            cv_res = KernelRidgeRegression.cross_validate(X_cv, y_cv, lam_grid, ls_grid, k=k)
+            best_lam = cv_res['best_lam']
+            best_ls = cv_res['best_length_scale']
+            
+            if config_path:
+                os.makedirs(os.path.dirname(config_path), exist_ok=True)
+                with open(config_path, 'w') as f:
+                    json.dump({
+                        'best_lam': best_lam, 
+                        'best_length_scale': best_ls, 
+                        'best_cv_score': cv_res['best_cv_score']
+                    }, f, indent=2)
+
+        # 2. Fit mô hình
+        X_fit, y_fit = X_krr_train, self.y_train
+        if len(X_krr_train) > 1000:
+            print(f"[{model_name}] Lấy mẫu 1000 dòng để fit mô hình...")
+            X_fit, y_fit = sample_rows(X_krr_train, self.y_train, max_rows=1000)
+
+        result = KernelRidgeRegression.fit(X_fit, y_fit, lam=best_lam, length_scale=best_ls)
+
+        # 3. Dự đoán trên tập test
+        y_pred = KernelRidgeRegression.predict(result, X_krr_test)
+
+        # 4. Tính metrics + residuals
+        p = len(X_krr_test[0]) if X_krr_test else 0
+        metrics = self._compute_test_metrics(y_pred, p=p)
+        residuals = [self.y_test[i] - y_pred[i] for i in range(len(self.y_test))]
+
+        # 5. Lưu kết quả
+        self.results[model_name] = {
+            'result':       result,
+            'y_pred':       y_pred,
+            'metrics':      metrics,
+            'residuals':    residuals,
+            'lambda_opt':   best_lam,
+            'length_scale': best_ls,
+        }
+
+        print(
+            f"[{model_name}] R²={metrics['R2']:.4f} | "
+            f"RMSE={metrics['RMSE']:.4f} | "
+            f"MAE={metrics['MAE']:.4f}"
+        )
+
+    # -------------------------------------------------------------------------
+    # Bước 9b: train_bayesian_optimal
+    # -------------------------------------------------------------------------
+
+    def train_bayesian_optimal(self, k: int = 5, config_path: str = None):
+        """Train Bayesian Linear Regression với alpha tối ưu qua k-Fold CV.
+
+        BLR sử dụng polynomial features (giống OLS/Ridge/Lasso) vì nó là
+        mô hình tuyến tính trong không gian đặc trưng.
+        """
+        import json
+        model_name = 'Bayesian LR'
+
+        # 1. Tìm siêu tham số (alpha = prior precision)
+        if config_path and os.path.exists(config_path):
+            with open(config_path, 'r') as f:
+                cfg = json.load(f)
+            best_alpha = cfg['best_alpha']
+            print(f"[{model_name}] Đọc config từ cache: alpha={best_alpha:.6g}")
+        else:
+            alpha_grid = [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+
+            print(f"[{model_name}] Chạy CV {k}-Fold tìm alpha tối ưu trên {len(self.X_train)} mẫu...")
+            cv_res = BayesianLinearRegression.cross_validate(
+                self.X_train, self.y_train, alpha_grid, k=k
+            )
+            best_alpha = cv_res['best_alpha']
+
+            if config_path:
+                os.makedirs(os.path.dirname(config_path), exist_ok=True)
+                with open(config_path, 'w') as f:
+                    json.dump({
+                        'best_alpha': best_alpha,
+                        'best_cv_score': cv_res['best_cv_score']
+                    }, f, indent=2)
+
+        # 2. Ước lượng σ² từ OLS trên tập train
+        sigma2 = BayesianLinearRegression.estimate_sigma2(self.X_train, self.y_train)
+        print(f"[{model_name}] sigma²={sigma2:.4f}, alpha={best_alpha:.6g}")
+
+        # 3. Fit mô hình
+        result = BayesianLinearRegression.fit(
+            self.X_train, self.y_train, sigma2=sigma2, alpha=best_alpha
+        )
+
+        # 4. Dự đoán trên tập test
+        y_pred, y_lower, y_upper = BayesianLinearRegression.predict(
+            result, self.X_test, sigma2
+        )
+
+        # 5. Tính metrics + residuals
+        p = len(self.X_test[0])
+        metrics = self._compute_test_metrics(y_pred, p=p)
+        residuals = [self.y_test[i] - y_pred[i] for i in range(len(self.y_test))]
+
+        # 6. Lưu kết quả
+        self.results[model_name] = {
+            'result':       result,
+            'y_pred':       y_pred,
+            'y_lower':      y_lower,
+            'y_upper':      y_upper,
+            'metrics':      metrics,
+            'residuals':    residuals,
+            'alpha_opt':    best_alpha,
+            'sigma2':       sigma2,
+        }
+
+        print(
+            f"[{model_name}] R²={metrics['R2']:.4f} | "
+            f"RMSE={metrics['RMSE']:.4f} | "
+            f"MAE={metrics['MAE']:.4f}"
+        )
+
+    # -------------------------------------------------------------------------
     # Bước 10: compare_models
     # -------------------------------------------------------------------------
 
@@ -581,11 +734,12 @@ class ModelComparator:
         # 1. Chuẩn bị dữ liệu
         self.prepare_data()
 
-        # 2. Train 4 mô hình
+        # 2. Train các mô hình
         self.train_ols_full()
         self.train_ols_selected()
         self.train_ridge_optimal()
         self.train_lasso_optimal()
+        self.train_kernel_ridge_optimal()
 
         # 3. Kiểm định thống kê
         self.run_diagnostics()
@@ -603,7 +757,7 @@ if __name__ == '__main__':
     import argparse
     import json
 
-    VALID_MODELS = ['ols_full', 'ols_selected', 'ridge', 'lasso', 'all']
+    VALID_MODELS = ['ols_full', 'ols_selected', 'ridge', 'lasso', 'krr', 'bayesian', 'all']
 
     parser = argparse.ArgumentParser(
         description='ModelComparator — chay tung model va luu ket qua JSON'
@@ -635,6 +789,8 @@ if __name__ == '__main__':
     feature_cfg    = os.path.join(cfg_dir, 'feature_selection.json')
     ridge_lam_cfg  = os.path.join(cfg_dir, 'ridge_lambda.json')
     lasso_lam_cfg  = os.path.join(cfg_dir, 'lasso_lambda.json')
+    krr_cfg        = os.path.join(cfg_dir, 'krr_config.json')
+    blr_cfg        = os.path.join(cfg_dir, 'blr_config.json')
 
     # Khoi tao va load data
     comparator = ModelComparator(args.data)
@@ -660,6 +816,14 @@ if __name__ == '__main__':
         elif m == 'lasso':
             comparator.train_lasso_optimal(lambda_config=lasso_lam_cfg)
             key = 'Lasso'
+
+        elif m == 'krr':
+            comparator.train_kernel_ridge_optimal(k=5, config_path=krr_cfg)
+            key = 'Kernel Ridge'
+
+        elif m == 'bayesian':
+            comparator.train_bayesian_optimal(k=5, config_path=blr_cfg)
+            key = 'Bayesian LR'
 
         # Chay diagnostics neu yeu cau
         if args.diagnostics and key in comparator.results:

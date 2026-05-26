@@ -110,7 +110,8 @@ def kfold_cv(
     Returns:
         dict with cv_scores, mean_cv_score, std_cv_score.
     """
-    import numpy as np
+    import random
+    import math
 
     _validate_data(X, y)
 
@@ -124,15 +125,26 @@ def kfold_cv(
     if k > n:
         raise ValueError("k must be <= number of samples")
 
-    indices = np.arange(n)
-    rng = np.random.default_rng(RANDOM_STATE)
-    rng.shuffle(indices)
-    folds = np.array_split(indices, k)
+    indices = list(range(n))
+    random.Random(RANDOM_STATE).shuffle(indices)
+
+    fold_sizes = [n // k] * k
+    for i in range(n % k):
+        fold_sizes[i] += 1
+
+    folds = []
+    start = 0
+    for size in fold_sizes:
+        folds.append(indices[start : start + size])
+        start += size
 
     cv_scores = []
     for i in range(k):
         val_idx = folds[i]
-        train_idx = np.concatenate([folds[j] for j in range(k) if j != i])
+        train_idx = []
+        for j in range(k):
+            if j != i:
+                train_idx.extend(folds[j])
 
         X_train = _take_rows(X, train_idx)
         y_train = _take_values(y, train_idx)
@@ -143,10 +155,14 @@ def kfold_cv(
         y_pred_val = predict(X_val, result)
         cv_scores.append(_mse(y_val, y_pred_val))
 
+    mean_score = sum(cv_scores) / len(cv_scores)
+    # Tính standard deviation (population std) giống np.std mặc định
+    std_score = math.sqrt(sum((x - mean_score)**2 for x in cv_scores) / len(cv_scores))
+
     return {
-        "cv_scores": [float(score) for score in cv_scores],
-        "mean_cv_score": float(np.mean(cv_scores)),
-        "std_cv_score": float(np.std(cv_scores)),
+        "cv_scores": cv_scores,
+        "mean_cv_score": mean_score,
+        "std_cv_score": std_score,
     }
 
 
@@ -177,7 +193,6 @@ def select_lambda_cv(
     """
     Select the best lambda by k-Fold CV and plot lambda vs mean CV MSE.
     """
-    import numpy as np
     import matplotlib.pyplot as plt
 
     if lambda_grid is None:
@@ -196,7 +211,11 @@ def select_lambda_cv(
         cv_means.append(result["mean_cv_score"])
         cv_stds.append(result["std_cv_score"])
 
-    best_idx = int(np.argmin(cv_means))
+    best_idx = 0
+    for i in range(1, len(cv_means)):
+        if cv_means[i] < cv_means[best_idx]:
+            best_idx = i
+            
     lambda_opt = lambda_grid[best_idx]
 
     fig, ax = plt.subplots(figsize=(8, 5))
