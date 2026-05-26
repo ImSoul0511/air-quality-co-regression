@@ -525,3 +525,33 @@ def assert_raises(
     raise AssertionError(
         f"{label}: expected exception {exc_type.__name__}"
     )
+
+def solve_system(A: list[list[float]], b: list[float]) -> list[float]:
+    """
+    Solve Ax = b using Gauss-Jordan elimination with partial pivoting.
+    """
+    n = len(A)
+    M = [A[i][:] + [b[i]] for i in range(n)]
+
+    for col in range(n):
+        pivot = col
+        for r in range(col + 1, n):
+            if abs(M[r][col]) > abs(M[pivot][col]):
+                pivot = r
+
+        if is_zero(abs(M[pivot][col])):
+            raise ValueError("Linear system has no unique solution")
+
+        M[col], M[pivot] = M[pivot], M[col]
+
+        pivot_val = M[col][col]
+        for j in range(col, n + 1):
+            M[col][j] /= pivot_val
+
+        for r in range(n):
+            if r != col:
+                factor = M[r][col]
+                for j in range(col, n + 1):
+                    M[r][j] -= factor * M[col][j]
+
+    return [zero_rectify(M[i][n]) for i in range(n)]

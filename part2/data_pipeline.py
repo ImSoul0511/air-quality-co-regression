@@ -500,8 +500,14 @@ class DataPipeline:
             
         return self
 
-    def transform(self, X: pd.DataFrame, y: pd.Series = None) -> tuple:
+    def transform(self, X: pd.DataFrame, y: pd.Series = None, poly: bool = True) -> tuple:
         """Áp dụng pipeline đã fit lên data mới.
+
+        Args:
+            X: DataFrame features.
+            y: Series target (optional).
+            poly: Nếu True, thêm polynomial features (dùng cho OLS/Ridge/Lasso).
+                  Nếu False, bỏ qua (dùng cho KRR vì RBF kernel đã xử lý non-linearity).
         
         Returns:
             tuple: (X_processed: list[list[float]], y_list: list[float] hoặc None)
@@ -562,10 +568,11 @@ class DataPipeline:
         # Chuyển sang list[list[float]]
         X_result = X_out.values.tolist()
 
-        # Bước 7: Polynomial features (nếu degree > 1)
-        poly_degree = self.models_.get('poly_degree', 1)
-        if poly_degree > 1:
-            X_result = self.add_polynomial_features(X_result, degree=poly_degree)
+        # Bước 7: Polynomial features (nếu degree > 1 và poly=True)
+        if poly:
+            poly_degree = self.models_.get('poly_degree', 1)
+            if poly_degree > 1:
+                X_result = self.add_polynomial_features(X_result, degree=poly_degree)
 
         # Xử lý y
         y_result = None
@@ -574,10 +581,10 @@ class DataPipeline:
 
         return X_result, y_result
 
-    def fit_transform(self, X_train: pd.DataFrame, y_train: pd.Series = None) -> tuple:
+    def fit_transform(self, X_train: pd.DataFrame, y_train: pd.Series = None, poly: bool = True) -> tuple:
         """Fit rồi transform."""
         self.fit(X_train, y_train)
-        return self.transform(X_train, y_train)
+        return self.transform(X_train, y_train, poly=poly)
 
     def add_polynomial_features(self, X: list[list[float]], degree: int = 2) -> list[list[float]]:
         """Thêm polynomial features (tương tác giữa các biến).
