@@ -214,7 +214,7 @@ def select_lambda_cv(
     ax.legend()
     ax.grid(True)
     plt.tight_layout()
-    plt.show()
+    plt.close(fig)
 
     return {
         "lambda_grid": lambda_grid,
