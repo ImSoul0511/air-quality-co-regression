@@ -207,7 +207,7 @@ def coefficients_to_original_scale(
     return beta_original
 
 
-def lasso_fit(
+def lasso_fituti(
     X: list[list[float]],
     y: list[float],
     lam: float,
