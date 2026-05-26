@@ -243,34 +243,39 @@ def lasso_fit(
     beta_scaled = [0.0 for _ in range(p)]
     n_iter = 0
 
-    # residual = y_centered - X_scaled @ beta_scaled (maintained incrementally)
-    residual = [y_centered[i] - sum(X_scaled[i][k] * beta_scaled[k] for k in range(p))
-                for i in range(n)]
+    # Pre-transpose for O(1) column access instead of O(n) extraction each time
+    X_T = [[X_scaled[i][j] for i in range(n)] for j in range(p)]
+
+    # Pre-compute squared column norms — constant across iterations
+    z = [sum(X_T[j][i] * X_T[j][i] for i in range(n)) for j in range(p)]
+
+    # residual = y_centered (beta_scaled starts at 0, so residual = y_centered)
+    residual = y_centered[:]
 
     for iteration in range(1, max_iter + 1):
         beta_old = beta_scaled[:]
 
         for j in range(p):
-            X_j = [X_scaled[i][j] for i in range(n)]
+            X_j = X_T[j]
             beta_j_old = beta_scaled[j]
-
-            # partial residual: add back feature j's contribution
-            rho_j = 0.0
-            z_j = 0.0
-            for i in range(n):
-                r_ji = residual[i] + X_j[i] * beta_j_old
-                rho_j += X_j[i] * r_ji
-                z_j += X_j[i] * X_j[i]
+            z_j = z[j]
 
             if is_zero(z_j):
                 beta_scaled[j] = 0.0
-            else:
-                beta_scaled[j] = soft_threshold(rho_j, lam) / z_j
+                continue
+
+            # rho_j = X_j · (residual + X_j * beta_j_old)
+            rho_j = 0.0
+            for i in range(n):
+                rho_j += X_j[i] * (residual[i] + X_j[i] * beta_j_old)
+
+            beta_scaled[j] = soft_threshold(rho_j, lam) / z_j
 
             # update residual incrementally
             delta = beta_scaled[j] - beta_j_old
-            for i in range(n):
-                residual[i] -= X_j[i] * delta
+            if delta != 0.0:
+                for i in range(n):
+                    residual[i] -= X_j[i] * delta
 
         n_iter = iteration
         max_change = max(abs(beta_scaled[j] - beta_old[j]) for j in range(p))
