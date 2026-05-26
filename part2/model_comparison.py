@@ -625,6 +625,50 @@ class ModelComparator:
         df = pd.DataFrame(rows).set_index('Model')
         return df.sort_values('RMSE', ascending=True)
 
+    def plot_model_comparison(self, save_path: str = None):
+        """Vẽ biểu đồ cột so sánh RMSE và R² giữa các mô hình."""
+        import matplotlib.pyplot as plt
+        df = self.compare_models()
+        if df.empty:
+            print("[Warning] Chưa có mô hình nào được huấn luyện để vẽ biểu đồ.")
+            return
+
+        fig, axes = plt.subplots(1, 2, figsize=(15, 6), dpi=100)
+        
+        # 1. Vẽ biểu đồ cột cho RMSE (sắp xếp ngược để model tốt nhất ở trên cùng)
+        df_rmse = df.sort_values('RMSE', ascending=False)
+        colors_rmse = ['lightcoral' if x == df['RMSE'].min() else 'skyblue' for x in df_rmse['RMSE']]
+        bars_rmse = axes[0].barh(df_rmse.index, df_rmse['RMSE'], color=colors_rmse, edgecolor='black', height=0.6)
+        axes[0].set_title('So sánh RMSE giữa các mô hình (Càng nhỏ càng tốt)', fontsize=12, fontweight='bold')
+        axes[0].set_xlabel('RMSE')
+        axes[0].grid(axis='x', linestyle='--', alpha=0.7)
+        for bar in bars_rmse:
+            width = bar.get_width()
+            axes[0].text(width + 0.005, bar.get_y() + bar.get_height()/2, f'{width:.4f}', 
+                         va='center', ha='left', fontsize=10, fontweight='bold')
+
+        # 2. Vẽ biểu đồ cột cho R²
+        df_r2 = df.sort_values('R2_test', ascending=True)
+        colors_r2 = ['lightgreen' if x == df['R2_test'].max() else 'lightgray' for x in df_r2['R2_test']]
+        bars_r2 = axes[1].barh(df_r2.index, df_r2['R2_test'], color=colors_r2, edgecolor='black', height=0.6)
+        axes[1].set_title('So sánh R² giữa các mô hình (Càng lớn càng tốt)', fontsize=12, fontweight='bold')
+        axes[1].set_xlabel('R² Score')
+        axes[1].grid(axis='x', linestyle='--', alpha=0.7)
+        for bar in bars_r2:
+            width = bar.get_width()
+            axes[1].text(width + 0.005, bar.get_y() + bar.get_height()/2, f'{width:.4f}', 
+                         va='center', ha='left', fontsize=10, fontweight='bold')
+
+        plt.suptitle('Báo cáo So sánh Hiệu năng giữa các Mô hình Hồi quy', fontsize=16, fontweight='bold', y=1.02)
+        plt.tight_layout()
+        
+        if save_path:
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            plt.savefig(save_path, bbox_inches='tight')
+            print(f"[Plot] Đã lưu biểu đồ so sánh mô hình tại: {save_path}")
+        
+        plt.show()
+
     # -------------------------------------------------------------------------
     # Bước 11: Kiểm định thống kê (static methods)
     # -------------------------------------------------------------------------
