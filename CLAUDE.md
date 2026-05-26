@@ -4,12 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a university coursework project (MTH00051, deadline 2026-05-30) implementing linear regression from scratch in Python — without NumPy in the core math layer. It has two parts:
+University coursework (MTH00051, deadline 2026-05-30) implementing linear regression from scratch in Python — without NumPy in the core math layer. Two parts:
 
-- **Part 1**: OLS theory — implement solvers, metrics, regularization, diagnostics, cross-validation, and a Gauss-Markov Monte Carlo demo.
-- **Part 2**: Real-world application — data pipeline, multi-model comparison (OLS, Ridge, Lasso), and analysis on an air quality dataset.
-
-All `part1/` and `part2/` implementation files are currently empty stubs. The full specification lives in [docs/TASKS.md](docs/TASKS.md).
+- **Part 1**: OLS theory — solvers, metrics, regularization, diagnostics, cross-validation, Gauss-Markov Monte Carlo demo.
+- **Part 2**: Real-world application — data pipeline, multi-model comparison (OLS, Ridge, Lasso), advanced methods on `AirQualityUCI.csv`.
 
 ## Setup
 
@@ -25,7 +23,7 @@ No build system. Run modules directly with `python` or execute Jupyter notebooks
 
 ```
 config.py          — Constants (RANDOM_STATE=42, EPSILON=1e-12) and numerical helpers
-utils.py           — Foundation: linear algebra, data generators, assert helpers
+utils.py           — Foundation: linear algebra (no NumPy), data generators, assert helpers
 test_logger.py     — Colored terminal output for manual test suites
 part1/             — Theory implementations (F1–F10 + notebook)
 part2/             — Application pipeline (T1–T6 + notebook)
@@ -41,9 +39,9 @@ All functions in `utils.py` implement math from scratch using only pure Python l
 
 ### `config.py` — shared constants
 
-Use `config.RANDOM_STATE` as the seed for all random operations and `config.EPSILON` for numerical zero comparisons. Prefer `config.is_zero(x)` and `config.zero_rectify(value)` over ad-hoc comparisons.
+`config.py` imports `matvec`, `vector_sub`, `norm` from `utils.py`. Use `config.RANDOM_STATE` as seed for all random operations and `config.EPSILON` for numerical zero comparisons. Prefer `config.is_zero(x)` and `config.zero_rectify(value)` over ad-hoc comparisons.
 
-### Implementation files (part1/, part2/)
+### Implementation files
 
 Each file maps to specific feature IDs in `docs/TASKS.md`:
 - `part1/ols_implementation.py` → F1–F5
@@ -59,8 +57,72 @@ Each file maps to specific feature IDs in `docs/TASKS.md`:
 
 ### Testing pattern
 
-There is no pytest setup. Tests are written as standalone Python scripts that use the assert helpers from `utils.py` and print results via `test_logger.TestLogger`. Run them directly:
+No pytest setup. Tests are standalone Python scripts using assert helpers from `utils.py` and `test_logger.TestLogger`. The main test suite is `part1/test_case.py`. Run directly:
 
 ```bash
-python <test_script>.py
+python part1/test_case.py
 ```
+
+## Implementation Status
+
+### Complete
+
+| File | Features | Notes |
+|------|----------|-------|
+| `utils.py` | Linear algebra, data gen, asserts | Pure Python, no NumPy |
+| `config.py` | Constants + helpers | Imports matvec/vector_sub/norm from utils |
+| `test_logger.py` | TestLogger class | Terminal output only |
+| `part1/ols_implementation.py` | F1–F5 | ols_fit, hat_matrix, model_metrics, coef_inference, vif |
+| `part1/ridge_lasso.py` | F6–F7 | ridge_fit (closed-form), lasso_fit (coordinate descent) |
+| `part1/residual_analysis.py` | F8 | residual_diagnostics (4-plot: resid vs fitted, Q-Q, scale-loc, Cook's D) |
+| `part1/cross_validation.py` | F9 | kfold_cv, predict, select_lambda_cv |
+| `part1/gauss_markov_demo.py` | F10 | run_gauss_markov_simulation (N_SIM=1000, Monte Carlo BLUE demo) |
+| `part1/test_case.py` | All F1–F10 | Comprehensive unit tests |
+| `part2/data_pipeline.py` | T3 | EDAToolkit + DataPipeline (impute, winsorize, encode, scale, poly) |
+| `part2/model_comparison.py` | T4 | ModelComparator: OLS full, OLS selected (p-value/VIF), Ridge, Lasso |
+
+### Stub / Not started
+
+| File | Features | Notes |
+|------|----------|-------|
+| `part2/advanced_methods.py` | T6 | Empty — Kernel Ridge or Bayesian LR (bonus) |
+| `part1/part1_notebook.ipynb` | F11 | Notebook demos for F1–F10 |
+| `part2/part2_notebook.ipynb` | T5 | Part 2 analysis notebook |
+
+## Data
+
+- **Dataset:** `part2/data/AirQualityUCI.csv` — Air Quality UCI (hourly sensor readings)
+- **Target column:** CO sensor response (continuous regression target)
+- **Cached outputs:** `part2/configs/feature_selection.json`, `part2/outputs/ols_selected.json`
+
+## Git Workflow
+
+Current branch: `feat/part1-ols-metrics`
+
+```
+main
+├── feat/part1-ols-metrics     ← F1, F2, F3
+├── feat/part1-inference-gm    ← F4, F5, F10
+├── feat/part1-ridge-cv        ← F6, F7, F8, F9
+├── feat/part1-notebook        ← F11
+├── feat/part2-pipeline        ← T3, compare
+├── feat/part2-models          ← T4
+├── feat/part2-advanced        ← T6
+└── feat/part2-notebook        ← T5
+```
+
+Commit format: `[P1/F3] Implement model_metrics with R2, adj-R2, F-test`
+
+## Data Conventions
+
+| Symbol | Type | Shape | Description |
+|--------|------|-------|-------------|
+| `X` | `list[list[float]]` | `(n, p)` | Features, **no** bias column |
+| `X_bias` | `list[list[float]]` | `(n, p+1)` | Design matrix with leading 1s column |
+| `y` | `list[float]` | `(n,)` | Target vector |
+| `beta_hat` | `list[float]` | `(p+1,)` | Coefficients including intercept |
+| `y_hat` | `list[float]` | `(n,)` | Predicted values |
+| `lam` | `float` | scalar | Regularization lambda |
+| `k` | `int` | scalar | Number of CV folds |
+
+All `part1/` functions accept `X` **without** bias column and add it internally.

@@ -108,10 +108,10 @@ def ols_fit(X: list[list[float]], y: list[float]) -> dict:
     sigma2_hat = RSS / df
 
     return {
-        "beta_hat":   beta_hat,
-        "sigma2_hat": sigma2_hat,
-        "y_hat":      y_hat,
-        "residuals":  residuals,
+        "beta_hat":   beta_hat,     # Vector trọng số
+        "sigma2_hat": sigma2_hat,   # Phương sai nhiễu
+        "y_hat":      y_hat,        # Fitted values
+        "residuals":  residuals,    # Phần dư: y - y_hat
     }
 
 

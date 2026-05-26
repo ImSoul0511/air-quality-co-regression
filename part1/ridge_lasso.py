@@ -243,27 +243,34 @@ def lasso_fit(
     beta_scaled = [0.0 for _ in range(p)]
     n_iter = 0
 
+    # residual = y_centered - X_scaled @ beta_scaled (maintained incrementally)
+    residual = [y_centered[i] - sum(X_scaled[i][k] * beta_scaled[k] for k in range(p))
+                for i in range(n)]
+
     for iteration in range(1, max_iter + 1):
         beta_old = beta_scaled[:]
 
         for j in range(p):
             X_j = [X_scaled[i][j] for i in range(n)]
+            beta_j_old = beta_scaled[j]
 
-            y_pred_scaled = matvec(X_scaled, beta_scaled)
-            r_j = []
-            for i in range(n):
-                r_j.append(y_centered[i] - y_pred_scaled[i] + X_j[i] * beta_scaled[j])
-
+            # partial residual: add back feature j's contribution
             rho_j = 0.0
             z_j = 0.0
             for i in range(n):
-                rho_j += X_j[i] * r_j[i]
+                r_ji = residual[i] + X_j[i] * beta_j_old
+                rho_j += X_j[i] * r_ji
                 z_j += X_j[i] * X_j[i]
 
             if is_zero(z_j):
                 beta_scaled[j] = 0.0
             else:
                 beta_scaled[j] = soft_threshold(rho_j, lam) / z_j
+
+            # update residual incrementally
+            delta = beta_scaled[j] - beta_j_old
+            for i in range(n):
+                residual[i] -= X_j[i] * delta
 
         n_iter = iteration
         max_change = max(abs(beta_scaled[j] - beta_old[j]) for j in range(p))
