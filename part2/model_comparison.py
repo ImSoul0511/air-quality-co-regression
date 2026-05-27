@@ -499,9 +499,10 @@ class ModelComparator:
 
         # 2. Fit mô hình
         X_fit, y_fit = X_krr_train, self.y_train
-        if len(X_krr_train) > 1000:
-            print(f"[{model_name}] Lấy mẫu 1000 dòng để fit mô hình...")
-            X_fit, y_fit = sample_rows(X_krr_train, self.y_train, max_rows=1000)
+        # Bypassed safety downsampling to run fit on the entire train-set
+        # if len(X_krr_train) > 2000:
+        #     print(f"[{model_name}] Lấy mẫu 2000 dòng để fit mô hình...")
+        #     X_fit, y_fit = sample_rows(X_krr_train, self.y_train, max_rows=2000)
 
         result = KernelRidgeRegression.fit(X_fit, y_fit, lam=best_lam, length_scale=best_ls)
 
@@ -668,6 +669,87 @@ class ModelComparator:
             print(f"[Plot] Đã lưu biểu đồ so sánh mô hình tại: {save_path}")
         
         plt.show()
+
+    @staticmethod
+    def plot_comparison_from_json(outputs_dir: str = "part2/outputs", save_path: str = None):
+        """Đọc kết quả của tất cả các mô hình từ các file JSON trong outputs_dir và vẽ biểu đồ so sánh."""
+        import json
+        import glob
+        import matplotlib.pyplot as plt
+        
+        json_files = glob.glob(os.path.join(outputs_dir, "*.json"))
+        
+        model_names_map = {
+            "ols_full": "OLS Full",
+            "ols_selected": "OLS Selected",
+            "ridge": "Ridge",
+            "lasso": "Lasso",
+            "kernel_ridge": "Kernel Ridge",
+            "bayesian_lr": "Bayesian LR"
+        }
+        
+        rows = []
+        for file_path in json_files:
+            base_name = os.path.splitext(os.path.basename(file_path))[0]
+            display_name = model_names_map.get(base_name, base_name.replace('_', ' ').title())
+            
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                if 'metrics' in data:
+                    metrics = data['metrics']
+                    rows.append({
+                        'Model':   display_name,
+                        'MAE':     metrics.get('MAE', None),
+                        'RMSE':    metrics.get('RMSE', None),
+                        'R2_test': metrics.get('R2', None),
+                    })
+            except Exception as e:
+                print(f"[Warning] Không thể đọc file {file_path}: {e}")
+                
+        if not rows:
+            print(f"[Warning] Không tìm thấy dữ liệu hợp lệ trong thư mục: {outputs_dir}")
+            return None
+            
+        df = pd.DataFrame(rows).set_index('Model')
+        df = df.sort_values('RMSE', ascending=True)
+        
+        fig, axes = plt.subplots(1, 2, figsize=(15, 6), dpi=100)
+        
+        # 1. RMSE
+        df_rmse = df.sort_values('RMSE', ascending=False)
+        colors_rmse = ['lightcoral' if x == df['RMSE'].min() else 'skyblue' for x in df_rmse['RMSE']]
+        bars_rmse = axes[0].barh(df_rmse.index, df_rmse['RMSE'], color=colors_rmse, edgecolor='black', height=0.6)
+        axes[0].set_title('So sánh RMSE giữa các mô hình (Càng nhỏ càng tốt)', fontsize=12, fontweight='bold')
+        axes[0].set_xlabel('RMSE')
+        axes[0].grid(axis='x', linestyle='--', alpha=0.7)
+        for bar in bars_rmse:
+            width = bar.get_width()
+            axes[0].text(width + 0.005, bar.get_y() + bar.get_height()/2, f'{width:.4f}', 
+                         va='center', ha='left', fontsize=10, fontweight='bold')
+
+        # 2. R²
+        df_r2 = df.sort_values('R2_test', ascending=True)
+        colors_r2 = ['lightgreen' if x == df['R2_test'].max() else 'lightgray' for x in df_r2['R2_test']]
+        bars_r2 = axes[1].barh(df_r2.index, df_r2['R2_test'], color=colors_r2, edgecolor='black', height=0.6)
+        axes[1].set_title('So sánh R² giữa các mô hình (Càng lớn càng tốt)', fontsize=12, fontweight='bold')
+        axes[1].set_xlabel('R² Score')
+        axes[1].grid(axis='x', linestyle='--', alpha=0.7)
+        for bar in bars_r2:
+            width = bar.get_width()
+            axes[1].text(width + 0.005, bar.get_y() + bar.get_height()/2, f'{width:.4f}', 
+                         va='center', ha='left', fontsize=10, fontweight='bold')
+
+        plt.suptitle('Báo cáo So sánh Hiệu năng (Đọc từ file JSON)', fontsize=16, fontweight='bold', y=1.02)
+        plt.tight_layout()
+        
+        if save_path:
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            plt.savefig(save_path, bbox_inches='tight')
+            print(f"[Plot] Đã lưu biểu đồ so sánh mô hình tại: {save_path}")
+        
+        plt.show()
+        return df
 
     # -------------------------------------------------------------------------
     # Bước 11: Kiểm định thống kê (static methods)

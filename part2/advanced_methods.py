@@ -190,11 +190,12 @@ class KernelRidgeRegression:
             dict chứa: model_type, alpha, X_train (copy), length_scale, lam, jitter, y_hat.
         """
         n = len(X_train)
-        if n > 2000:
-            raise ValueError(
-                f"Kernel Ridge is O(n^3); n_train={n} > 2000. "
-                "Pass a smaller subset via sample_rows()."
-            )
+        # Bypassed safety check to run fit on the entire train-set
+        # if n > 2000:
+        #     raise ValueError(
+        #         f"Kernel Ridge is O(n^3); n_train={n} > 2000. "
+        #         "Pass a smaller subset via sample_rows()."
+        #     )
 
         K = KernelRidgeRegression.rbf_kernel(X_train, X_train, length_scale)
         A = KernelRidgeRegression._add_diagonal(K, lam + jitter)
@@ -622,6 +623,41 @@ class BayesianLinearRegression:
 
 
 # =========================================================
+# COMPARE MODELS HELPER (thuần Python, không cần pandas)
+# =========================================================
+
+def compare_models_summary(results: dict) -> list[dict]:
+    """Tạo bảng so sánh MAE/RMSE/R² từ dict results.
+
+    Hàm tiện ích cho notebook — không cần import pandas.
+
+    Args:
+        results: dict[str, dict] — key là tên model,
+                 value chứa key 'metrics' với MAE, RMSE, R2.
+
+    Returns:
+        list[dict] — mỗi phần tử là {'Model', 'MAE', 'RMSE', 'R2'},
+                     sắp xếp theo RMSE tăng dần.
+
+    Example:
+        >>> summary = compare_models_summary(comparator.results)
+        >>> for row in summary:
+        ...     print(f"{row['Model']:20s}  RMSE={row['RMSE']:.4f}  R²={row['R2']:.4f}")
+    """
+    rows = []
+    for name, data in results.items():
+        m = data.get('metrics', {})
+        rows.append({
+            'Model': name,
+            'MAE': m.get('MAE', float('nan')),
+            'RMSE': m.get('RMSE', float('nan')),
+            'R2': m.get('R2', float('nan')),
+        })
+    rows.sort(key=lambda r: r['RMSE'])
+    return rows
+
+
+# =========================================================
 # UNIT TESTS
 # =========================================================
 
@@ -651,7 +687,7 @@ def _run_tests() -> tuple[int, int]:
         abs(K[0][1] - math.exp(-0.5)) < 1e-9,
     )
 
-    print("\n=== Test 3: Fit/predict shape và MSE ===")
+    print("\n=== Test 3: KRR Fit/predict shape và MSE ===")
     X3 = [[0.0], [1.0], [2.0]]
     y3 = [0.0, 1.0, 4.0]
     model3 = krr.fit(X3, y3, lam=0.01, length_scale=1.0)
@@ -687,6 +723,54 @@ def _run_tests() -> tuple[int, int]:
         len(cv_result["cv_results"]) == expected_n,
     )
 
+    # ----- BLR Tests -----
+
+    print("\n=== Test 6: BLR fit/predict shape ===")
+    X6 = [[1.0, 10.0], [3.0, 7.0], [5.0, 3.0], [7.0, 12.0], [9.0, 1.0]]
+    y6 = [2.5, 6.5, 10.5, 14.5, 18.5]
+    sigma2_6 = BayesianLinearRegression.estimate_sigma2(X6, y6)
+    check("sigma2 > 0", sigma2_6 > 0)
+
+    model6 = BayesianLinearRegression.fit(X6, y6, sigma2=sigma2_6, alpha=1.0)
+    check("model_type == 'bayesian_lr'", model6["model_type"] == "bayesian_lr")
+    check("len(m_n) == p+1 (3)", len(model6["m_n"]) == 3)
+    check("S_n is 3x3", len(model6["S_n"]) == 3 and len(model6["S_n"][0]) == 3)
+
+    y_mean6, y_lower6, y_upper6 = BayesianLinearRegression.predict(model6, X6, sigma2_6)
+    check("len(y_mean) == 5", len(y_mean6) == 5)
+    check("len(y_lower) == 5", len(y_lower6) == 5)
+    check("len(y_upper) == 5", len(y_upper6) == 5)
+
+    print("\n=== Test 7: BLR credible interval order ===")
+    all_ordered = all(y_lower6[i] <= y_mean6[i] <= y_upper6[i] for i in range(5))
+    check("y_lower <= y_mean <= y_upper for all i", all_ordered)
+
+    mse6 = sum((y6[i] - y_mean6[i]) ** 2 for i in range(5)) / 5
+    check(f"BLR MSE on train < 200 (MSE={mse6:.4f})", mse6 < 200.0)
+
+    # Kiểm tra BLR CV trả về alpha từ grid
+    print("\n=== Test 8: BLR CV trả về alpha từ grid ===")
+    alpha_grid = [0.01, 0.1, 1.0, 10.0]
+    blr_cv = BayesianLinearRegression.cross_validate(X6, y6, alpha_grid, k=3)
+    check("best_alpha in alpha_grid", blr_cv["best_alpha"] in alpha_grid)
+    check(
+        f"len(cv_results) == {len(alpha_grid)}",
+        len(blr_cv["cv_results"]) == len(alpha_grid),
+    )
+    check("best_cv_score >= 0", blr_cv["best_cv_score"] >= 0)
+
+    # ----- compare_models_summary Test -----
+
+    print("\n=== Test 9: compare_models_summary ===")
+    fake_results = {
+        'ModelA': {'metrics': {'MAE': 1.0, 'RMSE': 2.0, 'R2': 0.8}},
+        'ModelB': {'metrics': {'MAE': 0.5, 'RMSE': 1.0, 'R2': 0.95}},
+    }
+    summary = compare_models_summary(fake_results)
+    check("trả về 2 phần tử", len(summary) == 2)
+    check("sắp xếp theo RMSE tăng dần (ModelB trước)", summary[0]['Model'] == 'ModelB')
+    check("ModelB RMSE == 1.0", abs(summary[0]['RMSE'] - 1.0) < 1e-9)
+
     print(f"\n{'='*40}")
     print(f"Kết quả: {passed}/{total} tests PASSED")
     print(f"{'='*40}\n")
@@ -695,3 +779,4 @@ def _run_tests() -> tuple[int, int]:
 
 if __name__ == "__main__":
     _run_tests()
+
