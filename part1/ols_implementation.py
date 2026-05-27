@@ -455,7 +455,17 @@ def coef_inference(X, y, beta_hat, sigma2):
     p = len(X[0]) # số lượng features
     
     # 1. Thêm cột bias (cột 1 đầu tiên)
-    X_bias = [[1.0] + row for row in X]
+    # Kiểm tra số lượng cột của X so với số lượng hệ số beta_hat
+    if len(X[0]) == len(beta_hat):
+        # Trường hợp 1: X ĐÃ có sẵn cột bias (từ các hàm trước truyền vào)
+        X_bias = X
+        p = len(X[0]) - 1  # p là số features thực tế (không tính intercept)
+    elif len(X[0]) == len(beta_hat) - 1:
+        # Trường hợp 2: X CHƯA có cột bias, hàm phải tự thêm
+        X_bias = [[1.0] + row for row in X]
+        p = len(X[0])      # p chính là số lượng features hiện tại
+    else:
+        raise ValueError(f"Bất thường: Số cột của X ({len(X[0])}) không khớp với beta_hat ({len(beta_hat)})")
     
     # 2. Tính Ma trận hiệp phương sai của beta: Cov = sigma2 * (X^T @ X)^-1
     # Dùng hoàn toàn hàm từ utils để tính toán đại số
@@ -495,8 +505,7 @@ def coef_inference(X, y, beta_hat, sigma2):
         'ci_lower': ci_lower,
         'ci_upper': ci_upper
     }
-    
-    index = ['intercept'] + [f'x{i+1}' for i in range(p)]
+    index = ['intercept'] + [f'x{i+1}' for i in range(len(beta_hat) - 1)]
     return pd.DataFrame(data, index=index)
 
 def vif(X):

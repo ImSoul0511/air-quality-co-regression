@@ -9,3 +9,4 @@ numpy>=1.26
 
 ipykernel>=6.29
 jupyter>=1.0
+statsmodels>=0.15
