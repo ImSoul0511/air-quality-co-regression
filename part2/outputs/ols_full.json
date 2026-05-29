@@ -9,15 +9,5 @@
     "F_pvalue": 0.0,
     "MAE": 0.30662082926552553,
     "RMSE": 0.489227676875095
-  },
-  "shapiro": {
-    "statistic": 0.855821343993439,
-    "p_value": 1.7698079017918997e-35,
-    "is_normal": false
-  },
-  "bp_test": {
-    "LM_stat": 552.8636421480464,
-    "p_value": 0.0,
-    "is_homoscedastic": false
   }
 }

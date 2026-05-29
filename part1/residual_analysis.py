@@ -1,16 +1,14 @@
 import os
 import sys
-
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from config import is_zero
-from utils import inverse, matmul, transpose
+from utils import inverse, matmul, transpose, add_bias_column
 
 
 def _validate_vector(name: str, values: list[float]) -> None:
     if len(values) == 0:
-        raise ValueError(f"{name} must not be empty")
+        raise ValueError(f"{name} không được rỗng")
 
 
 def _validate_inputs(
@@ -22,21 +20,21 @@ def _validate_inputs(
     _validate_vector("y_hat", y_hat)
 
     if len(y) != len(y_hat):
-        raise ValueError("y and y_hat must have the same length")
+        raise ValueError("y và y_hat phải có cùng kích thước")
 
     if X is None:
         return
 
     if len(X) != len(y):
-        raise ValueError("X must have the same number of rows as y")
+        raise ValueError("X phải có cùng số dòng với y")
 
     if len(X) == 0 or len(X[0]) == 0:
-        raise ValueError("X must contain at least one feature")
+        raise ValueError("X phải chứa ít nhất một đặc trưng")
 
     p = len(X[0])
     for row in X:
         if len(row) != p:
-            raise ValueError("All rows in X must have the same number of columns")
+            raise ValueError("Tất cả các dòng của X phải có cùng số lượng cột")
 
 
 def _mean(values: list[float]) -> float:
@@ -49,25 +47,26 @@ def _std(values: list[float]) -> float:
     return variance**0.5
 
 
-def _add_bias_column(X: list[list[float]]) -> list[list[float]]:
-    return [[1.0] + row[:] for row in X]
-
-
 def hat_matrix(X: list[list[float]]) -> dict:
-    """
-    Compute the OLS hat matrix H = X(X^T X)^(-1)X^T.
+    """Tính toán ma trận hình chiếc mũ H = X(X^T X)^{-1} X^T của OLS.
 
-    X should not include the intercept column. This function adds it.
+    Tham số
+    -------
+    X : list[list[float]] -- ma trận đặc trưng (không bao gồm intercept).
+
+    Trả về
+    ------
+    dict -- ma trận H, leverage của từng quan sát và ma trận X_bias.
     """
     if len(X) == 0 or len(X[0]) == 0:
-        raise ValueError("X must contain at least one feature")
+        raise ValueError("X phải chứa ít nhất một đặc trưng")
 
     p = len(X[0])
     for row in X:
         if len(row) != p:
-            raise ValueError("All rows in X must have the same number of columns")
+            raise ValueError("Tất cả các dòng của X phải có cùng số lượng cột")
 
-    X_bias = _add_bias_column(X)
+    X_bias = add_bias_column(X)
     Xt = transpose(X_bias)
     XtX = matmul(Xt, X_bias)
     XtX_inv = inverse(XtX)
@@ -104,7 +103,7 @@ def _compute_cooks_distance(
     p = len(X[0])
     denominator = n - p - 1
     if denominator <= 0:
-        raise ValueError("Cook's Distance requires n > p + 1")
+        raise ValueError("Khoảng cách Cook yêu cầu n > p + 1")
 
     rss = sum(residual * residual for residual in residuals)
     sigma2 = rss / denominator
@@ -141,14 +140,23 @@ def residual_diagnostics(
     y_hat: list[float],
     X: list[list[float]] | None = None,
 ) -> tuple:
-    """
-    Draw four residual diagnostic plots and return (fig, metrics).
+    """Vẽ 4 biểu đồ chẩn đoán phần dư hồi quy và trả về hình ảnh cùng các chỉ số chẩn đoán.
 
-    Plots:
+    Các biểu đồ bao gồm:
         1. Residuals vs Fitted
         2. Q-Q Plot
         3. Scale-Location
         4. Cook's Distance
+
+    Tham số
+    -------
+    y     : list[float]              -- vector thực tế.
+    y_hat : list[float]              -- vector dự đoán.
+    X     : list[list[float]] | None -- ma trận đặc trưng.
+
+    Trả về
+    ------
+    tuple -- (fig, metrics) trong đó fig là đối tượng matplotlib figure và metrics là từ điển các chỉ số chẩn đoán.
     """
     _validate_inputs(y, y_hat, X)
 

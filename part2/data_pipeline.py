@@ -1,10 +1,10 @@
 import os
 import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import RANDOM_STATE
 import pandas as pd
 
@@ -13,13 +13,16 @@ MIN_COMMON_FEATURES = 3
 class EDAToolkit:
     @staticmethod
     def get_raw_data_summary(file_path: str, target_col: str = 'CO(GT)') -> dict:
-        """Lấy thông tin tổng quan về dữ liệu
-        
-        Args:
-            file_path (str): Đường dẫn đến file CSV
-            target_col (str): Tên cột target
-        Returns:
-            dict: Dictionary chứa thông tin tổng quan về dữ liệu
+        """Lấy thông tin tổng quan về dữ liệu.
+
+        Tham số
+        -------
+        file_path  : str -- đường dẫn đến tệp CSV.
+        target_col : str -- tên cột mục tiêu (mặc định 'CO(GT)').
+
+        Trả về
+        ------
+        dict -- từ điển chứa các thông tin tổng quan về số dòng, số cột, target, số giá trị thiếu và DataFrame.
         """
 
         # Đọc file CSV
@@ -46,12 +49,15 @@ class EDAToolkit:
         }
     @staticmethod
     def descriptive_statistics_report(df: pd.DataFrame) -> pd.DataFrame:
-        """Báo cáo thống kê mô tả
+        """Báo cáo thống kê mô tả cho các cột số của DataFrame.
 
-        Args:
-            df (pd.DataFrame): DataFrame chứa dữ liệu
-        Returns:
-            pd.DataFrame: DataFrame chứa báo cáo thống kê mô tả
+        Tham số
+        -------
+        df : pd.DataFrame -- DataFrame chứa dữ liệu đầu vào.
+
+        Trả về
+        ------
+        pd.DataFrame -- DataFrame chứa báo cáo thống kê mô tả (Count, Mean, Std Dev, Min, Q1, Median, Q3, Max).
         """
 
         # Chọn cột số
@@ -69,12 +75,15 @@ class EDAToolkit:
 
     @staticmethod
     def missing_report(data: pd.DataFrame) -> pd.DataFrame:
-        """Báo cáo giá trị bị thiếu
+        """Báo cáo giá trị bị thiếu.
 
-        Args:
-            data (pd.DataFrame): DataFrame chứa dữ liệu
-        Returns:
-            pd.DataFrame: DataFrame chứa báo cáo giá trị bị thiếu
+        Tham số
+        -------
+        data : pd.DataFrame -- DataFrame chứa dữ liệu đầu vào.
+
+        Trả về
+        ------
+        pd.DataFrame -- DataFrame chứa báo cáo giá trị bị thiếu.
         """
 
         # Đếm giá trị thiếu
@@ -95,12 +104,15 @@ class EDAToolkit:
 
     @staticmethod
     def check_duplicates(df: pd.DataFrame):
-        """Kiểm tra dữ liệu trùng lặp
-        Args:
-            df (pd.DataFrame): DataFrame chứa dữ liệu
-            
-        Returns:
-            int: Số lượng dòng dữ liệu trùng lặp
+        """Kiểm tra và đếm số lượng các dòng dữ liệu trùng lặp.
+
+        Tham số
+        -------
+        df : pd.DataFrame -- DataFrame chứa dữ liệu đầu vào.
+
+        Trả về
+        ------
+        int -- số lượng dòng dữ liệu trùng lặp phát hiện.
         """
 
         # Kiểm tra dữ liệu trùng lặp
@@ -111,12 +123,16 @@ class EDAToolkit:
 
     @staticmethod
     def plot_histograms(df: pd.DataFrame, figsize=(18, 22)):
-        """
-        Vẽ biểu đồ Histogram phân phối cho các đặc trưng số
+        """Vẽ biểu đồ Histogram phân phối cho các đặc trưng số.
 
-        Args:
-            df (pd.DataFrame): DataFrame chứa dữ liệu
-            figsize (tuple): Kích thước biểu đồ
+        Tham số
+        -------
+        df      : pd.DataFrame -- DataFrame chứa dữ liệu.
+        figsize : tuple -- kích thước biểu đồ (mặc định (18, 22)).
+
+        Trả về
+        ------
+        None
         """
 
         # Chọn cột số
@@ -130,9 +146,15 @@ class EDAToolkit:
 
     @staticmethod
     def plot_boxplots(df: pd.DataFrame):
-        """Vẽ biểu đồ Boxplot phân tán và Outliers cho các đặc trưng số
-        Args:
-            df (pd.DataFrame): DataFrame chứa dữ liệu
+        """Vẽ biểu đồ Boxplot khảo sát phân tán và giá trị ngoại lai (outliers) của các đặc trưng số.
+
+        Tham số
+        -------
+        df : pd.DataFrame -- DataFrame chứa dữ liệu.
+
+        Trả về
+        ------
+        None
         """
 
         # Chọn cột số
@@ -154,10 +176,15 @@ class EDAToolkit:
 
     @staticmethod
     def plot_correlation_heatmap(df: pd.DataFrame):
-        """Vẽ ma trận hệ số tương quan Pearson giữa các đặc trưng
+        """Vẽ ma trận nhiệt hệ số tương quan Pearson giữa các đặc trưng số.
 
-        Args:
-            df (pd.DataFrame): DataFrame chứa dữ liệu
+        Tham số
+        -------
+        df : pd.DataFrame -- DataFrame chứa dữ liệu.
+
+        Trả về
+        ------
+        None
         """
 
         # Chọn cột số
@@ -174,12 +201,16 @@ class EDAToolkit:
 
     @staticmethod
     def plot_top_correlations(df: pd.DataFrame, target_col='CO(GT)'):
-        """
-        Vẽ scatterplot giữa target và 5 đặc trưng có tương quan cao nhất
+        """Vẽ biểu đồ phân tán (scatterplot) giữa đặc trưng mục tiêu và 5 đặc trưng có tương quan mạnh nhất.
 
-        Args:
-            df (pd.DataFrame): DataFrame chứa dữ liệu
-            target_col (str): Tên cột target
+        Tham số
+        -------
+        df         : pd.DataFrame -- DataFrame chứa dữ liệu.
+        target_col : str -- tên cột mục tiêu (mặc định 'CO(GT)').
+
+        Trả về
+        ------
+        None
         """
 
         # Chọn cột số
@@ -223,12 +254,15 @@ class EDAToolkit:
 
     @staticmethod
     def outlier_report_iqr(df: pd.DataFrame) -> pd.DataFrame:
-        """Báo cáo giá trị ngoại lai sử dụng phương pháp IQR
+        """Báo cáo giá trị ngoại lai sử dụng phương pháp IQR.
 
-        Args:
-            df (pd.DataFrame): DataFrame chứa dữ liệu
-        Returns:
-            pd.DataFrame: DataFrame chứa báo cáo giá trị ngoại lai
+        Tham số
+        -------
+        df : pd.DataFrame -- DataFrame chứa dữ liệu.
+
+        Trả về
+        ------
+        pd.DataFrame -- DataFrame chứa báo cáo số lượng và tỷ lệ giá trị ngoại lai.
         """
 
         numeric_cols = df.select_dtypes(include=[np.number]).columns
@@ -256,12 +290,16 @@ class EDAToolkit:
 
     @staticmethod
     def outlier_report_zscore(df: pd.DataFrame, threshold: float = 3.0) -> pd.DataFrame:
-        """Báo cáo giá trị ngoại lai sử dụng phương pháp Z-score
-        Args:
-            df (pd.DataFrame): DataFrame chứa dữ liệu
-            threshold (float): Ngưỡng Z-score để xác định giá trị ngoại lai
-        Returns:
-            pd.DataFrame: DataFrame chứa báo cáo giá trị ngoại lai
+        """Báo cáo giá trị ngoại lai sử dụng phương pháp Z-score.
+
+        Tham số
+        -------
+        df        : pd.DataFrame -- DataFrame chứa dữ liệu.
+        threshold : float -- ngưỡng Z-score (mặc định 3.0).
+
+        Trả về
+        ------
+        pd.DataFrame -- DataFrame chứa báo cáo số lượng và tỷ lệ giá trị ngoại lai.
         """
 
         numeric_cols = df.select_dtypes(include=[np.number]).columns
@@ -289,7 +327,18 @@ class EDAToolkit:
 
     @staticmethod
     def plot_feature_importance(model, feature_names, model_name="OLS"):
-        """Vẽ biểu đồ feature importance"""
+        """Vẽ biểu đồ tầm quan trọng đặc trưng dựa trên trọng số hồi quy.
+
+        Tham số
+        -------
+        model         : dict hoặc object -- mô hình hồi quy đã huấn luyện.
+        feature_names : list[str] -- danh sách tên đặc trưng.
+        model_name    : str -- tên mô hình (mặc định 'OLS').
+
+        Trả về
+        ------
+        None
+        """
 
         if isinstance(model, dict) and "beta_hat" in model:
             coeffs = np.array(model["beta_hat"])
@@ -335,7 +384,17 @@ class DataPipeline:
         self.models_ = {}
 
     def _knn_impute(self, X: pd.DataFrame, n_neighbors: int = 5) -> pd.DataFrame:
-        """Thực hiện KNN Imputation dùng hoàn toàn bằng Pandas."""
+        """Thực hiện xử lý giá trị khuyết thiếu bằng phương pháp láng giềng gần nhất (KNN Imputation).
+
+        Tham số
+        -------
+        X           : pd.DataFrame -- DataFrame chứa dữ liệu các đặc trưng số.
+        n_neighbors : int -- số neighbors gần nhất cần tìm (mặc định 5).
+
+        Trả về
+        ------
+        pd.DataFrame -- DataFrame đã được điền các giá trị khuyết thiếu.
+        """
         if 'knn_train_data' not in self.models_:
             return X
             
@@ -388,8 +447,16 @@ class DataPipeline:
         return X_out
 
     def load_data(self, filepath: str) -> pd.DataFrame:
-        """Đọc CSV, xử lý cột rỗng, parse Date/Time."""
-        # Đọc file CSV
+        """Đọc tệp dữ liệu CSV, loại bỏ cột rỗng và định dạng thời gian.
+
+        Tham số
+        -------
+        filepath : str -- đường dẫn tới tệp dữ liệu CSV.
+
+        Trả về
+        ------
+        pd.DataFrame -- DataFrame dữ liệu đã được làm sạch và chuẩn hóa định dạng.
+        """
         df = pd.read_csv(filepath, sep=',')
         
         # Xóa hai cột rỗng ở cuối file do dính dấu , cuối dòng
@@ -398,7 +465,7 @@ class DataPipeline:
         # Loại bỏ các dòng hoàn toàn trống ở cuối file
         df.dropna(how='all', inplace=True)
         
-        # Chuyển đổi giá trị -200 thành rỗng (None) thay vì dùng numpy
+        # Chuyển đổi giá trị -200 thành rỗng (None)
         df.replace(-200, None, inplace=True)
         
         # Định dạng lại cột Date_Time
@@ -414,7 +481,16 @@ class DataPipeline:
         return df
 
     def eda(self, df: pd.DataFrame) -> dict:
-        """EDA: thống kê mô tả, missing %, correlation."""
+        """Thực hiện phân tích khám phá dữ liệu nhanh (thống kê mô tả, tỷ lệ thiếu, ma trận tương quan).
+
+        Tham số
+        -------
+        df : pd.DataFrame -- DataFrame chứa dữ liệu cần khám phá.
+
+        Trả về
+        ------
+        dict -- từ điển chứa các kết quả thống kê mô tả, tỷ lệ thiếu và ma trận tương quan.
+        """
         eda_results = {}
         
         # Thống kê mô tả
@@ -432,9 +508,18 @@ class DataPipeline:
         return eda_results
 
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series = None):
-        """Tính toán thống kê từ train set (mean, std, median...)."""
-        
-        # Tách X và y nếu X_train truyền vào thực chất là df_train (chứa cột target)
+        """Học các tham số thống kê từ tập huấn luyện (medians, means, winsorize bounds, scale stats).
+
+        Tham số
+        -------
+        X_train : pd.DataFrame -- DataFrame dữ liệu huấn luyện.
+        y_train : pd.Series -- Series mục tiêu huấn luyện (mặc định None).
+
+        Trả về
+        ------
+        self -- đối tượng DataPipeline hiện tại.
+        """
+ 
         if self.target_col in X_train.columns:
             X_tmp = X_train.drop(columns=[self.target_col])
         else:
@@ -480,7 +565,7 @@ class DataPipeline:
             self.models_['winsorize'][col] = (q01, q99)
             X_tmp[col] = X_tmp[col].clip(lower=q01, upper=q99)
             
-        # One-hot encoding cho categorical cols
+        # Ma hoa One-hot cho cac bien phan loai (One-hot encoding)
         if len(cat_cols) > 0:
             X_tmp = pd.get_dummies(X_tmp, columns=cat_cols, drop_first=False, dtype=float)
         self.models_['encoded_cols'] = X_tmp.columns.tolist()
@@ -499,16 +584,17 @@ class DataPipeline:
         return self
 
     def transform(self, X: pd.DataFrame, y: pd.Series = None, poly: bool = True) -> tuple:
-        """Áp dụng pipeline đã fit lên data mới.
+        """Áp dụng pipeline tiền xử lý đã học lên dữ liệu mới.
 
-        Args:
-            X: DataFrame features.
-            y: Series target (optional).
-            poly: Nếu True, thêm polynomial features (dùng cho OLS/Ridge/Lasso).
-                  Nếu False, bỏ qua (dùng cho KRR vì RBF kernel đã xử lý non-linearity).
-        
-        Returns:
-            tuple: (X_processed: list[list[float]], y_list: list[float] hoặc None)
+        Tham số
+        -------
+        X    : pd.DataFrame -- DataFrame chứa các đặc trưng đầu vào.
+        y    : pd.Series -- Series mục tiêu (mặc định None).
+        poly : bool -- nếu True, thêm các đặc trưng đa thức (mặc định True).
+
+        Trả về
+        ------
+        tuple -- bộ (X_processed, y_list) trong đó X_processed dạng list[list[float]] và y_list dạng list[float] hoặc None.
         """
         # Tách target nếu còn trong X
         if self.target_col in X.columns:
@@ -521,7 +607,7 @@ class DataPipeline:
             X_out = X.copy()
             y_clean = y.copy() if y is not None else None
 
-        # Bước 1: Drop các cột đã đánh dấu từ fit và drop dòng missing target
+        # Drop các cột đã đánh dấu từ fit và drop dòng missing target
         if 'drop_cols' in self.models_:
             X_out = X_out.drop(columns=self.models_['drop_cols'], errors='ignore')
             
@@ -530,34 +616,34 @@ class DataPipeline:
             X_out = X_out.loc[valid_mask].copy()
             y_clean = y_clean.loc[valid_mask].copy()
 
-        # Bước 2: KNN Impute (dùng thống kê từ train)
+        # KNN Impute
         numeric_cols = X_out.select_dtypes(include=['float64', 'int64']).columns
         cat_cols = X_out.select_dtypes(include=['object', 'category']).columns
 
         if len(numeric_cols) > 0 and 'knn_train_data' in self.models_:
             X_out[numeric_cols] = self._knn_impute(X_out[numeric_cols], n_neighbors=5)
 
-        # Bước 3: Winsorize dùng ngưỡng từ fit
+        # Winsorize dùng ngưỡng từ fit
         if 'winsorize' in self.models_:
             for col, (lower, upper) in self.models_['winsorize'].items():
                 if col in X_out.columns:
                     X_out[col] = X_out[col].clip(lower=lower, upper=upper)
 
-        # Bước 4: One-hot encode + align với train columns
+        # One-hot encode + align với train columns
         if len(cat_cols) > 0:
             X_out = pd.get_dummies(X_out, columns=cat_cols, drop_first=False, dtype=float)
 
         if 'encoded_cols' in self.models_:
             X_out = X_out.reindex(columns=self.models_['encoded_cols'], fill_value=0.0)
 
-        # Bước 5: Standardize = (X - mean) / std
+        # Chuan hoa so lieu: Standardize = (X - mean) / std
         if 'scale_means' in self.models_ and 'scale_stds' in self.models_:
             for col in X_out.columns:
                 mean_val = self.models_['scale_means'].get(col, 0.0)
                 std_val = self.models_['scale_stds'].get(col, 1.0)
                 X_out[col] = (X_out[col] - mean_val) / std_val
 
-        # Bước 6: Check NaN
+        # Check NaN
         remaining_nan = X_out.isna().sum().sum()
         if remaining_nan > 0:
             print(f"WARNING: {remaining_nan} NaN values remain after pipeline!")
@@ -566,7 +652,7 @@ class DataPipeline:
         # Chuyển sang list[list[float]]
         X_result = X_out.values.tolist()
 
-        # Bước 7: Polynomial features (nếu degree > 1 và poly=True)
+        # Polynomial features (nếu degree > 1 và poly=True)
         if poly:
             poly_degree = self.models_.get('poly_degree', 1)
             if poly_degree > 1:
@@ -580,14 +666,32 @@ class DataPipeline:
         return X_result, y_result
 
     def fit_transform(self, X_train: pd.DataFrame, y_train: pd.Series = None, poly: bool = True) -> tuple:
-        """Fit rồi transform."""
+        """Học các tham số thống kê rồi thực hiện biến đổi dữ liệu huấn luyện.
+
+        Tham số
+        -------
+        X_train : pd.DataFrame -- DataFrame dữ liệu huấn luyện.
+        y_train : pd.Series -- Series mục tiêu huấn luyện (mặc định None).
+        poly    : bool -- nếu True, thêm các đặc trưng đa thức (mặc định True).
+
+        Trả về
+        ------
+        tuple -- bộ (X_processed, y_list) đã được tiền xử lý.
+        """
         self.fit(X_train, y_train)
         return self.transform(X_train, y_train, poly=poly)
 
     def add_polynomial_features(self, X: list[list[float]], degree: int = 2) -> list[list[float]]:
-        """Thêm polynomial features (tương tác giữa các biến).
-        
-        Với degree=2: thêm x_i^2 và x_i*x_j cho mọi cặp (i, j).
+        """Thêm các đặc trưng đa thức bậc 2 (bình phương và tương tác chéo).
+
+        Tham số
+        -------
+        X      : list[list[float]] -- ma trận đặc trưng đầu vào.
+        degree : int -- bậc đa thức (mặc định 2).
+
+        Trả về
+        ------
+        list[list[float]] -- ma trận đặc trưng mới sau khi thêm các thành phần đa thức.
         """
         result = []
         for row in X:
@@ -596,15 +700,37 @@ class DataPipeline:
             for i in range(n):
                 # x_i^2
                 new_row.append(row[i] ** 2)
-                # x_i * x_j (interaction terms)
+                # x_i * x_j (cac so hang tuong tac - interaction terms)
                 if degree >= 2:
                     for j in range(i + 1, n):
                         new_row.append(row[i] * row[j])
             result.append(new_row)
         return result
 
+
+def _run_tests() -> tuple[int, int]:
+    """Chạy unit tests cho DataPipeline từ part2/test_case.py."""
+    from part2.test_case import (
+        _log,
+        run_test_cases,
+        test_pipeline_scale_stats_consistent,
+        test_pipeline_transform_no_side_effects,
+        test_pipeline_winsorize_train_bounds,
+        test_pipeline_no_leakage_fit,
+    )
+
+    _log.print_suite_header("DATA PIPELINE & NO-LEAKAGE - UNIT TESTS")
+    passed_count, total_count = run_test_cases(
+        [
+            test_pipeline_scale_stats_consistent,
+            test_pipeline_transform_no_side_effects,
+            test_pipeline_winsorize_train_bounds,
+            test_pipeline_no_leakage_fit,
+        ]
+    )
+    _log.print_summary(passed_count, total_count)
+    return passed_count, total_count
+
+
 if __name__ == "__main__":
-    """Ví dụ sử dụng DataPipeline."""
-    pipeline = DataPipeline()
-    df = pipeline.load_data("part2/data/AirQualityUCI.csv")
-    eda_results = pipeline.eda(df)
+    _run_tests()

@@ -1,5 +1,5 @@
 class TestLogger:
-    """Plain-text logger for unit-test output."""
+    """Trình ghi nhật ký văn bản thuần (plain-text logger) cho kết quả unit test."""
 
     _WIDTH = 72
     _LABEL_WIDTH = 18

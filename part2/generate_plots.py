@@ -1,8 +1,8 @@
 import os
 import sys
-import matplotlib.pyplot as plt
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+import matplotlib.pyplot as plt
 
 from part2.model_comparison import ModelComparator
 
@@ -19,12 +19,12 @@ def main():
     krr_cfg = os.path.join(project_root, "part2", "configs", "krr_config.json")
     blr_cfg = os.path.join(project_root, "part2", "configs", "blr_config.json")
 
-    # 1. Initialize and prepare data
+    # 1. Khởi tạo và chuẩn bị dữ liệu
     comparator = ModelComparator(data_filepath=data_path)
     comparator.prepare_data()
 
-    # 2. Train/load all models using cache
-    print("Training/Loading all models...")
+    # 2. Huấn luyện/Tải tất cả mô hình sử dụng bộ nhớ đệm (cache)
+    print("Đang huấn luyện/tải tất cả mô hình...")
     comparator.train_ols_full()
     comparator.train_ols_selected(config_path=feature_cfg)
     comparator.train_ridge_optimal(lambda_config=ridge_cfg)
@@ -32,12 +32,12 @@ def main():
     comparator.train_kernel_ridge_optimal(k=5, config_path=krr_cfg)
     comparator.train_bayesian_optimal(k=5, config_path=blr_cfg)
 
-    # 3. Generate comparison bar chart
-    print("Generating comparison bar chart...")
+    # 3. Tạo biểu đồ cột so sánh hiệu năng
+    print("Đang tạo biểu đồ cột so sánh...")
     comparator.plot_model_comparison()
 
-    # 4. Generate Actual vs Predicted scatter plots (3x2 grid)
-    print("Generating Actual vs Predicted scatter plots...")
+    # 4. Tạo biểu đồ phân tán Thực tế vs Dự đoán (lưới 3x2)
+    print("Đang tạo biểu đồ phân tán Thực tế vs Dự đoán...")
     models_to_plot = [
         ('OLS Full', 'royalblue'),
         ('OLS Selected', 'darkorange'),
@@ -57,19 +57,19 @@ def main():
         if model_name in comparator.results:
             y_pred = comparator.results[model_name]['y_pred']
             
-            # Scatter plot: y_true vs y_pred
+            # Biểu đồ phân tán: y_true vs y_pred
             ax.scatter(y_true, y_pred, color=color, alpha=0.3, s=10, edgecolors='none', label='Mẫu dự đoán')
             
-            # Identity line y = x (Perfect prediction)
+            # Đường phân giác y = x (Dự đoán hoàn hảo)
             min_val = min(min(y_true), min(y_pred))
             max_val = max(max(y_true), max(y_pred))
             ax.plot([min_val, max_val], [min_val, max_val], 'k--', lw=1.5, label='Khớp hoàn hảo (y = x)')
             
-            # Calculate R2 and RMSE for the title
+            # Tính toán R2 và RMSE cho tiêu đề
             r2 = comparator.results[model_name]['metrics']['R2']
             rmse = comparator.results[model_name]['metrics']['RMSE']
             
-            ax.set_title(f"{model_name} (R² = {r2:.4f}, RMSE = {rmse:.4f})", fontsize=12, fontweight='bold')
+            ax.set_title(f"{model_name} (R2 = {r2:.4f}, RMSE = {rmse:.4f})", fontsize=12, fontweight='bold')
             ax.grid(True, linestyle='--', alpha=0.5)
             ax.legend(loc='upper left', fontsize=9)
             

@@ -1,12 +1,11 @@
 import os
 import sys
-import math
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import math
 from test_logger import TestLogger
 
-from part1.ridge_lasso import lasso_fit, lasso_trace, make_lambda_grid, ridge_fit
+from part1.ridge_lasso import lasso_fit, ridge_fit
 from part1.cross_validation import kfold_cv
 from utils import make_linear_data, make_multifeature_data
 from config import RANDOM_STATE
@@ -81,12 +80,6 @@ def _coef_inference_fixture():
     y = [1.0 + 2.0 * row[0] - 0.5 * row[1] + noise[i] for i, row in enumerate(X)]
     result = ols_fit(X, y)
     return X, y, result
-
-
-# ---------------------------------------------------------------------------
-# Unit Tests - F1: ols_fit
-# ---------------------------------------------------------------------------
-
 
 def test_ols_perfect_fit():
     name = "test_ols_perfect_fit"
@@ -200,12 +193,6 @@ def test_ols_verify_with_sklearn():
     _log.print_value("sklearn", [round(value, 6) for value in sklearn_beta])
     return _finish_case(name, passed)
 
-
-# ---------------------------------------------------------------------------
-# Unit Tests - F2: hat_matrix
-# ---------------------------------------------------------------------------
-
-
 def test_hat_matrix_idempotent():
     name = "test_hat_matrix_idempotent"
     _print_case(
@@ -301,12 +288,6 @@ def test_hat_matrix_output_shape():
     passed = len(H) == n and all(len(row) == n for row in H)
     _log.print_value("shape", (len(H), len(H[0]) if H else 0), expected=(n, n))
     return _finish_case(name, passed)
-
-
-# ---------------------------------------------------------------------------
-# Unit Tests - F3: model_metrics
-# ---------------------------------------------------------------------------
-
 
 def test_metrics_perfect_prediction():
     name = "test_metrics_perfect_prediction"
@@ -417,12 +398,6 @@ def test_metrics_verify_r2_with_sklearn():
     _log.print_value("R2", metrics["R2"])
     _log.print_value("sklearn R2", sklearn_r2)
     return _finish_case(name, passed)
-
-
-# ---------------------------------------------------------------------------
-# Unit Tests - F4: coef_inference
-# ---------------------------------------------------------------------------
-
 
 def test_coef_inference_output_structure():
     name = "test_coef_inference_output_structure"
@@ -550,12 +525,6 @@ def test_coef_inference_sigma2_scales_standard_errors():
     passed = all(_close(ratio, 2.0, rtol=1e-8, atol=1e-10) for ratio in ratios)
     _log.print_value("ratios", [round(value, 8) for value in ratios])
     return _finish_case(name, passed)
-
-
-# ---------------------------------------------------------------------------
-# Unit Tests - F5: vif
-# ---------------------------------------------------------------------------
-
 
 def test_vif_output_keys():
     name = "test_vif_output_keys"
@@ -688,12 +657,6 @@ def test_vif_values_are_at_least_one():
     passed = all(value >= 1.0 and math.isfinite(value) for value in result.values())
     _log.print_value("vif", {key: round(value, 8) for key, value in result.items()})
     return _finish_case(name, passed)
-
-
-# ---------------------------------------------------------------------------
-# Unit Tests - F9: run_gauss_markov_simulation
-# ---------------------------------------------------------------------------
-
 
 def test_gauss_markov_output_lengths():
     name = "test_gauss_markov_output_lengths"

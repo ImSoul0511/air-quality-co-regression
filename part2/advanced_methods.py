@@ -1,19 +1,15 @@
-import math
-import random
 import os
 import sys
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import math
+import random
 from config import RANDOM_STATE
-from part1.ridge_lasso import solve_system
-from utils import identity_matrix, matvec, vector_sub, vector_add, dot, transpose, matmul, inverse, scalar_multiply
+from utils import (
+    identity_matrix, matvec, vector_sub, vector_add, dot, transpose,
+    matmul, inverse, scalar_multiply, solve_system
+)
 from part1.ols_implementation import model_metrics
-
-
-# =========================================================
-# SAMPLE ROWS HELPER (module-level, dùng chung cho mọi model)
-# =========================================================
 
 def sample_rows(
     X: list[list[float]],
@@ -26,17 +22,19 @@ def sample_rows(
     Nếu len(X) <= max_rows, trả nguyên bản sao.
     Gọi hai lần cùng seed sẽ trả cùng subset.
 
-    Args:
-        X: list[list[float]], shape (n, p).
-        y: list[float], shape (n,).
-        max_rows: Số hàng tối đa cần lấy.
-        seed: Random seed để tái lập.
+    Tham số
+    -------
+    X        : list[list[float]], shape (n, p) -- tập đặc trưng đầu vào.
+    y        : list[float], shape (n,) -- tập mục tiêu đầu vào.
+    max_rows : int -- số hàng tối đa cần lấy.
+    seed     : int -- hạt giống ngẫu nhiên để tái lập kết quả.
 
-    Returns:
-        tuple (X_sub, y_sub)
+    Trả về
+    ------
+    tuple[list[list[float]], list[float]] -- bộ (X_sub, y_sub) đã lấy mẫu.
     """
     if max_rows <= 0:
-        raise ValueError("max_rows must be > 0")
+        raise ValueError("max_rows phải lớn hơn 0")
 
     n = len(X)
     if n <= max_rows:
@@ -50,26 +48,10 @@ def sample_rows(
     y_sub = [y[i] for i in chosen]
     return X_sub, y_sub
 
-
-# =========================================================
-# KERNEL RIDGE REGRESSION CLASS
-# =========================================================
-
 class KernelRidgeRegression:
-    """Kernel Ridge Regression với RBF kernel (thuần Python).
-
-    Gom toàn bộ logic: RBF kernel, fit, predict, cross-validation
-    vào một class duy nhất để tách biệt với các phương pháp khác
-    (ví dụ: Bayesian).
-
-    Usage:
-        krr = KernelRidgeRegression()
-        model = krr.fit(X_train, y_train, lam=1.0, length_scale=5.0)
-        y_pred = krr.predict(model, X_test)
-        cv = krr.cross_validate(X, y, lam_grid, ls_grid, k=5)
     """
-
-    # ----- RBF Kernel -----
+    Kernel Ridge Regression với RBF kernel.
+    """
 
     @staticmethod
     def rbf_kernel_value(
@@ -79,7 +61,15 @@ class KernelRidgeRegression:
     ) -> float:
         """Tính giá trị RBF kernel giữa hai điểm.
 
-        k(x1, x2) = exp(-||x1 - x2||^2 / (2 * length_scale^2))
+        Tham số
+        -------
+        x1           : list[float] -- điểm dữ liệu thứ nhất.
+        x2           : list[float] -- điểm dữ liệu thứ hai.
+        length_scale : float -- tham số tỷ lệ độ dài (mặc định 1.0).
+
+        Trả về
+        ------
+        float -- giá trị k(x1, x2) = exp(-||x1 - x2||^2 / (2 * length_scale^2)).
         """
         v_diff = vector_sub(x1, x2)
         dist2 = dot(v_diff, v_diff)
@@ -91,10 +81,17 @@ class KernelRidgeRegression:
         X2: list[list[float]],
         length_scale: float = 1.0,
     ) -> list[list[float]]:
-        """Tính Gram matrix K[i][j] = k(X1[i], X2[j]).
+        """Tính ma trận Gram K[i][j] = k(X1[i], X2[j]) với RBF kernel.
 
-        Returns:
-            K: ma trận kích thước len(X1) x len(X2)
+        Tham số
+        -------
+        X1           : list[list[float]] -- tập điểm dữ liệu thứ nhất.
+        X2           : list[list[float]] -- tập điểm dữ liệu thứ hai.
+        length_scale : float -- tham số tỷ lệ độ dài (mặc định 1.0).
+
+        Trả về
+        ------
+        list[list[float]] -- ma trận Gram K kích thước len(X1) x len(X2).
         """
         denom = 2.0 * length_scale ** 2
         K = []
@@ -107,11 +104,20 @@ class KernelRidgeRegression:
             K.append(row)
         return K
 
-    # ----- Helper -----
 
     @staticmethod
     def _add_diagonal(K: list[list[float]], value: float) -> list[list[float]]:
-        """Trả về bản sao của K với K[i][i] += value."""
+        """Cộng thêm giá trị vào đường chéo chính của ma trận K.
+
+        Tham số
+        -------
+        K     : list[list[float]] -- ma trận vuông đầu vào.
+        value : float -- giá trị cần cộng thêm vào đường chéo.
+
+        Trả về
+        ------
+        list[list[float]] -- bản sao của K với K[i][i] += value.
+        """
         n = len(K)
         A = [K[i][:] for i in range(n)]
         for i in range(n):
@@ -120,7 +126,16 @@ class KernelRidgeRegression:
 
     @staticmethod
     def _std_sample(values: list[float]) -> float:
-        """Sample standard deviation (chia n-1)."""
+        """Tính độ lệch chuẩn mẫu hiệu chỉnh (chia cho n-1).
+
+        Tham số
+        -------
+        values : list[float] -- danh sách các giá trị mẫu.
+
+        Trả về
+        ------
+        float -- độ lệch chuẩn mẫu hiệu chỉnh.
+        """
         n = len(values)
         if n < 2:
             return 0.0
@@ -133,22 +148,24 @@ class KernelRidgeRegression:
         k: int,
         seed: int = RANDOM_STATE,
     ) -> list[list[int]]:
-        """Tạo danh sách k fold, mỗi fold là list các index trong validation set.
+        """Tạo danh sách k fold phân chia các chỉ số mẫu cho kiểm định chéo.
 
         Các fold có kích thước cân bằng: n % k fold đầu có thêm 1 phần tử.
 
-        Args:
-            n: Tổng số mẫu.
-            k: Số fold.
-            seed: Random seed.
+        Tham số
+        -------
+        n    : int -- tổng số mẫu dữ liệu.
+        k    : int -- số lượng fold cần chia.
+        seed : int -- hạt giống ngẫu nhiên.
 
-        Returns:
-            list[list[int]]: Danh sách k fold, mỗi fold là list index.
+        Trả về
+        ------
+        list[list[int]] -- danh sách k fold, mỗi fold chứa các chỉ số tập kiểm thử.
         """
         if k < 2:
-            raise ValueError("k must be >= 2")
+            raise ValueError("k phải lớn hơn hoặc bằng 2")
         if n < k:
-            raise ValueError(f"n={n} must be >= k={k}")
+            raise ValueError(f"n={n} phải lớn hơn hoặc bằng k={k}")
 
         indices = list(range(n))
         random.Random(seed).shuffle(indices)
@@ -164,8 +181,6 @@ class KernelRidgeRegression:
             start += size
         return folds
 
-    # ----- Fit -----
-
     @staticmethod
     def fit(
         X_train: list[list[float]],
@@ -174,29 +189,23 @@ class KernelRidgeRegression:
         length_scale: float,
         jitter: float = 1e-10,
     ) -> dict:
-        """Fit Kernel Ridge Regression với RBF kernel.
+        """Huấn luyện Kernel Ridge Regression với RBF kernel.
 
         Giải hệ: (K + (lam + jitter) * I) * alpha = y_train
-        Trong đó K[i][j] = k_RBF(x_i, x_j)
 
-        Args:
-            X_train: Dữ liệu train, list[list[float]], shape (n, p).
-            y_train: Target train, list[float], shape (n,).
-            lam: Hệ số regularization (>= 0).
-            length_scale: Length scale của RBF kernel (> 0).
-            jitter: Giá trị nhỏ thêm vào đường chéo để ổn định số.
+        Tham số
+        -------
+        X_train      : list[list[float]], shape (n, p) -- dữ liệu đặc trưng huấn luyện.
+        y_train      : list[float], shape (n,) -- dữ liệu mục tiêu huấn luyện.
+        lam          : float -- hệ số điều hòa (>= 0).
+        length_scale : float -- tham số tỷ lệ độ dài của RBF kernel (> 0).
+        jitter       : float -- giá trị ổn định số học cộng vào đường chéo.
 
-        Returns:
-            dict chứa: model_type, alpha, X_train (copy), length_scale, lam, jitter, y_hat.
+        Trả về
+        ------
+        dict -- từ điển chứa thông tin mô hình đã huấn luyện.
         """
         n = len(X_train)
-        # Bypassed safety check to run fit on the entire train-set
-        # if n > 2000:
-        #     raise ValueError(
-        #         f"Kernel Ridge is O(n^3); n_train={n} > 2000. "
-        #         "Pass a smaller subset via sample_rows()."
-        #     )
-
         K = KernelRidgeRegression.rbf_kernel(X_train, X_train, length_scale)
         A = KernelRidgeRegression._add_diagonal(K, lam + jitter)
         alpha = solve_system(A, y_train)
@@ -213,24 +222,21 @@ class KernelRidgeRegression:
             "y_hat": y_hat,
         }
 
-    # ----- Predict -----
-
     @staticmethod
     def predict(
         model: dict,
         X_test: list[list[float]],
     ) -> list[float]:
-        """Dự đoán từ mô hình KRR đã fit.
+        """Dự đoán từ mô hình KRR đã huấn luyện.
 
-        Dùng streaming prediction để tránh tạo K_test đầy đủ:
-            y_pred[i] = sum_j k(x_test_i, x_train_j) * alpha[j]
+        Tham số
+        -------
+        model  : dict -- từ điển mô hình trả về từ fit().
+        X_test : list[list[float]], shape (m, p) -- dữ liệu cần dự đoán.
 
-        Args:
-            model: dict trả về từ fit().
-            X_test: Dữ liệu test, list[list[float]], shape (m, p).
-
-        Returns:
-            list[float] chứa m giá trị dự đoán.
+        Trả về
+        ------
+        list[float] -- danh sách m giá trị dự đoán.
         """
         alpha = model["alpha"]
         X_tr = model["X_train"]
@@ -245,8 +251,6 @@ class KernelRidgeRegression:
             y_pred.append(pred)
         return y_pred
 
-    # ----- Cross-Validation -----
-
     @staticmethod
     def cross_validate(
         X: list[list[float]],
@@ -256,29 +260,27 @@ class KernelRidgeRegression:
         k: int = 5,
         seed: int = RANDOM_STATE,
     ) -> dict:
-        """Cross-validation 2D grid search cho KRR.
+        """Kiểm định chéo với tìm kiếm lưới 2 chiều cho KRR.
 
         Với mỗi cặp (lam, length_scale), chạy k-fold CV và ghi lại MSE trung bình.
-        Chọn cặp tham số có mean validation MSE nhỏ nhất.
 
-        Args:
-            X: list[list[float]], shape (n, p).
-            y: list[float], shape (n,).
-            lambda_grid: Danh sách các giá trị lambda cần thử.
-            length_scale_grid: Danh sách các giá trị length_scale cần thử.
-            k: Số fold (>= 2).
-            seed: Random seed.
+        Tham số
+        -------
+        X                 : list[list[float]], shape (n, p) -- dữ liệu đặc trưng.
+        y                 : list[float], shape (n,) -- dữ liệu mục tiêu.
+        lambda_grid       : list[float] -- danh sách các giá trị lambda cần thử.
+        length_scale_grid : list[float] -- danh sách các giá trị length_scale cần thử.
+        k                 : int -- số fold (>= 2).
+        seed              : int -- hạt giống ngẫu nhiên.
 
-        Returns:
-            dict: {
-                "best_lam", "best_length_scale", "best_cv_score",
-                "cv_results": list of {lam, length_scale, fold_scores, mean_score, std_score}
-            }
+        Trả về
+        ------
+        dict -- từ điển chứa best_lam, best_length_scale, best_cv_score và cv_results.
         """
         if len(lambda_grid) == 0:
-            raise ValueError("lambda_grid must not be empty")
+            raise ValueError("lambda_grid không được rỗng")
         if len(length_scale_grid) == 0:
-            raise ValueError("length_scale_grid must not be empty")
+            raise ValueError("length_scale_grid không được rỗng")
 
         n = len(X)
         folds = KernelRidgeRegression._kfold_indices(n, k, seed)
@@ -336,79 +338,78 @@ class KernelRidgeRegression:
             "cv_results": cv_results,
         }
 
-
-# =========================================================
-# BAYESIAN LINEAR REGRESSION CLASS
-# =========================================================
-
 class BayesianLinearRegression:
-    """Bayesian Linear Regression (thuần Python).
-
-    Prior:      β ~ N(m0, S0)
-    Likelihood: y | X, β ~ N(X_bias @ β, σ² I)
-    Posterior:  β | X, y ~ N(m_n, S_n)
-
-    Công thức posterior:
-        S_n_inv = S0_inv + (1/σ²) X_bias^T X_bias
-        S_n     = S_n_inv^{-1}
-        m_n     = S_n (S0_inv m0 + (1/σ²) X_bias^T y)
-
-    Dự đoán:
-        ŷ     = X_bias_new @ m_n
-        σ²_pred = σ² + x^T S_n x   (predictive variance cho mỗi điểm)
-
-    Usage:
-        blr = BayesianLinearRegression()
-        sigma2 = blr.estimate_sigma2(X_train, y_train)
-        model  = blr.fit(X_train, y_train, sigma2, alpha=1.0)
-        y_pred, y_lower, y_upper = blr.predict(model, X_test, sigma2)
-        cv     = blr.cross_validate(X, y, alpha_grid, k=5)
     """
-
-    # ----- Helpers -----
+    Bayesian Linear Regression.
+    """
 
     @staticmethod
     def _add_bias(X: list[list[float]]) -> list[list[float]]:
-        """Thêm cột 1 (intercept) vào đầu X → shape (n, p+1)."""
+        """Thêm cột bias (intercept = 1.0) vào đầu mỗi hàng của X.
+
+        Tham số
+        -------
+        X : list[list[float]] -- ma trận đặc trưng kích thước (n, p).
+
+        Trả về
+        ------
+        list[list[float]] -- ma trận với cột bias, kích thước (n, p+1).
+        """
         return [[1.0] + row for row in X]
 
     @staticmethod
     def _matrix_add(A: list[list[float]], B: list[list[float]]) -> list[list[float]]:
-        """Cộng hai ma trận cùng kích thước."""
+        """Cộng hai ma trận cùng kích thước.
+
+        Tham số
+        -------
+        A : list[list[float]] -- ma trận thứ nhất.
+        B : list[list[float]] -- ma trận thứ hai cùng kích thước với A.
+
+        Trả về
+        ------
+        list[list[float]] -- ma trận tổng A + B.
+        """
         n = len(A)
         m = len(A[0])
         return [[A[i][j] + B[i][j] for j in range(m)] for i in range(n)]
 
     @staticmethod
     def _scalar_matrix(k: float, A: list[list[float]]) -> list[list[float]]:
-        """Nhân ma trận với scalar."""
+        """Nhân ma trận với một hằng số vô hướng.
+
+        Tham số
+        -------
+        k : float -- hằng số vô hướng.
+        A : list[list[float]] -- ma trận cần nhân.
+
+        Trả về
+        ------
+        list[list[float]] -- ma trận k * A.
+        """
         n = len(A)
         m = len(A[0])
         return [[k * A[i][j] for j in range(m)] for i in range(n)]
-
-    # ----- Estimate σ² từ OLS -----
 
     @staticmethod
     def estimate_sigma2(
         X_train: list[list[float]],
         y_train: list[float],
     ) -> float:
-        """Ước lượng σ² (noise variance) từ OLS residuals.
+        """Ước lượng sigma2 (phương sai nhiễu) từ phần dư OLS.
 
-        σ² = RSS / (n - p - 1)
+        Tham số
+        -------
+        X_train : list[list[float]], shape (n, p) -- dữ liệu đặc trưng huấn luyện.
+        y_train : list[float], shape (n,) -- dữ liệu mục tiêu huấn luyện.
 
-        Args:
-            X_train: list[list[float]], shape (n, p).
-            y_train: list[float], shape (n,).
-
-        Returns:
-            float: Ước lượng σ².
+        Trả về
+        ------
+        float -- ước lượng sigma2 = RSS / (n - p - 1).
         """
         from part1.ols_implementation import ols_fit
         result = ols_fit(X_train, y_train)
         return result['sigma2_hat']
-
-    # ----- Fit -----
 
     @staticmethod
     def fit(
@@ -419,22 +420,22 @@ class BayesianLinearRegression:
         m0: list[float] = None,
         S0: list[list[float]] = None,
     ) -> dict:
-        """Fit Bayesian Linear Regression.
+        """Huấn luyện mô hình hồi quy tuyến tính Bayes.
 
-        Tính posterior parameters (m_n, S_n) từ prior và likelihood.
+        Tính tham số hậu nghiệm (m_n, S_n) từ tiên nghiệm và hàm hợp lý.
 
-        Args:
-            X_train: list[list[float]], shape (n, p). CHƯA có bias.
-            y_train: list[float], shape (n,).
-            sigma2: Noise variance (σ²). Dùng estimate_sigma2() để ước lượng.
-            alpha: Prior precision. S0 = (1/alpha) * I nếu S0 không được truyền.
-                   alpha nhỏ → prior yếu (ít ràng buộc).
-                   alpha lớn → prior mạnh (hệ số bị kéo về m0).
-            m0: Prior mean, shape (p+1,). Mặc định = vector 0.
-            S0: Prior covariance, shape (p+1, p+1). Mặc định = (1/alpha)*I.
+        Tham số
+        -------
+        X_train : list[list[float]], shape (n, p) -- dữ liệu đặc trưng, CHƯA có bias.
+        y_train : list[float], shape (n,) -- dữ liệu mục tiêu.
+        sigma2  : float -- phương sai nhiễu. Dùng estimate_sigma2() để ước lượng.
+        alpha   : float -- độ chính xác tiên nghiệm.
+        m0      : list[float], shape (p+1,) -- trung bình tiên nghiệm. Mặc định vector 0.
+        S0      : list[list[float]], shape (p+1, p+1) -- hiệp phương sai tiên nghiệm.
 
-        Returns:
-            dict: model_type, m_n, S_n, sigma2, alpha.
+        Trả về
+        ------
+        dict -- từ điển chứa model_type, m_n, S_n, sigma2, alpha, y_hat, beta_hat.
         """
         n = len(X_train)
         p = len(X_train[0])
@@ -443,7 +444,7 @@ class BayesianLinearRegression:
         X_bias = BayesianLinearRegression._add_bias(X_train)
         X_bias_T = transpose(X_bias)
 
-        # Prior defaults
+        # Gia tri mac dinh cua phan phoi tien nghiem (Prior defaults)
         if m0 is None:
             m0 = [0.0] * p1
         if S0 is None:
@@ -455,14 +456,14 @@ class BayesianLinearRegression:
         # XTX = X_bias^T @ X_bias  (p+1 x p+1)
         XTX = matmul(X_bias_T, X_bias)
 
-        # S_n_inv = S0_inv + (1/σ²) * XTX
+        # S_n_inv = S0_inv + (1/sigma2) * XTX
         XTX_scaled = BayesianLinearRegression._scalar_matrix(1.0 / sigma2, XTX)
         S_n_inv = BayesianLinearRegression._matrix_add(S0_inv, XTX_scaled)
 
         # S_n = S_n_inv^{-1}
         S_n = inverse(S_n_inv)
 
-        # m_n = S_n @ (S0_inv @ m0 + (1/σ²) * X_bias^T @ y)
+        # m_n = S_n @ (S0_inv @ m0 + (1/sigma2) * X_bias^T @ y)
         S0_inv_m0 = matvec(S0_inv, m0)
         XTy = matvec(X_bias_T, y_train)
         XTy_scaled = scalar_multiply(XTy, 1.0 / sigma2)
@@ -479,10 +480,8 @@ class BayesianLinearRegression:
             "sigma2": sigma2,
             "alpha": alpha,
             "y_hat": y_hat,
-            "beta_hat": m_n,  # Tương thích với model_metrics
+            "beta_hat": m_n,  
         }
-
-    # ----- Predict -----
 
     @staticmethod
     def predict(
@@ -491,21 +490,21 @@ class BayesianLinearRegression:
         sigma2: float = None,
         credible_interval: float = 0.95,
     ) -> tuple[list[float], list[float], list[float]]:
-        """Dự đoán từ mô hình BLR đã fit.
+        """Dự đoán từ mô hình BLR đã huấn luyện.
 
-        Trả về mean prediction và credible interval.
+        Tham số
+        -------
+        model             : dict -- từ điển mô hình trả về từ fit().
+        X_test            : list[list[float]], shape (m, p) -- dữ liệu cần dự đoán, CHƯA có bias.
+        sigma2            : float -- phương sai nhiễu. Nếu None, dùng sigma2 từ model.
+        credible_interval : float -- mức khoảng tin cậy (mặc định 0.95).
 
-        Args:
-            model: dict trả về từ fit().
-            X_test: list[list[float]], shape (m, p). CHƯA có bias.
-            sigma2: Noise variance. Nếu None, dùng sigma2 từ model.
-            credible_interval: Mức credible interval (mặc định 95%).
-
-        Returns:
-            tuple: (y_mean, y_lower, y_upper)
-                y_mean: list[float] - giá trị dự đoán trung bình.
-                y_lower: list[float] - cận dưới credible interval.
-                y_upper: list[float] - cận trên credible interval.
+        Trả về
+        ------
+        tuple -- bộ (y_mean, y_lower, y_upper):
+            y_mean  : list[float] -- giá trị dự đoán trung bình.
+            y_lower : list[float] -- cận dưới khoảng tin cậy.
+            y_upper : list[float] -- cận trên khoảng tin cậy.
         """
         m_n = model["m_n"]
         S_n = model["S_n"]
@@ -513,7 +512,6 @@ class BayesianLinearRegression:
             sigma2 = model["sigma2"]
 
         # z-score cho credible interval (xấp xỉ Normal)
-        # Dùng bảng tra cứng cho các mức phổ biến thay vì scipy
         z_table = {0.90: 1.6449, 0.95: 1.9600, 0.99: 2.5758}
         z = z_table.get(credible_interval, 1.9600)
 
@@ -524,10 +522,10 @@ class BayesianLinearRegression:
         y_upper = []
 
         for x in X_bias:
-            # ŷ = x^T @ m_n
+            # y_hat = x^T @ m_n
             pred = dot(x, m_n)
 
-            # Predictive variance: σ²_pred = σ² + x^T S_n x
+            # Predictive variance: sigma2_pred = sigma2 + x^T S_n x
             Sx = matvec(S_n, x)
             var_pred = sigma2 + dot(x, Sx)
             std_pred = math.sqrt(max(var_pred, 0.0))
@@ -538,8 +536,6 @@ class BayesianLinearRegression:
 
         return y_mean, y_lower, y_upper
 
-    # ----- Cross-Validation -----
-
     @staticmethod
     def cross_validate(
         X: list[list[float]],
@@ -548,26 +544,25 @@ class BayesianLinearRegression:
         k: int = 5,
         seed: int = RANDOM_STATE,
     ) -> dict:
-        """Cross-validation 1D grid search cho BLR (tìm alpha tối ưu).
+        """Kiểm định chéo với tìm kiếm lưới 1 chiều cho BLR (tìm alpha tối ưu).
 
         Với mỗi alpha, chạy k-fold CV và ghi lại MSE trung bình.
-        σ² được ước lượng tự động trong mỗi fold từ OLS trên tập train fold.
+        sigma2 được ước lượng tự động trong mỗi fold từ OLS.
 
-        Args:
-            X: list[list[float]], shape (n, p).
-            y: list[float], shape (n,).
-            alpha_grid: Danh sách các giá trị alpha (prior precision) cần thử.
-            k: Số fold (>= 2).
-            seed: Random seed.
+        Tham số
+        -------
+        X          : list[list[float]], shape (n, p) -- dữ liệu đặc trưng.
+        y          : list[float], shape (n,) -- dữ liệu mục tiêu.
+        alpha_grid : list[float] -- danh sách các giá trị alpha cần thử.
+        k          : int -- số fold (>= 2).
+        seed       : int -- hạt giống ngẫu nhiên.
 
-        Returns:
-            dict: {
-                "best_alpha", "best_cv_score",
-                "cv_results": list of {alpha, fold_scores, mean_score, std_score}
-            }
+        Trả về
+        ------
+        dict -- từ điển chứa best_alpha, best_cv_score và cv_results.
         """
         if len(alpha_grid) == 0:
-            raise ValueError("alpha_grid must not be empty")
+            raise ValueError("alpha_grid không được rỗng")
 
         n = len(X)
         folds = KernelRidgeRegression._kfold_indices(n, k, seed)
@@ -621,28 +616,18 @@ class BayesianLinearRegression:
             "cv_results": cv_results,
         }
 
-
-# =========================================================
-# COMPARE MODELS HELPER (thuần Python, không cần pandas)
-# =========================================================
-
 def compare_models_summary(results: dict) -> list[dict]:
-    """Tạo bảng so sánh MAE/RMSE/R² từ dict results.
+    """Tạo bảng so sánh MAE/RMSE/R2 từ kết quả các mô hình.
 
-    Hàm tiện ích cho notebook — không cần import pandas.
+    Tham số
+    -------
+    results : dict[str, dict] -- key là tên mô hình,
+              value chứa key 'metrics' với MAE, RMSE, R2.
 
-    Args:
-        results: dict[str, dict] — key là tên model,
-                 value chứa key 'metrics' với MAE, RMSE, R2.
-
-    Returns:
-        list[dict] — mỗi phần tử là {'Model', 'MAE', 'RMSE', 'R2'},
-                     sắp xếp theo RMSE tăng dần.
-
-    Example:
-        >>> summary = compare_models_summary(comparator.results)
-        >>> for row in summary:
-        ...     print(f"{row['Model']:20s}  RMSE={row['RMSE']:.4f}  R²={row['R2']:.4f}")
+    Trả về
+    ------
+    list[dict] -- mỗi phần tử là {'Model', 'MAE', 'RMSE', 'R2'},
+                 sắp xếp theo RMSE tăng dần.
     """
     rows = []
     for name, data in results.items():
@@ -657,124 +642,35 @@ def compare_models_summary(results: dict) -> list[dict]:
     return rows
 
 
-# =========================================================
-# UNIT TESTS
-# =========================================================
 
 def _run_tests() -> tuple[int, int]:
-    """Chạy unit tests cơ bản cho advanced_methods.py."""
-    passed = 0
-    total = 0
-
-    krr = KernelRidgeRegression()
-
-    def check(label: str, condition: bool):
-        nonlocal passed, total
-        total += 1
-        status = "PASS" if condition else "FAIL"
-        if condition:
-            passed += 1
-        print(f"  [{status}] {label}")
-
-    print("\n=== Test 1: RBF kernel cơ bản ===")
-    X2 = [[0.0], [1.0]]
-    K = krr.rbf_kernel(X2, X2, length_scale=1.0)
-    check("K[0][0] == 1.0", abs(K[0][0] - 1.0) < 1e-12)
-    check("K[1][1] == 1.0", abs(K[1][1] - 1.0) < 1e-12)
-    check("K[0][1] == K[1][0] (symmetry)", abs(K[0][1] - K[1][0]) < 1e-12)
-    check(
-        "K[0][1] ≈ exp(-0.5)",
-        abs(K[0][1] - math.exp(-0.5)) < 1e-9,
+    """Chạy unit tests cho advanced_methods.py từ part2/test_case.py."""
+    from part2.test_case import (
+        _log,
+        run_test_cases,
+        test_krr_rbf_kernel,
+        test_krr_fit_predict_shape_mse,
+        test_sample_rows_reproducible,
+        test_krr_cv_returns_grid_values,
+        test_blr_fit_predict_shape,
+        test_blr_credible_interval_order,
+        test_blr_cv_returns_grid_values,
     )
 
-    print("\n=== Test 3: KRR Fit/predict shape và MSE ===")
-    X3 = [[0.0], [1.0], [2.0]]
-    y3 = [0.0, 1.0, 4.0]
-    model3 = krr.fit(X3, y3, lam=0.01, length_scale=1.0)
-    y_hat3 = krr.predict(model3, X3)
-    check("len(alpha) == len(y)", len(model3["alpha"]) == len(y3))
-    check("len(y_hat) == len(y)", len(y_hat3) == len(y3))
-    mse3 = sum((y3[i] - y_hat3[i]) ** 2 for i in range(len(y3))) / len(y3)
-    check(f"MSE on train < 0.1 (MSE={mse3:.4f})", mse3 < 0.1)
-    check("model_type correct", model3["model_type"] == "kernel_ridge_rbf")
-
-    print("\n=== Test 4: sample_rows tái lập ===")
-    X4 = [[float(i)] for i in range(50)]
-    y4 = [float(i) for i in range(50)]
-    X4a, y4a = sample_rows(X4, y4, max_rows=20, seed=7)
-    X4b, y4b = sample_rows(X4, y4, max_rows=20, seed=7)
-    check("sample_rows cùng seed cho cùng X_sub", X4a == X4b)
-    check("sample_rows cùng seed cho cùng y_sub", y4a == y4b)
-    check("sample_rows trả đúng kích thước", len(X4a) == 20)
-    Xfull, yfull = sample_rows(X4, y4, max_rows=100, seed=0)
-    check("sample_rows khi max_rows >= n trả toàn bộ", len(Xfull) == 50)
-
-    print("\n=== Test 5: CV trả về tham số từ grid ===")
-    X5 = [[float(i)] for i in range(30)]
-    y5 = [float(i) * 0.5 for i in range(30)]
-    lam_grid = [0.01, 0.1, 1.0]
-    ls_grid = [1.0, 2.0]
-    cv_result = krr.cross_validate(X5, y5, lam_grid, ls_grid, k=3, seed=42)
-    check("best_lam in lambda_grid", cv_result["best_lam"] in lam_grid)
-    check("best_length_scale in length_scale_grid", cv_result["best_length_scale"] in ls_grid)
-    expected_n = len(lam_grid) * len(ls_grid)
-    check(
-        f"len(cv_results) == {expected_n}",
-        len(cv_result["cv_results"]) == expected_n,
+    _log.print_suite_header("KRR & BLR METHODS - UNIT TESTS")
+    passed_count, total_count = run_test_cases(
+        [
+            test_krr_rbf_kernel,
+            test_krr_fit_predict_shape_mse,
+            test_sample_rows_reproducible,
+            test_krr_cv_returns_grid_values,
+            test_blr_fit_predict_shape,
+            test_blr_credible_interval_order,
+            test_blr_cv_returns_grid_values,
+        ]
     )
-
-    # ----- BLR Tests -----
-
-    print("\n=== Test 6: BLR fit/predict shape ===")
-    X6 = [[1.0, 10.0], [3.0, 7.0], [5.0, 3.0], [7.0, 12.0], [9.0, 1.0]]
-    y6 = [2.5, 6.5, 10.5, 14.5, 18.5]
-    sigma2_6 = BayesianLinearRegression.estimate_sigma2(X6, y6)
-    check("sigma2 > 0", sigma2_6 > 0)
-
-    model6 = BayesianLinearRegression.fit(X6, y6, sigma2=sigma2_6, alpha=1.0)
-    check("model_type == 'bayesian_lr'", model6["model_type"] == "bayesian_lr")
-    check("len(m_n) == p+1 (3)", len(model6["m_n"]) == 3)
-    check("S_n is 3x3", len(model6["S_n"]) == 3 and len(model6["S_n"][0]) == 3)
-
-    y_mean6, y_lower6, y_upper6 = BayesianLinearRegression.predict(model6, X6, sigma2_6)
-    check("len(y_mean) == 5", len(y_mean6) == 5)
-    check("len(y_lower) == 5", len(y_lower6) == 5)
-    check("len(y_upper) == 5", len(y_upper6) == 5)
-
-    print("\n=== Test 7: BLR credible interval order ===")
-    all_ordered = all(y_lower6[i] <= y_mean6[i] <= y_upper6[i] for i in range(5))
-    check("y_lower <= y_mean <= y_upper for all i", all_ordered)
-
-    mse6 = sum((y6[i] - y_mean6[i]) ** 2 for i in range(5)) / 5
-    check(f"BLR MSE on train < 200 (MSE={mse6:.4f})", mse6 < 200.0)
-
-    # Kiểm tra BLR CV trả về alpha từ grid
-    print("\n=== Test 8: BLR CV trả về alpha từ grid ===")
-    alpha_grid = [0.01, 0.1, 1.0, 10.0]
-    blr_cv = BayesianLinearRegression.cross_validate(X6, y6, alpha_grid, k=3)
-    check("best_alpha in alpha_grid", blr_cv["best_alpha"] in alpha_grid)
-    check(
-        f"len(cv_results) == {len(alpha_grid)}",
-        len(blr_cv["cv_results"]) == len(alpha_grid),
-    )
-    check("best_cv_score >= 0", blr_cv["best_cv_score"] >= 0)
-
-    # ----- compare_models_summary Test -----
-
-    print("\n=== Test 9: compare_models_summary ===")
-    fake_results = {
-        'ModelA': {'metrics': {'MAE': 1.0, 'RMSE': 2.0, 'R2': 0.8}},
-        'ModelB': {'metrics': {'MAE': 0.5, 'RMSE': 1.0, 'R2': 0.95}},
-    }
-    summary = compare_models_summary(fake_results)
-    check("trả về 2 phần tử", len(summary) == 2)
-    check("sắp xếp theo RMSE tăng dần (ModelB trước)", summary[0]['Model'] == 'ModelB')
-    check("ModelB RMSE == 1.0", abs(summary[0]['RMSE'] - 1.0) < 1e-9)
-
-    print(f"\n{'='*40}")
-    print(f"Kết quả: {passed}/{total} tests PASSED")
-    print(f"{'='*40}\n")
-    return passed, total
+    _log.print_summary(passed_count, total_count)
+    return passed_count, total_count
 
 
 if __name__ == "__main__":

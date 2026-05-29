@@ -1,14 +1,25 @@
 import os
 import sys
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from config import is_zero, zero_rectify
-from utils import identity_matrix, matmul, matvec, transpose
+from config import is_zero
+from utils import (
+    identity_matrix, matmul, matvec, transpose,
+    add_bias_column, solve_system, make_lambda_grid
+)
 
 
 def mean_columns(X: list[list[float]]) -> list[float]:
-    """Return the mean of each column in X."""
+    """Tính giá trị trung bình của từng cột trong ma trận X.
+
+    Tham số
+    -------
+    X : list[list[float]] -- ma trận đầu vào.
+
+    Trả về
+    ------
+    list[float] -- danh sách giá trị trung bình của từng cột.
+    """
     n = len(X)
     p = len(X[0])
 
@@ -22,7 +33,17 @@ def mean_columns(X: list[list[float]]) -> list[float]:
 
 
 def std_columns(X: list[list[float]], means: list[float]) -> list[float]:
-    """Return population standard deviations for each column in X."""
+    """Tính độ lệch chuẩn của từng cột trong ma trận X.
+
+    Tham số
+    -------
+    X     : list[list[float]] -- ma trận đầu vào.
+    means : list[float]        -- danh sách trung bình tương ứng của mỗi cột.
+
+    Trả về
+    ------
+    list[float] -- danh sách độ lệch chuẩn của từng cột.
+    """
     n = len(X)
     p = len(X[0])
 
@@ -45,7 +66,18 @@ def standardize(
     means: list[float],
     stds: list[float],
 ) -> list[list[float]]:
-    """Standardize X with precomputed column means and standard deviations."""
+    """Chuẩn hóa Z-score cho ma trận X dựa trên trung bình và độ lệch chuẩn đã tính trước.
+
+    Tham số
+    -------
+    X     : list[list[float]] -- ma trận đặc trưng ban đầu.
+    means : list[float]        -- trung bình của mỗi cột.
+    stds  : list[float]        -- độ lệch chuẩn của mỗi cột.
+
+    Trả về
+    ------
+    list[list[float]] -- ma trận đặc trưng đã chuẩn hóa.
+    """
     X_scaled = []
     for row in X:
         scaled_row = []
@@ -55,15 +87,19 @@ def standardize(
     return X_scaled
 
 
-def add_bias_column(X: list[list[float]]) -> list[list[float]]:
-    """Prepend a column of ones to X."""
-    return [[1.0] + row[:] for row in X]
-
-
 def median(values: list[float]) -> float:
-    """Return the median of a non-empty list."""
+    """Tính trung vị của danh sách khác rỗng.
+
+    Tham số
+    -------
+    values : list[float] -- danh sách các số thực.
+
+    Trả về
+    ------
+    float -- giá trị trung vị.
+    """
     if len(values) == 0:
-        raise ValueError("values must not be empty")
+        raise ValueError("danh sách giá trị không được rỗng")
 
     sorted_values = sorted(values)
     n = len(sorted_values)
@@ -75,64 +111,46 @@ def median(values: list[float]) -> float:
 
 
 def validate_regression_input(X: list[list[float]], y: list[float], lam: float) -> None:
-    """Validate shared Ridge/Lasso inputs."""
+    """Kiểm tra tính hợp lệ của dữ liệu đầu vào hồi quy Ridge/Lasso.
+
+    Tham số
+    -------
+    X   : list[list[float]] -- ma trận đặc trưng.
+    y   : list[float]       -- vector mục tiêu.
+    lam : float             -- hệ số điều chuẩn lambda.
+    """
     if lam < 0:
-        raise ValueError("lam must be >= 0")
+        raise ValueError("lam phải lớn hơn hoặc bằng 0")
 
     if len(X) == 0:
-        raise ValueError("X must not be empty")
+        raise ValueError("X không được rỗng")
 
     if len(X) != len(y):
-        raise ValueError("Number of rows in X must match length of y")
+        raise ValueError("Số dòng của X phải khớp với số phần tử của y")
 
     if len(X[0]) == 0:
-        raise ValueError("X must contain at least one feature")
+        raise ValueError("X phải chứa ít nhất một đặc trưng")
 
     p = len(X[0])
     for row in X:
         if len(row) != p:
-            raise ValueError("All rows in X must have the same number of columns")
-
-
-def solve_system(A: list[list[float]], b: list[float]) -> list[float]:
-    """
-    Solve Ax = b using Gauss-Jordan elimination with partial pivoting.
-    """
-    n = len(A)
-    M = [A[i][:] + [b[i]] for i in range(n)]
-
-    for col in range(n):
-        pivot = col
-        for r in range(col + 1, n):
-            if abs(M[r][col]) > abs(M[pivot][col]):
-                pivot = r
-
-        if is_zero(abs(M[pivot][col])):
-            raise ValueError("Linear system has no unique solution")
-
-        M[col], M[pivot] = M[pivot], M[col]
-
-        pivot_val = M[col][col]
-        for j in range(col, n + 1):
-            M[col][j] /= pivot_val
-
-        for r in range(n):
-            if r != col:
-                factor = M[r][col]
-                for j in range(col, n + 1):
-                    M[r][j] -= factor * M[col][j]
-
-    return [zero_rectify(M[i][n]) for i in range(n)]
-
+            raise ValueError("Tất cả các dòng của X phải có cùng số lượng cột")
 
 def ridge_fit(X: list[list[float]], y: list[float], lam: float) -> dict:
-    """
-    Fit Ridge Regression using the closed-form solution.
+    """Mô hình hồi quy Ridge với nghiệm dạng đóng.
 
-    Objective:
-        min_beta ||y - X beta||^2 + lam ||beta||^2
+    Tối thiểu hóa: ||y - X * beta||^2 + lam * ||beta||^2.
+    Trả về beta_hat ở thang đo gốc của các đặc trưng.
 
-    Returns beta_hat on the original feature scale.
+    Tham số
+    -------
+    X   : list[list[float]] -- ma trận đặc trưng.
+    y   : list[float]       -- vector mục tiêu.
+    lam : float             -- hệ số điều chuẩn lambda.
+
+    Trả về
+    ------
+    dict -- beta_hat, y_hat, mean_X, std_X.
     """
     validate_regression_input(X, y, lam)
 
@@ -176,8 +194,16 @@ def ridge_fit(X: list[list[float]], y: list[float], lam: float) -> dict:
 
 
 def soft_threshold(rho: float, lam: float) -> float:
-    """
-    Soft-thresholding operator for one-coordinate Lasso updates.
+    """Toán tử ngưỡng mềm (soft-thresholding) cho cập nhật tọa độ của Lasso.
+
+    Tham số
+    -------
+    rho : float -- giá trị tích vô hướng của đặc trưng với phần dư.
+    lam : float -- hệ số điều chuẩn lambda.
+
+    Trả về
+    ------
+    float -- giá trị sau khi áp dụng ngưỡng mềm.
     """
     if rho > lam:
         return rho - lam
@@ -192,7 +218,19 @@ def coefficients_to_original_scale(
     mean_X: list[float],
     std_X: list[float],
 ) -> list[float]:
-    """Convert standardized-space coefficients back to the original X scale."""
+    """Chuyển đổi các hệ số từ không gian chuẩn hóa về thang đo gốc của X.
+
+    Tham số
+    -------
+    intercept_scaled : float       -- hệ số chặn trong không gian chuẩn hóa.
+    beta_scaled      : list[float] -- các hệ số độ dốc trong không gian chuẩn hóa.
+    mean_X           : list[float] -- trung bình của X.
+    std_X            : list[float] -- độ lệch chuẩn của X.
+
+    Trả về
+    ------
+    list[float] -- danh sách hệ số ở thang đo gốc.
+    """
     p = len(beta_scaled)
     beta_original = [0.0] * (p + 1)
 
@@ -214,22 +252,31 @@ def lasso_fit(
     max_iter: int = 1000,
     tol: float = 1e-6,
 ) -> dict:
-    """
-    Fit Lasso Regression using Coordinate Descent.
+    """Mô hình hồi quy Lasso với phương pháp hạ tọa độ.
 
-    Objective:
-        min_beta ||y - X beta||^2 + lam ||beta||_1
+    Tối thiểu hóa: ||y - X * beta||^2 + lam * ||beta||_1.
+    Cập nhật tọa độ được thực hiện trên ma trận X đã chuẩn hóa,
+    sau đó chuyển đổi beta_hat về thang đo đặc trưng gốc.
 
-    The coordinate updates are done on standardized X. The returned beta_hat is
-    converted back to the original feature scale, matching ridge_fit.
+    Tham số
+    -------
+    X        : list[list[float]] -- ma trận đặc trưng.
+    y        : list[float]       -- vector mục tiêu.
+    lam      : float             -- hệ số điều chuẩn lambda.
+    max_iter : int               -- số lượng vòng lặp tối đa.
+    tol      : float             -- ngưỡng hội tụ.
+
+    Trả về
+    ------
+    dict -- beta_hat, y_hat, mean_X, std_X, n_iter.
     """
     validate_regression_input(X, y, lam)
 
     if max_iter <= 0:
-        raise ValueError("max_iter must be > 0")
+        raise ValueError("max_iter phải lớn hơn 0")
 
     if tol <= 0:
-        raise ValueError("tol must be > 0")
+        raise ValueError("tol phải lớn hơn 0")
 
     n = len(X)
     p = len(X[0])
@@ -243,13 +290,12 @@ def lasso_fit(
     beta_scaled = [0.0 for _ in range(p)]
     n_iter = 0
 
-    # Pre-transpose for O(1) column access instead of O(n) extraction each time
+    # Chuyển vị trước ma trận để truy cập cột với độ phức tạp O(1) thay vì trích xuất O(n) mỗi lần
     X_T = [[X_scaled[i][j] for i in range(n)] for j in range(p)]
 
-    # Pre-compute squared column norms — constant across iterations
+    # Tính toán trước bình phương chuẩn của cột -- hằng số qua các vòng lặp
     z = [sum(X_T[j][i] * X_T[j][i] for i in range(n)) for j in range(p)]
 
-    # residual = y_centered (beta_scaled starts at 0, so residual = y_centered)
     residual = y_centered[:]
 
     for iteration in range(1, max_iter + 1):
@@ -264,14 +310,14 @@ def lasso_fit(
                 beta_scaled[j] = 0.0
                 continue
 
-            # rho_j = X_j · (residual + X_j * beta_j_old)
+            # rho_j = X_j * (residual + X_j * beta_j_old)
             rho_j = 0.0
             for i in range(n):
                 rho_j += X_j[i] * (residual[i] + X_j[i] * beta_j_old)
 
             beta_scaled[j] = soft_threshold(rho_j, lam) / z_j
 
-            # update residual incrementally
+            # Cập nhật residual tăng dần
             delta = beta_scaled[j] - beta_j_old
             if delta != 0.0:
                 for i in range(n):
@@ -301,31 +347,24 @@ def lasso_fit(
     }
 
 
-def make_lambda_grid(
-    start_exp: float = -3,
-    stop_exp: float = 3,
-    num: int = 50,
-) -> list[float]:
-    """Return a logspace-style lambda grid without requiring NumPy."""
-    if num <= 0:
-        raise ValueError("num must be > 0")
-
-    if num == 1:
-        return [10.0**start_exp]
-
-    step = (stop_exp - start_exp) / (num - 1)
-    return [10.0 ** (start_exp + i * step) for i in range(num)]
-
-
 def ridge_trace(
     X: list[list[float]],
     y: list[float],
     lambda_grid: list[float] | None = None,
 ) -> dict:
-    """
-    Plot Ridge trace with lambda on a log scale.
+    """Vẽ đường biểu diễn của các hệ số Ridge theo hệ số lambda trên thang log.
 
-    Default lambda_grid is logspace(-3, 3, 50).
+    Mặc định lambda_grid là logspace(-3, 3, 50).
+
+    Tham số
+    -------
+    X           : list[list[float]]   -- ma trận đặc trưng.
+    y           : list[float]         -- vector mục tiêu.
+    lambda_grid : list[float] | None  -- lưới các giá trị lambda.
+
+    Trả về
+    ------
+    dict -- lambda_grid và danh sách coefficients tương ứng.
     """
     import matplotlib.pyplot as plt
 
@@ -333,7 +372,7 @@ def ridge_trace(
         lambda_grid = make_lambda_grid(-3, 3, 50)
 
     if len(lambda_grid) == 0:
-        raise ValueError("lambda_grid must not be empty")
+        raise ValueError("lambda_grid không được rỗng")
 
     coefficients = []
     for lam in lambda_grid:
@@ -367,10 +406,16 @@ def lasso_trace(
     lambda_grid: list[float] | None = None,
     zero_tol: float = 1e-10,
 ) -> None:
-    """
-    Plot Lasso path and report the first lambda where each coefficient is zero.
+    """Vẽ đường biểu diễn của các hệ số Lasso và báo cáo giá trị lambda đầu tiên mà mỗi hệ số triệt tiêu.
 
-    Default lambda_grid is logspace(-3, 3, 50).
+    Mặc định lambda_grid là logspace(-3, 3, 50).
+
+    Tham số
+    -------
+    X           : list[list[float]]   -- ma trận đặc trưng.
+    y           : list[float]         -- vector mục tiêu.
+    lambda_grid : list[float] | None  -- lưới các giá trị lambda.
+    zero_tol    : float               -- sai số cho phép để coi hệ số bằng 0.
     """
     import matplotlib.pyplot as plt
 
@@ -378,7 +423,7 @@ def lasso_trace(
         lambda_grid = make_lambda_grid(-3, 3, 50)
 
     if len(lambda_grid) == 0:
-        raise ValueError("lambda_grid must not be empty")
+        raise ValueError("lambda_grid không được rỗng")
 
     coefficients = []
     for lam in lambda_grid:
@@ -414,15 +459,15 @@ def lasso_trace(
     plt.show()
 
     if zero_events:
-        print("First lambda where coefficients become exactly zero:")
+        print("Giá trị lambda đầu tiên khiến hệ số triệt tiêu hoàn toàn:")
         for label, lam in zero_events.items():
             print(f"  {label}: {lam:.6g}")
     else:
-        print("No non-intercept coefficient became exactly zero on this grid.")
+        print("Không có hệ số độ dốc nào triệt tiêu hoàn toàn trên lưới này.")
 
 
 def run_ridge_tests() -> tuple[int, int]:
-    """Run ridge_fit unit tests from part1/test_case.py."""
+    """Chạy unit tests cho ridge_fit từ part1/test_case.py."""
     from part1.test_case import (
         _log,
         run_test_cases,
@@ -450,7 +495,7 @@ def run_ridge_tests() -> tuple[int, int]:
 
 
 def run_lasso_tests() -> tuple[int, int]:
-    """Run lasso_fit unit tests from part1/test_case.py."""
+    """Chạy unit tests cho lasso_fit từ part1/test_case.py."""
     from part1.test_case import (
         _log,
         run_test_cases,

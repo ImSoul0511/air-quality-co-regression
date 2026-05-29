@@ -4,32 +4,30 @@ import random
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from utils import transpose, matmul, inverse, matvec, vector_add
+from utils import transpose, matmul, inverse, matvec, vector_add, add_bias_column
 from part1.ols_implementation import ols_fit
-from part1.ridge_lasso import add_bias_column
 
 
 def run_gauss_markov_simulation(n_sim=1000, n_obs=100, true_beta=None, true_sigma=1.0):
-    """
-    F9: Mô phỏng Monte Carlo chứng minh OLS là BLUE.
+    """Mô phỏng Monte Carlo để chứng minh định lý Gauss-Markov.
 
     Tham số
     -------
-    n_sim      : int   — số lần mô phỏng
-    n_obs      : int   — số quan sát mỗi lần
-    true_beta  : list  — hệ số thực [intercept, β1, β2, ...]
-    true_sigma : float — độ lệch chuẩn nhiễu
+    n_sim      : int   -- số lần mô phỏng.
+    n_obs      : int   -- số quan sát trong mỗi lần mô phỏng.
+    true_beta  : list  -- hệ số thực [intercept, beta_1, beta_2, ...].
+    true_sigma : float -- độ lệch chuẩn của nhiễu.
 
     Trả về
     ------
-    (beta_ols_list, beta_alt_list, true_beta)
+    tuple -- (beta_ols_list, beta_alt_list, true_beta)
     """
     if true_beta is None:
         true_beta = [2.0, -1.5, 0.8]
 
     random.seed(42)
 
-    p_features = len(true_beta) - 1  # số features (không tính intercept)
+    p_features = len(true_beta) - 1  # Số features (không tính intercept)
 
     # 1. Sinh X cố định
     X_fixed = [[random.gauss(0, 1) for _ in range(p_features)] for _ in range(n_obs)]
@@ -60,7 +58,7 @@ def run_gauss_markov_simulation(n_sim=1000, n_obs=100, true_beta=None, true_sigm
         res_ols = ols_fit(X_fixed, y_sim)
         beta_ols_list.append(res_ols['beta_hat'])
 
-        # 5. Ước lượng thay thế (Ridge — biased estimator)
+        # 5. Ước lượng thay thế (Ridge -- biased estimator)
         beta_alt = matvec(H_alt, y_sim)
         beta_alt_list.append(beta_alt)
 
@@ -68,7 +66,7 @@ def run_gauss_markov_simulation(n_sim=1000, n_obs=100, true_beta=None, true_sigm
 
 
 def run_gauss_markov_tests() -> tuple[int, int]:
-    """Run gauss_markov unit tests from part1/test_case.py."""
+    """Chạy unit tests cho gauss_markov từ part1/test_case.py."""
     from part1.test_case import (
         _log,
         run_test_cases,

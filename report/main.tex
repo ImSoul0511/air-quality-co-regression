@@ -1,0 +1,591 @@
+\documentclass[12pt,a4paper]{report}
+
+% ===== PACKAGES =====
+\usepackage{fontspec}
+\defaultfontfeatures{Ligatures=TeX}
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont{Consolas}
+\usepackage[vietnamese,english]{babel}
+\usepackage[top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{colortbl}
+\usepackage[table]{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{fancybox}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage{microtype}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{parskip}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+
+% ===== HYPERREF SETUP =====
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% ===== COLORS =====
+\definecolor{tableheader}{gray}{0.9}
+\definecolor{infobox}{RGB}{230,242,255}
+\definecolor{infoborder}{RGB}{0,102,204}
+\definecolor{codebg}{gray}{0.97}
+
+% ===== LISTINGS (code blocks) =====
+\lstset{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{codebg},
+    frame=single,
+    framerule=0.5pt,
+    breaklines=true,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+}
+
+% ===== SECTION FORMATTING =====
+\titleformat{\chapter}[hang]{\large\bfseries}{\thechapter.}{0.5em}{}
+\titlespacing*{\chapter}{0pt}{0pt}{0.8em}
+\titleformat{\section}[hang]{\normalsize\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}[hang]{\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}[hang]{\normalsize\bfseries}{\thesubsubsection.}{0.5em}{}
+
+% ===== TABLE COLUMN COLORS =====
+\newcommand{\theadcolor}{\rowcolor{tableheader}}
+
+% ===== TCOLORBOX =====
+\tcbuselibrary{skins,breakable}
+
+% ===== MATH COMMANDS =====
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+
+% ===== DOCUMENT =====
+\begin{document}
+
+% ============================================================
+%  TRANG BÌA
+% ============================================================
+\begin{titlepage}
+  % Khung viền trang bìa
+  \begin{tikzpicture}[remember picture, overlay]
+    \draw[line width=1.5pt]
+      ($(current page.north west) + (1.5cm,-1.5cm)$)
+      rectangle
+      ($(current page.south east) + (-1.5cm,1.5cm)$);
+  \end{tikzpicture}
+
+  \centering
+  \vspace{1.5cm}
+
+  {\large\bfseries ĐẠI HỌC QUỐC GIA TP. HỒ CHÍ MINH}\\[4pt]
+  {\large TRƯỜNG ĐẠI HỌC KHOA HỌC TỰ NHIÊN}\\[4pt]
+  {\large KHOA CÔNG NGHỆ THÔNG TIN}
+
+  \vspace{2cm}
+  \includegraphics[width=4cm]{assets/logo_hcmus.png}
+  \vspace{0.8cm}
+
+  \vspace{0.5cm}
+  {\Huge\bfseries\color{blue} BÁO CÁO ĐỒ ÁN MÔN HỌC}\\[8pt]
+  {\Huge\bfseries\color{blue} Toán ứng dụng và thống kê}
+
+  \vfill
+
+  \begin{tabular}{ll}
+    \textbf{Giáo viên hướng dẫn:} &
+    \begin{tabular}[t]{l}
+      ThS. Võ Nam Thục Đoan \\
+      ThS. Lê Nhựt Nam
+    \end{tabular} \\[1.2em]
+    \\ 
+    \textbf{Nhóm thực hiện:} & \, Nhóm 14 -- Lớp 24CTT2 \\[0.4em]
+    \textbf{Thành viên:} &
+    \begin{tabular}[t]{l}
+      24120394 -- Nguyễn Đặng Khôi Nguyên \\
+      24120331 -- Lê Quốc Khải \\
+      24120384 -- Phan Nhật Minh \\
+      24120370 -- Trần Thị Lợi \\
+      24120474 -- Trịnh Vỹ Triết
+    \end{tabular}
+  \end{tabular}
+
+  \vspace{1.5cm}
+  \textbf{TP. Hồ Chí Minh, 2026}
+
+  \vspace{1cm}
+\end{titlepage}
+
+% ============================================================
+%  MỤC LỤC
+% ============================================================
+\tableofcontents
+\clearpage
+
+% ============================================================
+%  CHƯƠNG: PHÂN CÔNG CÔNG VIỆC
+% ============================================================
+\chapter{Phân Công Công Việc}
+
+\begin{center}
+\begin{tabular}{|c|p{3.5cm}|p{9cm}|c|}
+\hline
+\theadcolor \textbf{STT} & \textbf{Họ và tên} & \textbf{Nhiệm vụ phụ trách} & \textbf{Hoàn thành} \\
+\hline
+1 & Nguyễn Đặng Khôi Nguyên (24120394) & & 100\% \\
+\hline
+2 & Lê Quốc Khải (24120331) & & 100\% \\
+\hline
+3 & Phan Nhật Minh (24120384) & & 100\% \\
+\hline
+4 & Trần Thị Lợi (24120370) & & 100\% \\
+\hline
+5 & Trịnh Vỹ Triết (24120474) & & 100\% \\
+\hline
+\end{tabular}
+\end{center}
+
+\clearpage
+
+% ============================================================
+%  CHƯƠNG 2: CẤU TRÚC HỆ THỐNG VÀ CÁC MODULE
+% ============================================================
+\chapter{CẤU TRÚC HỆ THỐNG VÀ CÁC MODULE}
+Mục này trình bày cấu trúc tổng thể của hệ thống, cách các Module được tổ chức và các thành phần dùng chung giữa phần 1 và phần 2.
+
+\section{Cấu trúc thư mục}
+
+\begin{tcolorbox}[
+  colback=white,
+  colframe=black,
+  arc=4pt,
+  boxrule=0.6pt,
+  left=12pt, right=12pt, top=8pt, bottom=8pt
+]
+\begin{lstlisting}[language={}, basicstyle=\ttfamily\small, frame=none, backgroundcolor=\color{white}]
+Group_14/
+|-- config.py                 # Hang so toan cuc (EPSILON, RANDOM_STATE)
+|-- utils.py                  # Phep toan dai so tuyen tinh tu dau
+|-- test_logger.py            # Tien ich ho tro xuat ket qua tinh toan
+|-- part1/
+|   |-- ols_implementation.py  # OLS, Hat matrix, VIF,...
+|   |-- ridge_lasso.py         # Ridge, Lasso, Trace
+|   |-- residual_analysis.py   # 4 bieu do chan doan
+|   |-- cross_validation.py    # k-Fold CV
+|   |-- gauss_markov_demo.py   # Monte Carlo demo
+|   |-- part1_notebook.ipynb   # Notebook tong hop ket qua
+|   `-- test_case.py           # Chua cac unit test case
+|-- part2/
+|   |-- data/
+|   |   `-- AirQualityUCI.csv  # Dataset cua du an
+|   |-- configs/
+|   |   `-- *.json             # Cache ket qua CV va VIF
+|-- output/
+|   |   `-- *.json             # Luu ket qua danh gia va kiem dinh
+|   |-- data_pipeline.py       # Tien xu ly, encoding, chuan hoa
+|   |-- model_comparison.py    # Chay huan luyen mo hinh va so sanh
+|   |-- test_no_leakage.py     # Unit test chong ro ri du lieu
+|   `-- advanced_methods.py    # Cai dat Kernel va Bayesian
+|-- report/
+|   `-- report.pdf
+`-- requirements.txt
+\end{lstlisting}
+\end{tcolorbox}
+
+\section{Cấu hình chung của hệ thống: \texttt{config.py}}
+
+\texttt{config.py} là file cấu hình chung của toàn hệ thống. Nó định nghĩa các hằng số và hàm tiện ích được sử dụng xuyên suốt toàn bộ dự án.
+
+\begin{itemize}
+  \item \texttt{RANDOM\_STATE = 42}: Seed toàn cục đảm bảo tính tái lập của toàn bộ dự án từ sinh dữ liệu giả lập trong bởi các hàm hỗ trợ trong \texttt{utils.py}, Fisher-Yates shuffle trong \texttt{cross\_validation.py}\ldots
+  \item \texttt{EPSILON = 1e-12}: Ngưỡng epsilon toàn cục. Mọi số có giá trị tuyệt đối nhỏ hơn ngưỡng này đều được coi là bằng 0 về mặt số học. Ngưỡng này được dùng nhất quán trong tất cả phép chia, kiểm tra pivot, và tính VIF để tránh chia cho 0.
+  \item \texttt{is\_zero(x)}
+\end{itemize}
+
+\subsection{Một số hình ảnh minh chứng}
+
+\clearpage
+
+\clearpage
+
+% ============================================================
+%  CHƯƠNG 3: PHẦN 1 — LÝ THUYẾT DATA FITTING
+% ============================================================
+\chapter{Phần 1: Lý Thuyết Data Fitting và Minh Họa}
+
+\noindent\textbf{Tóm tắt yêu cầu Phần 1.}
+Trình bày lại kiến thức đã học về data fitting và OLS. Với mỗi kết quả lý thuyết,
+sinh viên viết code Python để minh họa và kiểm chứng bằng dữ liệu giả lập
+(synthetic data).
+
+\section{Bài Toán Data Fitting}
+
+\subsection{Phát biểu bài toán tổng quát}
+
+\textbf{Định nghĩa 1.1} (Bài toán Data Fitting).
+Cho tập dữ liệu
+$\mathcal{D} = \{(\mathbf{x}_i, y_i)\}_{i=1}^{n}$
+với $\mathbf{x}_i \in \mathbb{R}^p$, $y_i \in \mathbb{R}$.
+
+Bài toán data fitting là tìm hàm
+$f: \mathbb{R}^p \to \mathbb{R}$
+trong một lớp hàm cho trước sao cho $f$
+xấp xỉ tốt nhất ánh xạ từ $\mathbf{x}_i$ đến $y_i$
+theo một tiêu chí đã định.
+
+Trong mô hình \textbf{hồi quy tuyến tính}, ta giả thiết:
+
+\begin{equation}
+  y_i = \beta_0 + \beta_1 x_{i,1} + \beta_2 x_{i,2} + \cdots + \beta_p x_{i,p} + \epsilon_i
+      = \mathbf{x}_i^T \boldsymbol{\beta} + \epsilon_i
+\end{equation}
+
+với $\boldsymbol{\beta} = (\beta_0, \beta_1, \dots, \beta_p)^T \in \mathbb{R}^{p+1}$
+là vector tham số cần ước lượng và $\epsilon_i$ là nhiễu ngẫu nhiên.
+Viết dưới dạng ma trận với $\mathbf{X} \in \mathbb{R}^{n \times (p+1)}$
+(ma trận design có cột đầu toàn 1):
+
+\begin{equation}
+  \mathbf{y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\epsilon}
+\end{equation}
+
+\subsection{Các Giả Thiết Gauss--Markov}
+
+\begin{tcolorbox}[
+  enhanced,
+  colback=white,
+  colframe=infoborder,
+  colbacktitle=infoborder,
+  coltitle=white,
+  title={Các giả thiết Gauss--Markov (GM1 -- GM5)},
+  fonttitle=\bfseries,
+  boxrule=1pt,
+  arc=4pt,
+  left=12pt, right=12pt, top=10pt, bottom=10pt,
+  before skip=0.8em,
+  after skip=0.8em
+]
+\textbf{GM1. \ Tuyến tính:} $\mathbf{y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon}$.
+
+\medskip
+\textbf{GM2. \ Không hoàn hảo đa cộng tuyến:}
+$\operatorname{rank}(\mathbf{X}) = p + 1$ (các cột độc lập tuyến tính).
+
+\medskip
+\textbf{GM3. \ Ngoại sinh:}
+$\mathbb{E}[\boldsymbol{\varepsilon}\mid\mathbf{X}] = \mathbf{0}$,
+tức $\mathbb{E}[\varepsilon_i\mid\mathbf{x}_i] = 0$.
+
+\medskip
+\textbf{GM4. \ Đồng phương sai:}
+$\operatorname{Var}(\boldsymbol{\varepsilon}\mid\mathbf{X}) = \sigma^2\mathbf{I}_n$,
+tức $\operatorname{Var}(\varepsilon_i) = \sigma^2$ và
+$\operatorname{Cov}(\varepsilon_i,\varepsilon_j) = 0$ với $i \ne j$.
+
+\medskip
+\textbf{GM5. \ Phần dư Chuẩn:}
+$\boldsymbol{\varepsilon}\mid\mathbf{X}\sim\mathcal{N}(\mathbf{0},\sigma^2\mathbf{I}_n)$.
+\end{tcolorbox}
+
+\section{Phương Pháp Ordinary Least Squares (OLS)}
+
+\subsection{Hàm mất mát và nghiệm OLS}
+
+OLS tìm $\hat{\boldsymbol{\beta}}$ tối thiểu hóa tổng bình phương phần dư
+(Residual Sum of Squares):
+
+\begin{equation}
+  \operatorname{RSS}(\boldsymbol{\beta})
+  = \norm{\mathbf{y} - \mathbf{X}\boldsymbol{\beta}}_2^2
+  = \sum_{i=1}^{n}\left(y_i - \mathbf{x}_i^T\boldsymbol{\beta}\right)^2.
+\end{equation}
+
+\textbf{Định lý 1.1} (Nghiệm OLS --- Normal Equations).
+Nếu $\mathbf{X}^T\mathbf{X}$ khả nghịch, nghiệm OLS duy nhất là:
+
+\begin{equation}
+  \hat{\boldsymbol{\beta}}_{\mathrm{OLS}}
+  = \left(\mathbf{X}^T\mathbf{X}\right)^{-1}\mathbf{X}^T\mathbf{y}.
+\end{equation}
+
+\textbf{Chứng minh.}
+Tính đạo hàm và cho đạo hàm bằng không:
+
+\begin{equation}
+  \nabla_{\boldsymbol{\beta}}\operatorname{RSS}
+  = -2\mathbf{X}^T\left(\mathbf{y} - \mathbf{X}\boldsymbol{\beta}\right)
+  = \mathbf{0}.
+\end{equation}
+
+Suy ra hệ phương trình chuẩn:
+
+\begin{equation}
+  \mathbf{X}^T\mathbf{X}\boldsymbol{\beta}
+  = \mathbf{X}^T\mathbf{y}.
+\end{equation}
+
+\subsection{Ma Trận Chiếu và Hat Matrix}
+
+\textbf{Định nghĩa 1.2} (Hat Matrix).
+Ma trận chiếu (projection matrix hay hat matrix) là:
+
+\begin{equation}
+  \mathbf{H}
+  = \mathbf{X}\left(\mathbf{X}^T\mathbf{X}\right)^{-1}\mathbf{X}^T
+  \in \mathbb{R}^{n\times n}.
+\end{equation}
+
+\textbf{Mệnh đề 1.1} (Tính chất của $\mathbf{H}$).
+
+\begin{enumerate}[label=(\roman*)]
+  \item $\mathbf{H}^2 = \mathbf{H}$ (idempotent).
+  \item $\mathbf{H}^T = \mathbf{H}$ (đối xứng).
+  \item Giá trị riêng của $\mathbf{H}$ chỉ là $0$ hoặc $1$.
+  \item $\operatorname{rank}(\mathbf{H}) = p + 1$.
+  \item Giá trị fitted: $\hat{\mathbf{y}} = \mathbf{H}\mathbf{y}$;
+  phần dư: $\hat{\boldsymbol{\epsilon}} = (\mathbf{I} - \mathbf{H})\mathbf{y}$.
+\end{enumerate}
+
+\subsection{Định Lý Gauss--Markov}
+
+\textbf{Định lý 1.2} (Gauss--Markov).
+Dưới các giả thiết GM1--GM4, ước lượng OLS
+$\hat{\boldsymbol{\beta}}_{\mathrm{OLS}}$ là ước lượng tuyến tính không chệch tốt nhất
+(Best Linear Unbiased Estimator --- BLUE):
+
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{Không chệch:}
+  $\mathbb{E}\!\left[\hat{\boldsymbol{\beta}}_{\mathrm{OLS}}\right]
+  = \boldsymbol{\beta}$.
+
+  \item \textbf{Tốt nhất (phương sai nhỏ nhất):}
+  Với mọi ước lượng tuyến tính không chệch $\tilde{\boldsymbol{\beta}}$ khác,
+  ta có $\operatorname{Var}(\tilde{\beta}_j)
+  \ge \operatorname{Var}(\hat{\beta}_{j,\mathrm{OLS}})$ với mọi $j$.
+\end{enumerate}
+
+Ma trận hiệp phương sai của $\hat{\boldsymbol{\beta}}_{\mathrm{OLS}}$:
+
+\begin{equation}
+  \operatorname{Var}\!\left(\hat{\boldsymbol{\beta}}_{\mathrm{OLS}}\mid\mathbf{X}\right)
+  = \sigma^2\left(\mathbf{X}^T\mathbf{X}\right)^{-1}.
+\end{equation}
+
+\subsection{Ước Lượng Phương Sai Nhiễu}
+
+Ước lượng không chệch của $\sigma^2$:
+
+\begin{equation}
+  \hat{\sigma}^2
+  = \frac{\operatorname{RSS}}{n-p-1}
+  = \frac{\norm{\mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}}}_2^2}{n-p-1}.
+\end{equation}
+
+\section{Đánh Giá Mô Hình}
+
+\subsection{\texorpdfstring{Hệ số xác định $R^2$ và $\bar{R}^2$ hiệu chỉnh}{Hệ số xác định R2 và R2 hiệu chỉnh}}
+
+\textbf{Định nghĩa 1.3} (Hệ số xác định).
+Hệ số xác định $R^2$ được định nghĩa như sau:
+
+\begin{equation}
+  R^2
+  = 1 - \frac{\operatorname{RSS}}{\operatorname{TSS}}
+  = 1 - \frac{\sum_i (y_i - \hat{y}_i)^2}
+  {\sum_i (y_i - \bar{y})^2},
+  \qquad R^2 \in [0,1].
+\end{equation}
+
+$R^2$ luôn tăng khi thêm biến. Để so sánh các mô hình có số biến khác nhau,
+ta hay dùng $R^2$ hiệu chỉnh:
+
+\begin{equation}
+  \bar{R}^2
+  = 1 - \frac{n-1}{n-p-1}(1 - R^2).
+\end{equation}
+
+\subsection{Kiểm Định Giả Thuyết}
+
+Dưới giả thiết chuẩn GM5:
+
+\begin{equation}
+  \hat{\boldsymbol{\beta}}
+  \sim \mathcal{N}\!\left(
+    \boldsymbol{\beta},
+    \sigma^2\left(\mathbf{X}^T\mathbf{X}\right)^{-1}
+  \right).
+\end{equation}
+
+\textbf{Kiểm định Student, t-test.}
+Kiểm định ý nghĩa của từng đặc trưng đối với mô hình:
+
+\begin{equation}
+  t_j
+  = \frac{\hat{\beta}_j}
+  {\hat{\sigma}\sqrt{\left[\left(\mathbf{X}^T\mathbf{X}\right)^{-1}\right]_{jj}}}
+  \sim t_{n-p-1}
+  \qquad (H_0: \beta_j = 0).
+\end{equation}
+
+\textbf{Kiểm định F cho mô hình tổng thể.}
+Kiểm định ý nghĩa của mô hình:
+
+\begin{equation}
+  F
+  = \frac{(\operatorname{TSS} - \operatorname{RSS})/p}
+  {\operatorname{RSS}/(n-p-1)}
+  \sim F_{p,n-p-1}
+  \qquad (H_0: \beta_1 = \cdots = \beta_p = 0).
+\end{equation}
+
+\section{Các Vấn Đề Nâng Cao trong Data Fitting}
+
+\subsection{Đa cộng tuyến (Multicollinearity)}
+
+Đa cộng tuyến xảy ra khi các cột của $\mathbf{X}$ có tương quan cao,
+khiến $\mathbf{X}^T\mathbf{X}$ gần suy biến. Để phát hiện hiện tượng này,
+ta có thể sử dụng hệ số phóng đại phương sai (Variance Inflation Factor):
+
+\begin{equation}
+  \operatorname{VIF}_j
+  = \frac{1}{1 - R_j^2},
+\end{equation}
+
+trong đó $R_j^2$ là $R^2$ khi hồi quy biến $X_j$ theo các biến còn lại.
+$\operatorname{VIF} > 10$ cho thấy đa cộng tuyến nghiêm trọng.
+
+\subsection{Hồi Quy Ridge và Lasso (Regularization)}
+
+Khi dữ liệu có nhiều đặc trưng hoặc đa cộng tuyến, ta cần thêm thành phần
+chính quy hóa (regularization).
+
+\textbf{Ridge Regression (L2):}
+
+\begin{equation}
+  \hat{\boldsymbol{\beta}}_{\mathrm{ridge}}
+  = \underset{\boldsymbol{\beta}}{\arg\min}
+  \left\{
+    \norm{\mathbf{y} - \mathbf{X}\boldsymbol{\beta}}_2^2
+    + \lambda\norm{\boldsymbol{\beta}}_2^2
+  \right\}
+  = \left(\mathbf{X}^T\mathbf{X} + \lambda\mathbf{I}\right)^{-1}\mathbf{X}^T\mathbf{y}.
+\end{equation}
+
+\textbf{Lasso Regression (L1):}
+
+\begin{equation}
+  \hat{\boldsymbol{\beta}}_{\mathrm{lasso}}
+  = \underset{\boldsymbol{\beta}}{\arg\min}
+  \left\{
+    \norm{\mathbf{y} - \mathbf{X}\boldsymbol{\beta}}_2^2
+    + \lambda\norm{\boldsymbol{\beta}}_1
+  \right\}.
+\end{equation}
+
+Lasso không có nghiệm closed-form; thường được giải bằng coordinate descent
+hoặc các phương pháp subgradient.
+
+\subsection{Phân Tích Phần Dư (Residual Analysis)}
+
+Sử dụng các công cụ thống kê mô tả để kiểm tra sai số của mô hình:
+
+\begin{itemize}
+  \item \textbf{Residuals vs Fitted:} Kiểm tra tính tuyến tính và đồng phương sai.
+  \item \textbf{Q-Q Plot:} Kiểm tra tính chuẩn của phần dư.
+  \item \textbf{Scale-Location:} Kiểm tra phương sai đồng đều (homoscedasticity).
+  \item \textbf{Cook's Distance:} Xác định các quan sát có ảnh hưởng lớn (influential points).
+\end{itemize}
+
+\subsection{Cross-Validation và Lựa Chọn Mô Hình}
+
+\textbf{k-Fold Cross-Validation.}
+Chia dữ liệu thành $k$ phần bằng nhau. Mỗi lần dùng $k-1$ phần để huấn luyện,
+1 phần để kiểm tra. Lặp $k$ lần và lấy trung bình:
+
+\begin{equation}
+  \operatorname{CV}(k)
+  = \frac{1}{k}\sum_{i=1}^{k}\operatorname{MSE}_i.
+\end{equation}
+
+Thông thường người ta lựa chọn mô hình dựa trên các tiêu chí như AIC
+(Akaike Information Criterion) hoặc BIC (Bayesian Information Criterion):
+
+\begin{equation}
+  \operatorname{AIC}
+  = n\ln\left(\frac{\operatorname{RSS}}{n}\right) + 2(p+2),
+  \qquad
+  \operatorname{BIC}
+  = n\ln\left(\frac{\operatorname{RSS}}{n}\right) + (p+2)\ln n.
+\end{equation}
+
+\section{Tiêu Chí Đánh Giá --- Phần 1}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{4.2cm}|>{\raggedright\arraybackslash}X|c|}
+\hline
+\theadcolor \textbf{Tiêu chí} & \textbf{Mô tả} & \textbf{Điểm} \\
+\hline
+Trình bày lý thuyết OLS & Đúng, đầy đủ công thức, có chứng minh & 1.0 \\
+\hline
+Cài đặt OLS từ đầu & Đúng, kiểm chứng với NumPy & 1.0 \\
+\hline
+Hat matrix và tính chất & Cài đặt, kiểm tra idempotent & 0.5 \\
+\hline
+Kiểm định hệ số $(t, F)$ & Tính đúng t-stat, p-value & 0.5 \\
+\hline
+Regularization (Ridge/Lasso) & Cài đặt, vẽ ridge trace & 1.0 \\
+\hline
+Phân tích phần dư & 4 biểu đồ đầy đủ, nhận xét & 0.5 \\
+\hline
+Cross-validation & Cài k-fold CV, so sánh mô hình & 0.5 \\
+\hline
+Minh họa Gauss--Markov & Monte Carlo rõ ràng, nhận xét & 0.5 \\
+\hline
+Trình bày Notebook & Rõ ràng, có markdown giải thích & 0.5 \\
+\hline
+\textbf{Tổng Phần 1} & & \textbf{6.0} \\
+\hline
+\end{tabularx}
+\end{center}
+
+\clearpage
+
+% ============================================================
+%  TÀI LIỆU THAM KHẢO
+% ============================================================
+\chapter*{Tài Liệu Tham Khảo}
+\addcontentsline{toc}{chapter}{Tài Liệu Tham Khảo}
+
+\begin{enumerate}
+  \item Gilbert Strang. \textit{Introduction to Linear Algebra}, 6th ed. Wellesley-Cambridge Press, 2023.
+  \item Lloyd N. Trefethen \& David Bau III. \textit{Numerical Linear Algebra}. SIAM, 1997.
+  \item Gene H. Golub \& Charles F. Van Loan. \textit{Matrix Computations}, 4th ed. Johns Hopkins University Press, 2013.
+  \item Cleve Moler. \textit{Numerical Computing with MATLAB}. SIAM, 2004.
+  \item Manim Community Developers. \textit{Manim -- Mathematical Animation Framework}, v0.18. 2024.
+\end{enumerate}
+
+% ============================================================
+%  PHỤ LỤC
+% ============================================================
+\appendix
+\chapter{Chi tiết kết quả chạy thuật toán Phần 1}
+
+Dưới đây là các hình ảnh minh họa chi tiết cho từng trường hợp đặc biệt khi chạy các thuật toán lõi.
+
+\end{document}

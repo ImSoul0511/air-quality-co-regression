@@ -1,17 +1,15 @@
-import os, sys
+import os
+import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from config import RANDOM_STATE
 from part1.ols_implementation import ols_fit, model_metrics, coef_inference, vif
 from part1.ridge_lasso import ridge_fit, lasso_fit
-from part1.cross_validation import kfold_cv, predict, select_lambda_cv
+from part1.cross_validation import predict, select_lambda_cv
 from part2.data_pipeline import DataPipeline
 from part2.advanced_methods import KernelRidgeRegression, BayesianLinearRegression, sample_rows
 import pandas as pd
-# pyrefly: ignore [missing-import]
 import numpy as np
-import math
-
 
 class ModelComparator:
     def __init__(self, data_filepath: str, test_size: float = 0.2):
@@ -19,7 +17,6 @@ class ModelComparator:
         self.test_size = test_size
         self.pipeline = DataPipeline()
 
-        # Được khởi tạo trong prepare_data()
         self.df_train = None
         self.df_test = None
         self.X_train = None
@@ -31,47 +28,43 @@ class ModelComparator:
         # Lưu kết quả từng mô hình
         self.results = {}
 
-    # -------------------------------------------------------------------------
-    # Bước 2-3: prepare_data
-    # -------------------------------------------------------------------------
-
     def prepare_data(self):
-        """Chuẩn bị dữ liệu train/test (no data leakage).
+        """Chuẩn bị dữ liệu train/test.
 
-        Quy trình chuẩn (order of operations):
+        Quy trình chuẩn:
             1. Load raw DataFrame từ filepath.
             2. Loại bỏ các hàng có target CO(GT) bị NaN trên DataFrame thô
-               TRƯỚC KHI split và TRƯỚC KHI pipeline — đảm bảo:
+               Trước khi split và trước khi pipeline
                - KNN Imputer không chụp các dòng lỗi vào bộ nhớ nền.
                - X và y luôn đồng bộ số dòng xuyên suốt pipeline.
-            3. Shuffle + split thành df_train (80%) / df_test (20%).
-            4. pipeline.fit(df_train) — chỉ học thống kê từ train.
+               3. Shuffle + split thành df_train (80%) / df_test (20%).
+            4. pipeline.fit(df_train) -- chỉ học thống kê từ train.
             5. pipeline.transform() cho cả train và test.
         """
-        # 1. Load raw DataFrame
+        # Load raw DataFrame
         df = self.pipeline.load_data(self.data_filepath)
 
-        # 2. Loại bỏ các hàng có target bị NaN ngay trên DataFrame thô
+        # Loại bỏ các hàng có target bị NaN ngay trên DataFrame thô
         n_before = len(df)
         df = df.dropna(subset=[self.pipeline.target_col])
         n_dropped = n_before - len(df)
         if n_dropped > 0:
             print(f"[prepare_data] Loai {n_dropped}/{n_before} mau co target NaN")
 
-        # 3. Shuffle rồi split trên tập đã sạch nhãn
+        # Shuffle rồi split trên tập đã sạch nhãn
         df_shuffled = df.sample(frac=1, random_state=RANDOM_STATE).reset_index(drop=True)
         n_test = int(len(df_shuffled) * self.test_size)
         self.df_test  = df_shuffled.iloc[:n_test].copy()
         self.df_train = df_shuffled.iloc[n_test:].copy()
 
-        # 4. Fit pipeline CHỈ trên train (không để test set "rò rỉ" vào thống kê)
+        # Fit pipeline trên train
         self.pipeline.fit(self.df_train)
 
-        # 5. Transform cả train lẫn test bằng thống kê đã học từ train
+        # Transform cả train lẫn test bằng thống kê đã học từ train
         self.X_train, self.y_train = self.pipeline.transform(self.df_train)
         self.X_test,  self.y_test  = self.pipeline.transform(self.df_test)
 
-        # 6. Lấy tên features (trước polynomial expansion)
+        # Lấy tên features (trước polynomial expansion)
         encoded_cols = self.pipeline.models_.get('encoded_cols', None)
         if encoded_cols:
             self.feature_names = list(encoded_cols)
@@ -85,17 +78,13 @@ class ModelComparator:
             f"Features (sau poly): {len(self.X_train[0])}"
         )
 
-    # -------------------------------------------------------------------------
-    # Bước 4: _compute_test_metrics
-    # -------------------------------------------------------------------------
-
     def _compute_test_metrics(self, y_pred: list[float], p: int) -> dict:
         """Tính các metrics đánh giá mô hình trên test set.
 
         Tham số
         -------
-        y_pred : list[float] — giá trị dự đoán trên X_test.
-        p      : int         — số features (KHÔNG tính intercept).
+        y_pred : list[float] -- giá trị dự đoán trên X_test.
+        p      : int         -- số features (không tính intercept).
 
         Trả về
         ------
@@ -104,15 +93,13 @@ class ModelComparator:
         """
         return model_metrics(self.y_test, y_pred, p)
 
-    # -------------------------------------------------------------------------
     # Helpers: JSON I/O
-    # -------------------------------------------------------------------------
 
     @staticmethod
     def _save_result_json(model_name: str, data: dict, out_dir: str = "part2/outputs"):
-        """Luu metrics + diagnostics cua mot model ra file JSON.
+        """Lưu metrics + diagnostics của một model ra file JSON.
 
-        Chi serialize cac gia tri JSON-safe (bo qua 'result', 'cv_result', ...).
+        Chỉ serialize các giá trị JSON-safe (bỏ qua 'result', 'cv_result', ...).
         """
         import json
         os.makedirs(out_dir, exist_ok=True)
@@ -132,10 +119,10 @@ class ModelComparator:
         config_path: str = None,
         **cv_model_kwargs,
     ) -> float:
-        """Doc lambda_opt tu cache hoac chay k-Fold CV neu chua co.
+        """Đọc lambda_opt từ cache hoặc chạy k-Fold CV nếu chưa có.
 
-        config_path : str | None — duong dan toi file JSON luu lambda_opt.
-        **cv_model_kwargs — kwargs truyen vao model_fn khi chay CV (vd: max_iter, tol).
+        config_path : str | None -- đường dẫn tới file JSON lưu lambda_opt.
+        **cv_model_kwargs -- kwargs truyền vào model_fn khi chạy CV (vd: max_iter, tol).
         """
         import json
         if config_path and os.path.exists(config_path):
@@ -158,37 +145,31 @@ class ModelComparator:
             print(f"[{model_name}] Da luu lambda config: {config_path}")
         return lam
 
-
-
-    # -------------------------------------------------------------------------
-    # Bước 5: train_ols_full
-    # -------------------------------------------------------------------------
-
     def train_ols_full(self):
         """Train OLS với toàn bộ features sau pipeline.
 
         Lưu vào self.results['OLS Full']:
             result    : dict trả về bởi ols_fit (beta_hat, sigma2_hat, y_hat, residuals)
-            y_pred    : list[float] — dự đoán trên test set
+            y_pred    : list[float] -- dự đoán trên test set
             metrics   : dict từ _compute_test_metrics
-            residuals : list[float] — phần dư trên test set (y_test - y_pred)
+            residuals : list[float] -- phần dư trên test set (y_test - y_pred)
         """
-        # 1. Fit trên train
+        # Fit trên train
         result = ols_fit(self.X_train, self.y_train)
 
-        # 2. Predict trên test
+        # Predict trên test
         y_pred = predict(self.X_test, result)
 
-        # 3. Số features (sau poly expansion, không tính intercept)
+        # Số features (sau poly expansion, không tính intercept)
         p = len(self.X_train[0])
 
-        # 4. Tính metrics trên test set
+        # Tính metrics trên test set
         metrics = self._compute_test_metrics(y_pred, p)
 
-        # 5. Tính residuals trên test set
+        # Tính residuals trên test set
         residuals = [self.y_test[i] - y_pred[i] for i in range(len(self.y_test))]
 
-        # 6. Lưu kết quả
+        # Lưu kết quả
         self.results['OLS Full'] = {
             'result':    result,
             'y_pred':    y_pred,
@@ -197,14 +178,10 @@ class ModelComparator:
         }
 
         print(
-            f"[OLS Full] R²={metrics['R2']:.4f} | "
+            f"[OLS Full] R2={metrics['R2']:.4f} | "
             f"RMSE={metrics['RMSE']:.4f} | "
             f"MAE={metrics['MAE']:.4f}"
         )
-
-    # -------------------------------------------------------------------------
-    # Bước 6: _select_features
-    # -------------------------------------------------------------------------
 
     def _select_features(
         self,
@@ -212,22 +189,22 @@ class ModelComparator:
         vif_threshold: float = 10.0,
         config_path: str = None,
     ) -> tuple[list[int], list[str], list[str]]:
-        """Chon bien theo Cach 2: p-value truoc, VIF co dieu kien tren survivors.
+        """Chọn biến theo Cách 2: p-value trước, VIF có điều kiện trên survivors.
 
-        Buoc 1: Loc p-value — loai bien co p_value > p_threshold.
-        Buoc 2: Tinh VIF chi tren tap bien da qua loc p-value.
-                (Neu poly_degree > 1, VIF khong co y nghia → bo qua).
-        Buoc 3: Loai them bien co VIF > vif_threshold trong tap survivors.
+        Bước 1: Lọc p-value -- loại biến có p_value > p_threshold.
+        Bước 2: Tính VIF trên tập biến đã qua lọc p-value.
+                (Nếu poly_degree > 1, VIF không có ý nghĩa -> bỏ qua).
+        Bước 3: Loại thêm biến có VIF > vif_threshold trong tập survivors.
 
         config_path : str | None
-            Neu truyen vao, doc ket qua da tinh tu file JSON (bo qua tinh toan).
-            Neu chua co file, sau khi tinh xong se luu vao file do.
+            Nếu truyền vào, đọc kết quả đã tính từ file JSON (bỏ qua tính toán).
+            Nếu chưa có file, sau khi tính xong sẽ lưu vào file đó.
 
         Returns: (selected_idx, selected_names, removed_names)
         """
         import json
 
-        # --- Doc tu cache neu co ---
+        # Đọc từ cache nếu có
         if config_path and os.path.exists(config_path):
             with open(config_path, 'r') as f:
                 cfg = json.load(f)
@@ -244,7 +221,7 @@ class ModelComparator:
             for j in range(p_total)
         ]
 
-        # === Buoc 1: Loc bang p-value ===
+        # Lọc bằng p-value
         result = ols_fit(self.X_train, self.y_train)
         inference_df = coef_inference(
             self.X_train, self.y_train,
@@ -257,7 +234,7 @@ class ModelComparator:
         print(f"[_select_features] Buoc 1 (p-value<={p_threshold}): "
               f"con lai {len(pval_pass_idx)}/{p_total} bien")
 
-        # === Buoc 2: VIF chi tren survivors ===
+        # VIF chỉ trên survivors
         poly_degree = self.pipeline.models_.get('poly_degree', 1)
         vif_reject_idx = []
 
@@ -266,7 +243,7 @@ class ModelComparator:
         elif len(pval_pass_idx) > 1:
             X_survivors = [[row[j] for j in pval_pass_idx] for row in self.X_train]
             vif_dict = vif(X_survivors)
-            # vif_dict key la 'x1','x2',... tuong ung voi pval_pass_idx
+            # vif_dict key là 'x1','x2',... tương ứng với pval_pass_idx
             for local_j, global_j in enumerate(pval_pass_idx):
                 vif_val = vif_dict.get(f'x{local_j+1}', float('inf'))
                 if vif_val > vif_threshold:
@@ -276,7 +253,7 @@ class ModelComparator:
         else:
             print("[_select_features] Buoc 2: Bo qua VIF (< 2 survivors)")
 
-        # === Tong hop ket qua ===
+        # Tổng hợp kết quả
         reject_set = set(pval_reject_idx) | set(vif_reject_idx)
         selected_idx   = [j for j in range(p_total) if j not in reject_set]
         selected_names = [names_all[j] for j in selected_idx]
@@ -285,7 +262,7 @@ class ModelComparator:
         print(f"[_select_features] Ket qua cuoi: "
               f"Giu lai {len(selected_idx)}/{p_total} bien | Loai {len(removed_names)} bien")
 
-        # --- Luu cache ---
+        # Lưu cache
         if config_path:
             os.makedirs(os.path.dirname(config_path), exist_ok=True)
             with open(config_path, 'w') as f:
@@ -301,24 +278,19 @@ class ModelComparator:
 
         return selected_idx, selected_names, removed_names
 
-
-    # -------------------------------------------------------------------------
-    # Bước 7: train_ols_selected
-    # -------------------------------------------------------------------------
-
     def train_ols_selected(
         self,
         p_threshold: float = 0.05,
         vif_threshold: float = 10.0,
         config_path: str = None,
     ):
-        """Train OLS chi voi cac bien duoc chon qua p-value/VIF (Cach 2).
+        """Train OLS chỉ với các biến được chọn qua p-value/VIF (Cach 2).
 
         config_path : str | None
-            Duong dan file JSON cache feature selection.
-            Neu co san, bo qua buoc tinh toan (nhanh hon nhieu).
+            Đường dẫn file JSON cache feature selection.
+            Nếu có sẵn, bỏ qua bước tính toán (nhanh hơn nhiều).
         """
-        # 1. Chon bien (co cache)
+        # Chọn biến (có cache)
         selected_idx, selected_names, removed_names = self._select_features(
             p_threshold=p_threshold,
             vif_threshold=vif_threshold,
@@ -331,24 +303,24 @@ class ModelComparator:
                 "Hãy tăng ngưỡng p_threshold hoặc vif_threshold."
             )
 
-        # 2. Tạo X_train_sel và X_test_sel chỉ gồm các cột đã chọn
+        # Tạo X_train_sel và X_test_sel chỉ gồm các cột đã chọn
         X_train_sel = [[row[j] for j in selected_idx] for row in self.X_train]
         X_test_sel  = [[row[j] for j in selected_idx] for row in self.X_test]
 
-        # 3. Fit OLS trên tập feature đã chọn
+        # Fit OLS trên tập feature đã chọn
         result = ols_fit(X_train_sel, self.y_train)
 
-        # 4. Predict trên test
+        # Predict trên test
         y_pred = predict(X_test_sel, result)
 
-        # 5. p = số features đã chọn
+        # p = số features đã chọn
         p = len(selected_idx)
 
-        # 6. Tính metrics và residuals trên test set
+        # Tính metrics và residuals trên test set
         metrics   = model_metrics(self.y_test, y_pred, p)
         residuals = [self.y_test[i] - y_pred[i] for i in range(len(self.y_test))]
 
-        # 7. Lưu kết quả
+        # Lưu kết quả
         self.results['OLS Selected'] = {
             'result':            result,
             'y_pred':            y_pred,
@@ -359,40 +331,36 @@ class ModelComparator:
         }
 
         print(
-            f"[OLS Selected] R²={metrics['R2']:.4f} | "
+            f"[OLS Selected] R2={metrics['R2']:.4f} | "
             f"RMSE={metrics['RMSE']:.4f} | "
             f"MAE={metrics['MAE']:.4f} | "
             f"Features: {p}/{len(self.X_train[0])}"
         )
 
-    # -------------------------------------------------------------------------
-    # Bước 8: train_ridge_optimal
-    # -------------------------------------------------------------------------
-
     def train_ridge_optimal(self, k: int = 5, lambda_config: str = None):
-        """Train Ridge regression voi lambda toi uu qua k-Fold CV.
+        """Train Ridge regression với lambda tối ưu qua k-Fold CV.
 
         lambda_config : str | None
-            Duong dan file JSON luu lambda_opt da tinh san.
-            Neu chua co, chay CV roi luu vao file do.
+            Đường dẫn file JSON luu lambda_opt đã tính sẵn.
+            Nếu chưa có, chạy CV rồi lưu vào file đó.
         """
-        # 1. Tim lambda (tu cache hoac chay CV)
+        # Tìm lambda (từ cache hoặc chạy CV)
         lambda_opt = self._load_or_run_lambda_cv(
             ridge_fit, 'Ridge', k=k, config_path=lambda_config
         )
 
-        # 2. Fit Ridge voi lambda toi uu tren toan bo train
+        # Fit Ridge với lambda tối ưu trên toàn bộ tập train
         result = ridge_fit(self.X_train, self.y_train, lam=lambda_opt)
 
-        # 3. Predict tren test
+        # Predict trên test
         y_pred = predict(self.X_test, result)
 
-        # 4. Tinh metrics + residuals
+        # Tính metrics + residuals
         p = len(self.X_train[0])
         metrics = self._compute_test_metrics(y_pred, p)
         residuals = [self.y_test[i] - y_pred[i] for i in range(len(self.y_test))]
 
-        # 5. Luu ket qua
+        # Lưu kết quả
         self.results['Ridge'] = {
             'result':     result,
             'y_pred':     y_pred,
@@ -407,36 +375,32 @@ class ModelComparator:
             f"MAE={metrics['MAE']:.4f}"
         )
 
-    # -------------------------------------------------------------------------
-    # Bước 9: train_lasso_optimal
-    # -------------------------------------------------------------------------
-
     def train_lasso_optimal(self, k: int = 5, lambda_config: str = None):
-        """Train Lasso regression voi lambda toi uu qua k-Fold CV.
+        """Train Lasso regression với lambda tối ưu qua k-Fold CV.
 
         lambda_config : str | None
-            Duong dan file JSON luu lambda_opt da tinh san.
-            Neu chua co, chay CV roi luu vao file do.
+            Đường dẫn file JSON lưu lambda_opt đã tính sẵn.
+            Nếu chưa có, chạy CV rồi lưu vào file đó.
         """
-        # 1. Tim lambda (tu cache hoac chay CV)
-        # max_iter=100, tol=1e-4: loosened for CV speed; final fit dung default.
+        # Tìm lambda (từ cache hoặc chạy CV)
+        # max_iter=100, tol=1e-4: loosened cho CV speed; final fit dùng default.
         lambda_opt = self._load_or_run_lambda_cv(
             lasso_fit, 'Lasso', k=k, config_path=lambda_config,
             max_iter=100, tol=1e-4,
         )
 
-        # 2. Fit Lasso voi lambda toi uu (default max_iter=1000, tol=1e-6)
+        # Fit Lasso với lambda tối ưu (default max_iter=1000, tol=1e-6)
         result = lasso_fit(self.X_train, self.y_train, lam=lambda_opt)
 
-        # 3. Predict tren test
+        # Predict trên test
         y_pred = predict(self.X_test, result)
 
-        # 4. Tinh metrics + residuals
+        # Tính metrics + residuals
         p = len(self.X_train[0])
         metrics = self._compute_test_metrics(y_pred, p)
         residuals = [self.y_test[i] - y_pred[i] for i in range(len(self.y_test))]
 
-        # 5. Luu ket qua
+        # Lưu kết quả
         self.results['Lasso'] = {
             'result':     result,
             'y_pred':     y_pred,
@@ -451,10 +415,6 @@ class ModelComparator:
             f"MAE={metrics['MAE']:.4f}"
         )
 
-    # -------------------------------------------------------------------------
-    # KRR: train_kernel_ridge_optimal
-    # -------------------------------------------------------------------------
-
     def train_kernel_ridge_optimal(self, k: int = 5, config_path: str = None):
         """Train Kernel Ridge Regression với lambda và length_scale tối ưu qua k-Fold CV.
         
@@ -468,7 +428,7 @@ class ModelComparator:
         X_krr_train, _ = self.pipeline.transform(self.df_train, poly=False)
         X_krr_test,  _ = self.pipeline.transform(self.df_test, poly=False)
 
-        # 1. Tìm siêu tham số
+        # Tìm siêu tham số
         if config_path and os.path.exists(config_path):
             with open(config_path, 'r') as f:
                 cfg = json.load(f)
@@ -497,24 +457,19 @@ class ModelComparator:
                         'best_cv_score': cv_res['best_cv_score']
                     }, f, indent=2)
 
-        # 2. Fit mô hình
+        # Fit mô hình
         X_fit, y_fit = X_krr_train, self.y_train
-        # Bypassed safety downsampling to run fit on the entire train-set
-        # if len(X_krr_train) > 2000:
-        #     print(f"[{model_name}] Lấy mẫu 2000 dòng để fit mô hình...")
-        #     X_fit, y_fit = sample_rows(X_krr_train, self.y_train, max_rows=2000)
-
         result = KernelRidgeRegression.fit(X_fit, y_fit, lam=best_lam, length_scale=best_ls)
 
-        # 3. Dự đoán trên tập test
+        # Dự đoán trên tập test
         y_pred = KernelRidgeRegression.predict(result, X_krr_test)
 
-        # 4. Tính metrics + residuals
+        # Tính metrics + residuals
         p = len(X_krr_test[0]) if X_krr_test else 0
         metrics = self._compute_test_metrics(y_pred, p=p)
         residuals = [self.y_test[i] - y_pred[i] for i in range(len(self.y_test))]
 
-        # 5. Lưu kết quả
+        # Lưu kết quả
         self.results[model_name] = {
             'result':       result,
             'y_pred':       y_pred,
@@ -525,14 +480,10 @@ class ModelComparator:
         }
 
         print(
-            f"[{model_name}] R²={metrics['R2']:.4f} | "
+            f"[{model_name}] R2={metrics['R2']:.4f} | "
             f"RMSE={metrics['RMSE']:.4f} | "
             f"MAE={metrics['MAE']:.4f}"
         )
-
-    # -------------------------------------------------------------------------
-    # Bước 9b: train_bayesian_optimal
-    # -------------------------------------------------------------------------
 
     def train_bayesian_optimal(self, k: int = 5, config_path: str = None):
         """Train Bayesian Linear Regression với alpha tối ưu qua k-Fold CV.
@@ -543,7 +494,7 @@ class ModelComparator:
         import json
         model_name = 'Bayesian LR'
 
-        # 1. Tìm siêu tham số (alpha = prior precision)
+        # Tìm siêu tham số (alpha = prior precision)
         if config_path and os.path.exists(config_path):
             with open(config_path, 'r') as f:
                 cfg = json.load(f)
@@ -566,26 +517,26 @@ class ModelComparator:
                         'best_cv_score': cv_res['best_cv_score']
                     }, f, indent=2)
 
-        # 2. Ước lượng σ² từ OLS trên tập train
+        # Ước lượng sigma2 từ OLS trên tập train
         sigma2 = BayesianLinearRegression.estimate_sigma2(self.X_train, self.y_train)
-        print(f"[{model_name}] sigma²={sigma2:.4f}, alpha={best_alpha:.6g}")
+        print(f"[{model_name}] sigma2={sigma2:.4f}, alpha={best_alpha:.6g}")
 
-        # 3. Fit mô hình
+        # Fit mô hình
         result = BayesianLinearRegression.fit(
             self.X_train, self.y_train, sigma2=sigma2, alpha=best_alpha
         )
 
-        # 4. Dự đoán trên tập test
+        # Dự đoán trên tập test
         y_pred, y_lower, y_upper = BayesianLinearRegression.predict(
             result, self.X_test, sigma2
         )
 
-        # 5. Tính metrics + residuals
+        # Tính metrics + residuals
         p = len(self.X_test[0])
         metrics = self._compute_test_metrics(y_pred, p=p)
         residuals = [self.y_test[i] - y_pred[i] for i in range(len(self.y_test))]
 
-        # 6. Lưu kết quả
+        # Lưu kết quả
         self.results[model_name] = {
             'result':       result,
             'y_pred':       y_pred,
@@ -598,20 +549,16 @@ class ModelComparator:
         }
 
         print(
-            f"[{model_name}] R²={metrics['R2']:.4f} | "
+            f"[{model_name}] R2={metrics['R2']:.4f} | "
             f"RMSE={metrics['RMSE']:.4f} | "
             f"MAE={metrics['MAE']:.4f}"
         )
-
-    # -------------------------------------------------------------------------
-    # Bước 10: compare_models
-    # -------------------------------------------------------------------------
 
     def compare_models(self) -> pd.DataFrame:
         """Tạo bảng so sánh metrics của tất cả mô hình đã train.
 
         Returns:
-            pd.DataFrame — index=Model, columns=['MAE', 'RMSE', 'R2_test'],
+            pd.DataFrame -- index=Model, columns=['MAE', 'RMSE', 'R2_test'],
                            sắp xếp theo RMSE tăng dần.
         """
         rows = []
@@ -627,7 +574,7 @@ class ModelComparator:
         return df.sort_values('RMSE', ascending=True)
 
     def plot_model_comparison(self, save_path: str = None):
-        """Vẽ biểu đồ cột so sánh RMSE và R² giữa các mô hình."""
+        """Vẽ biểu đồ cột so sánh RMSE và R2 giữa các mô hình."""
         import matplotlib.pyplot as plt
         df = self.compare_models()
         if df.empty:
@@ -636,7 +583,7 @@ class ModelComparator:
 
         fig, axes = plt.subplots(1, 2, figsize=(15, 6), dpi=100)
         
-        # 1. Vẽ biểu đồ cột cho RMSE (sắp xếp ngược để model tốt nhất ở trên cùng)
+        # Vẽ biểu đồ cột cho RMSE (sắp xếp ngược để model tốt nhất ở trên cùng)
         df_rmse = df.sort_values('RMSE', ascending=False)
         colors_rmse = ['lightcoral' if x == df['RMSE'].min() else 'skyblue' for x in df_rmse['RMSE']]
         bars_rmse = axes[0].barh(df_rmse.index, df_rmse['RMSE'], color=colors_rmse, edgecolor='black', height=0.6)
@@ -648,12 +595,12 @@ class ModelComparator:
             axes[0].text(width + 0.005, bar.get_y() + bar.get_height()/2, f'{width:.4f}', 
                          va='center', ha='left', fontsize=10, fontweight='bold')
 
-        # 2. Vẽ biểu đồ cột cho R²
+        # Vẽ biểu đồ cột cho R2
         df_r2 = df.sort_values('R2_test', ascending=True)
         colors_r2 = ['lightgreen' if x == df['R2_test'].max() else 'lightgray' for x in df_r2['R2_test']]
         bars_r2 = axes[1].barh(df_r2.index, df_r2['R2_test'], color=colors_r2, edgecolor='black', height=0.6)
-        axes[1].set_title('So sánh R² giữa các mô hình (Càng lớn càng tốt)', fontsize=12, fontweight='bold')
-        axes[1].set_xlabel('R² Score')
+        axes[1].set_title('So sánh R2 giữa các mô hình (Càng lớn càng tốt)', fontsize=12, fontweight='bold')
+        axes[1].set_xlabel('R2 Score')
         axes[1].grid(axis='x', linestyle='--', alpha=0.7)
         for bar in bars_r2:
             width = bar.get_width()
@@ -716,7 +663,7 @@ class ModelComparator:
         
         fig, axes = plt.subplots(1, 2, figsize=(15, 6), dpi=100)
         
-        # 1. RMSE
+        # RMSE
         df_rmse = df.sort_values('RMSE', ascending=False)
         colors_rmse = ['lightcoral' if x == df['RMSE'].min() else 'skyblue' for x in df_rmse['RMSE']]
         bars_rmse = axes[0].barh(df_rmse.index, df_rmse['RMSE'], color=colors_rmse, edgecolor='black', height=0.6)
@@ -728,12 +675,12 @@ class ModelComparator:
             axes[0].text(width + 0.005, bar.get_y() + bar.get_height()/2, f'{width:.4f}', 
                          va='center', ha='left', fontsize=10, fontweight='bold')
 
-        # 2. R²
+        # R2
         df_r2 = df.sort_values('R2_test', ascending=True)
         colors_r2 = ['lightgreen' if x == df['R2_test'].max() else 'lightgray' for x in df_r2['R2_test']]
         bars_r2 = axes[1].barh(df_r2.index, df_r2['R2_test'], color=colors_r2, edgecolor='black', height=0.6)
-        axes[1].set_title('So sánh R² giữa các mô hình (Càng lớn càng tốt)', fontsize=12, fontweight='bold')
-        axes[1].set_xlabel('R² Score')
+        axes[1].set_title('So sánh R2 giữa các mô hình (Càng lớn càng tốt)', fontsize=12, fontweight='bold')
+        axes[1].set_xlabel('R2 Score')
         axes[1].grid(axis='x', linestyle='--', alpha=0.7)
         for bar in bars_r2:
             width = bar.get_width()
@@ -751,10 +698,6 @@ class ModelComparator:
         plt.show()
         return df
 
-    # -------------------------------------------------------------------------
-    # Bước 11: Kiểm định thống kê (static methods)
-    # -------------------------------------------------------------------------
-
     @staticmethod
     def shapiro_wilk_test(residuals: list[float]) -> dict:
         """Kiểm tra phần dư có phân phối chuẩn không (Shapiro-Wilk).
@@ -764,7 +707,7 @@ class ModelComparator:
 
         Returns:
             dict: {'statistic', 'p_value', 'is_normal'}
-                  is_normal = True nếu p_value > 0.05 (không bác bỏ H₀)
+                  is_normal = True nếu p_value > 0.05 (không bác bỏ H0)
         """
         from scipy.stats import shapiro
 
@@ -787,10 +730,10 @@ class ModelComparator:
         """Kiểm tra tính đồng nhất phương sai (Breusch-Pagan).
 
         Quy trình:
-            1. e² = residuals²
-            2. Fit OLS phụ: e² ~ X
-            3. R² của mô hình phụ
-            4. LM = n × R²
+            1. e2 = residuals2
+            2. Fit OLS phụ: e2 ~ X
+            3. R2 của mô hình phụ
+            4. LM = n * R2
             5. p_value = 1 - chi2.cdf(LM, df=p)
 
         Returns:
@@ -805,10 +748,10 @@ class ModelComparator:
         # 1. Bình phương phần dư
         e_squared = [r ** 2 for r in residuals]
 
-        # 2. Fit OLS phụ: e² ~ X (ols_fit tự thêm bias)
+        # 2. Fit OLS phụ: e2 ~ X (ols_fit tự thêm bias)
         aux_result = ols_fit(X, e_squared)
 
-        # 3. Tính R² của mô hình phụ
+        # 3. Tính R2 của mô hình phụ
         aux_metrics = model_metrics(e_squared, aux_result['y_hat'], p)
         R2_aux = aux_metrics['R2']
 
@@ -823,10 +766,6 @@ class ModelComparator:
             'p_value':          p_value,
             'is_homoscedastic': bool(p_value > 0.05),
         }
-
-    # -------------------------------------------------------------------------
-    # Bước 12: run_diagnostics
-    # -------------------------------------------------------------------------
 
     def run_diagnostics(self):
         """Chạy Shapiro-Wilk và Breusch-Pagan cho tất cả mô hình đã train."""
@@ -847,15 +786,11 @@ class ModelComparator:
                 f"BP p={bp['p_value']:.4f} ({'Homoscedastic' if bp['is_homoscedastic'] else 'Heteroscedastic'})"
             )
 
-    # -------------------------------------------------------------------------
-    # Bước 13: run_all
-    # -------------------------------------------------------------------------
-
     def run_all(self):
-        """Orchestrate toàn bộ pipeline: prepare → train → diagnostics → compare.
+        """Orchestrate toàn bộ pipeline: prepare -> train -> diagnostics -> compare.
 
         Returns:
-            pd.DataFrame — bảng so sánh 4 mô hình, sắp xếp theo RMSE tăng dần.
+            pd.DataFrame -- bảng so sánh 4 mô hình, sắp xếp theo RMSE tăng dần.
         """
         # 1. Chuẩn bị dữ liệu
         self.prepare_data()
@@ -873,20 +808,13 @@ class ModelComparator:
         # 4. Trả về bảng so sánh
         return self.compare_models()
 
-
-# =============================================================================
-# Entry point
-# =============================================================================
-
-
 if __name__ == '__main__':
     import argparse
-    import json
 
     VALID_MODELS = ['ols_full', 'ols_selected', 'ridge', 'lasso', 'krr', 'bayesian', 'all']
 
     parser = argparse.ArgumentParser(
-        description='ModelComparator — chay tung model va luu ket qua JSON'
+        description='ModelComparator -- chay tung model va luu ket qua JSON'
     )
     parser.add_argument(
         '--model', choices=VALID_MODELS, default='all',
@@ -910,7 +838,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    # Duong dan config (cache)
+    # Đường dẫn config (cache)
     cfg_dir        = args.config_dir
     feature_cfg    = os.path.join(cfg_dir, 'feature_selection.json')
     ridge_lam_cfg  = os.path.join(cfg_dir, 'ridge_lambda.json')
@@ -918,7 +846,7 @@ if __name__ == '__main__':
     krr_cfg        = os.path.join(cfg_dir, 'krr_config.json')
     blr_cfg        = os.path.join(cfg_dir, 'blr_config.json')
 
-    # Khoi tao va load data
+    # Khởi tạo và load data
     comparator = ModelComparator(args.data)
     comparator.prepare_data()
 
@@ -951,7 +879,7 @@ if __name__ == '__main__':
             comparator.train_bayesian_optimal(k=5, config_path=blr_cfg)
             key = 'Bayesian LR'
 
-        # Chay diagnostics neu yeu cau
+        # Chạy diagnostics nếu yêu cầu
         if args.diagnostics and key in comparator.results:
             data = comparator.results[key]
             data['shapiro'] = ModelComparator.shapiro_wilk_test(data['residuals'])
@@ -962,11 +890,11 @@ if __name__ == '__main__':
             bp = data['bp_test']
             print(f"  Shapiro p={sw['p_value']:.4f} | BP p={bp['p_value']:.4f}")
 
-        # Luu JSON ngay sau khi chay xong moi model
+        # Lưu JSON ngay sau khi chạy xong mỗi model
         if key in comparator.results:
             ModelComparator._save_result_json(key, comparator.results[key], args.out_dir)
 
-    # In bang so sanh neu co it nhat 1 model da chay
+    # In bảng so sánh nếu có ít nhất 1 model đã chạy
     if comparator.results:
         print("\n" + "=" * 55)
         print("BANG SO SANH (sap xep theo RMSE tang dan)")

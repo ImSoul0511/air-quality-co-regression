@@ -90,15 +90,5 @@
     "x75",
     "x76",
     "x77"
-  ],
-  "shapiro": {
-    "statistic": 0.8853245334294783,
-    "p_value": 1.980646699355526e-32,
-    "is_normal": false
-  },
-  "bp_test": {
-    "LM_stat": 610.9893407273174,
-    "p_value": 0.0,
-    "is_homoscedastic": false
-  }
+  ]
 }

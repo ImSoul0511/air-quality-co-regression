@@ -1,28 +1,28 @@
 import os
 import sys
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from config import RANDOM_STATE
+from utils import make_lambda_grid
 
 
 def _validate_data(X: list[list[float]], y: list[float]) -> None:
     if len(X) == 0:
-        raise ValueError("X must not be empty")
+        raise ValueError("X không được rỗng")
 
     if len(y) == 0:
-        raise ValueError("y must not be empty")
+        raise ValueError("y không được rỗng")
 
     if len(X) != len(y):
-        raise ValueError("X and y must have the same number of rows")
+        raise ValueError("Số dòng của X phải khớp với số phần tử của y")
 
     if len(X[0]) == 0:
-        raise ValueError("X must contain at least one feature")
+        raise ValueError("X phải chứa ít nhất một đặc trưng")
 
     p = len(X[0])
     for row in X:
         if len(row) != p:
-            raise ValueError("All rows in X must have the same number of columns")
+            raise ValueError("Tất cả các dòng của X phải có cùng số lượng cột")
 
 
 def _take_rows(X: list[list[float]], indices) -> list[list[float]]:
@@ -42,12 +42,20 @@ def _standardize_row(
 
 
 def predict(X: list[list[float]], fit_result: dict) -> list[float]:
-    """
-    Predict y for X using a model fit result.
+    """Dự đoán giá trị mục tiêu y cho ma trận đặc trưng X dựa trên kết quả khớp mô hình.
 
-    Supported conventions:
-        - beta_hat on original feature scale: [intercept, beta_1, ...]
-        - beta_scaled with mean_X/std_X: [intercept, beta_1, ...] in scaled space
+    Hỗ trợ hai dạng hệ số:
+        - beta_hat trên thang đo gốc: [intercept, beta_1,...]
+        - beta_scaled trong không gian chuẩn hóa cùng với mean_X/std_X
+
+    Tham số
+    -------
+    X          : list[list[float]] -- ma trận đặc trưng cần dự đoán.
+    fit_result : dict              -- từ điển chứa kết quả khớp mô hình.
+
+    Trả về
+    ------
+    list[float] -- danh sách các giá trị dự đoán.
     """
     if len(X) == 0:
         return []
@@ -67,7 +75,7 @@ def predict(X: list[list[float]], fit_result: dict) -> list[float]:
         return y_pred
 
     if "beta_hat" not in fit_result:
-        raise ValueError("fit_result must contain beta_hat or beta_scaled")
+        raise ValueError("fit_result phải chứa beta_hat hoặc beta_scaled")
 
     beta = fit_result["beta_hat"]
     y_pred = []
@@ -81,7 +89,7 @@ def predict(X: list[list[float]], fit_result: dict) -> list[float]:
 
 def _mse(y_true: list[float], y_pred: list[float]) -> float:
     if len(y_true) != len(y_pred):
-        raise ValueError("y_true and y_pred must have the same length")
+        raise ValueError("y_true và y_pred phải có cùng kích thước")
 
     total = 0.0
     for i in range(len(y_true)):
@@ -97,18 +105,19 @@ def kfold_cv(
     model_fn,
     **model_kwargs,
 ) -> dict:
-    """
-    Run k-Fold Cross-Validation from scratch.
+    """Thực hiện kiểm định chéo k-Fold.
 
-    Args:
-        X: feature matrix, shape (n, p)
-        y: target vector, shape (n,)
-        k: number of folds
-        model_fn: callable model_fn(X_train, y_train, **kwargs) -> dict
-        **model_kwargs: parameters passed to model_fn, e.g. lam=0.1
+    Tham số
+    -------
+    X            : list[list[float]] -- ma trận đặc trưng, shape (n, p).
+    y            : list[float]       -- vector mục tiêu, shape (n,).
+    k            : int               -- số lượng fold.
+    model_fn     : callable          -- hàm khớp mô hình: model_fn(X_train, y_train, **kwargs) -> dict.
+    model_kwargs : dict              -- các tham số truyền thêm cho model_fn, ví dụ lam=0.1.
 
-    Returns:
-        dict with cv_scores, mean_cv_score, std_cv_score.
+    Trả về
+    ------
+    dict -- các kết quả đánh giá (cv_scores, mean_cv_score, std_cv_score).
     """
     import random
     import math
@@ -116,14 +125,14 @@ def kfold_cv(
     _validate_data(X, y)
 
     if not callable(model_fn):
-        raise ValueError("model_fn must be callable")
+        raise ValueError("model_fn phải là hàm có thể gọi được")
 
     n = len(X)
     if k < 2:
-        raise ValueError("k must be >= 2")
+        raise ValueError("k phải lớn hơn hoặc bằng 2")
 
     if k > n:
-        raise ValueError("k must be <= number of samples")
+        raise ValueError("k phải nhỏ hơn hoặc bằng số lượng mẫu")
 
     indices = list(range(n))
     random.Random(RANDOM_STATE).shuffle(indices)
@@ -156,7 +165,7 @@ def kfold_cv(
         cv_scores.append(_mse(y_val, y_pred_val))
 
     mean_score = sum(cv_scores) / len(cv_scores)
-    # Tính standard deviation (population std) giống np.std mặc định
+    # Tính standard deviation (population std)
     std_score = math.sqrt(sum((x - mean_score)**2 for x in cv_scores) / len(cv_scores))
 
     return {
@@ -164,22 +173,6 @@ def kfold_cv(
         "mean_cv_score": mean_score,
         "std_cv_score": std_score,
     }
-
-
-def lambda_grid_logspace(
-    start_exp: float = -3,
-    stop_exp: float = 3,
-    num: int = 50,
-) -> list[float]:
-    """Return logspace(start_exp, stop_exp, num) as a list."""
-    if num <= 0:
-        raise ValueError("num must be > 0")
-
-    if num == 1:
-        return [10.0**start_exp]
-
-    step = (stop_exp - start_exp) / (num - 1)
-    return [10.0 ** (start_exp + i * step) for i in range(num)]
 
 
 def select_lambda_cv(
@@ -190,16 +183,28 @@ def select_lambda_cv(
     lambda_grid: list[float] | None = None,
     **model_kwargs,
 ) -> dict:
-    """
-    Select the best lambda by k-Fold CV and plot lambda vs mean CV MSE.
+    """Lựa chọn hệ số lambda tối ưu bằng phương pháp kiểm định chéo k-Fold.
+
+    Tham số
+    -------
+    X            : list[list[float]]  -- ma trận đặc trưng.
+    y            : list[float]        -- vector mục tiêu.
+    k            : int                -- số lượng fold.
+    model_fn     : callable           -- hàm khớp mô hình.
+    lambda_grid  : list[float] | None -- lưới giá trị lambda lựa chọn.
+    model_kwargs : dict               -- các tham số truyền cho model_fn.
+
+    Trả về
+    ------
+    dict -- kết quả lựa chọn bao gồm lambda tối ưu và thông tin MSE tương ứng.
     """
     import matplotlib.pyplot as plt
 
     if lambda_grid is None:
-        lambda_grid = lambda_grid_logspace(-3, 3, 50)
+        lambda_grid = make_lambda_grid(-3, 3, 50)
 
     if len(lambda_grid) == 0:
-        raise ValueError("lambda_grid must not be empty")
+        raise ValueError("lambda_grid không được rỗng")
 
     cv_means = []
     cv_stds = []
@@ -247,7 +252,7 @@ def select_lambda_cv(
 
 
 def run_cv_tests() -> tuple[int, int]:
-    """Run kfold_cv unit tests from part1/test_case.py."""
+    """Chạy unit tests cho kfold_cv từ part1/test_case.py."""
     from part1.test_case import (
         _log,
         run_test_cases,
