@@ -1,8 +1,8 @@
 import os
 import sys
-import random
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+import random
 
 from utils import transpose, matmul, inverse, matvec, vector_add, add_bias_column
 from part1.ols_implementation import ols_fit

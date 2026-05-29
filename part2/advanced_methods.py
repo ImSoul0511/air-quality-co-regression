@@ -9,7 +9,6 @@ from utils import (
     identity_matrix, matvec, vector_sub, vector_add, dot, transpose,
     matmul, inverse, scalar_multiply, solve_system
 )
-from part1.ols_implementation import model_metrics
 
 def sample_rows(
     X: list[list[float]],

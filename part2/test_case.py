@@ -1,13 +1,13 @@
 import os
 import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import math
 import copy
 import pandas as pd
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 from test_logger import TestLogger
-from part2.advanced_methods import KernelRidgeRegression, BayesianLinearRegression, sample_rows, compare_models_summary
+from part2.advanced_methods import KernelRidgeRegression, BayesianLinearRegression, sample_rows
 from part2.data_pipeline import DataPipeline
 
 _log = TestLogger()
