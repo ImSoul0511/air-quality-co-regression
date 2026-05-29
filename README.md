@@ -41,7 +41,6 @@ air-quality-co-regression/
 ├── part2/
 │   ├── advanced_methods.py        # Triển khai Kernel Ridge và Bayesian Regression
 │   ├── data_pipeline.py           # Pipeline tiền xử lý: Impute, Winsorize, Scaling, Poly
-│   ├── generate_plots.py          # Tập hợp các hàm vẽ biểu đồ trực quan hóa dữ liệu
 │   ├── model_comparison.py        # Hệ thống huấn luyện, đánh giá và cache mô hình
 │   ├── test_no_leakage.py         # Script kiểm tra đảm bảo không có rò rỉ dữ liệu (Leakage)
 │   ├── part2_notebook.ipynb       # Jupyter Notebook trình bày quá trình chạy Phần 2
