@@ -403,8 +403,8 @@ def test_coef_inference_output_structure():
     name = "test_coef_inference_output_structure"
     _print_case(
         name,
-        "coef_inference should return a DataFrame with expected columns and coefficient labels.",
-        "shape=(p+1, 6), index=[intercept, x1, x2], expected columns present",
+        "coef_inference should return a dict with expected keys and coefficient labels.",
+        "keys=[coef, std_err, t_stat, p_value, ci_lower, ci_upper], index=[intercept, x1, x2], len=3",
         None,
     )
 
@@ -412,12 +412,15 @@ def test_coef_inference_output_structure():
 
     X, y, result = _coef_inference_fixture()
     table = coef_inference(X, y, result["beta_hat"], result["sigma2_hat"])
-    expected_columns = ["coef", "std_err", "t_stat", "p_value", "ci_lower", "ci_upper"]
+    expected_keys = ["coef", "std_err", "t_stat", "p_value", "ci_lower", "ci_upper"]
     expected_index = ["intercept", "x1", "x2"]
 
-    passed = list(table.columns) == expected_columns and list(table.index) == expected_index and table.shape == (3, 6)
-    _log.print_value("columns", list(table.columns))
-    _log.print_value("index", list(table.index))
+    has_keys = all(k in table for k in expected_keys)
+    has_index = table["index"] == expected_index
+    has_len = len(table["coef"]) == 3
+    passed = has_keys and has_index and has_len
+    _log.print_value("keys", [k for k in table if k != "index"])
+    _log.print_value("index", table["index"])
     return _finish_case(name, passed)
 
 
@@ -474,8 +477,8 @@ def test_coef_inference_t_stat_formula():
 
     X, y, result = _coef_inference_fixture()
     table = coef_inference(X, y, result["beta_hat"], result["sigma2_hat"])
-    expected = [float(row.coef) / float(row.std_err) for row in table.itertuples()]
-    actual = [float(value) for value in table["t_stat"]]
+    expected = [c / se for c, se in zip(table["coef"], table["std_err"])]
+    actual = list(table["t_stat"])
 
     passed = _list_close(actual, expected, rtol=1e-8, atol=1e-10)
     _log.print_value("t_stat", [round(value, 8) for value in actual])
@@ -496,13 +499,13 @@ def test_coef_inference_p_values_and_ci_valid():
     X, y, result = _coef_inference_fixture()
     table = coef_inference(X, y, result["beta_hat"], result["sigma2_hat"])
 
-    p_values_ok = all(0.0 <= float(value) <= 1.0 for value in table["p_value"])
+    p_values_ok = all(0.0 <= v <= 1.0 for v in table["p_value"])
     ci_ok = all(
-        float(row.ci_lower) <= float(row.coef) <= float(row.ci_upper)
-        for row in table.itertuples()
+        lo <= c <= hi
+        for c, lo, hi in zip(table["coef"], table["ci_lower"], table["ci_upper"])
     )
     passed = p_values_ok and ci_ok
-    _log.print_value("p_value", [round(float(value), 8) for value in table["p_value"]])
+    _log.print_value("p_value", [round(v, 8) for v in table["p_value"]])
     return _finish_case(name, passed)
 
 
@@ -520,7 +523,7 @@ def test_coef_inference_sigma2_scales_standard_errors():
     X, y, result = _coef_inference_fixture()
     table = coef_inference(X, y, result["beta_hat"], result["sigma2_hat"])
     wider = coef_inference(X, y, result["beta_hat"], result["sigma2_hat"] * 4.0)
-    ratios = [float(wider["std_err"].iloc[i]) / float(table["std_err"].iloc[i]) for i in range(len(table))]
+    ratios = [wider["std_err"][i] / table["std_err"][i] for i in range(len(table["std_err"]))]
 
     passed = all(_close(ratio, 2.0, rtol=1e-8, atol=1e-10) for ratio in ratios)
     _log.print_value("ratios", [round(value, 8) for value in ratios])

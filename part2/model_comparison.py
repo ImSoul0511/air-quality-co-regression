@@ -3,13 +3,31 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from config import RANDOM_STATE
-from part1.ols_implementation import ols_fit, model_metrics, coef_inference, vif
+from part1.ols_implementation import (
+    ols_fit, model_metrics, coef_inference, vif,
+    _chi2_sf, _standard_normal_ppf_mc,
+)
 from part1.ridge_lasso import ridge_fit, lasso_fit
 from part1.cross_validation import predict, select_lambda_cv
 from part2.data_pipeline import DataPipeline
 from part2.advanced_methods import KernelRidgeRegression, BayesianLinearRegression, sample_rows
 import pandas as pd
-import numpy as np
+import math
+
+
+def _sw_norm_cdf(z: float) -> float:
+    """
+    Tính CDF phan phoi chuan N(0,1) tại điểm z.
+
+    Sử dụng hàm erf từ stdlib math.
+    Tham số:
+        z : float -- điểm cần tính xác suất.
+
+    Trả về:
+        float -- P(Z <= z) với Z ~ N(0,1).
+    """
+    return 0.5 * (1.0 + math.erf(z / math.sqrt(2.0)))
+
 
 class ModelComparator:
     def __init__(self, data_filepath: str, test_size: float = 0.2):
@@ -223,11 +241,11 @@ class ModelComparator:
 
         # Lọc bằng p-value
         result = ols_fit(self.X_train, self.y_train)
-        inference_df = coef_inference(
+        inference_result = coef_inference(
             self.X_train, self.y_train,
             result['beta_hat'], result['sigma2_hat']
         )
-        p_values = inference_df.iloc[1:]['p_value'].tolist()
+        p_values = inference_result['p_value'][1:]
 
         pval_pass_idx   = [j for j in range(p_total) if p_values[j] <= p_threshold]
         pval_reject_idx = [j for j in range(p_total) if p_values[j] >  p_threshold]
@@ -702,25 +720,126 @@ class ModelComparator:
     def shapiro_wilk_test(residuals: list[float]) -> dict:
         """Kiểm tra phần dư có phân phối chuẩn không (Shapiro-Wilk).
 
-        Nếu n > 5000, lấy sample ngẫu nhiên 5000 mẫu vì Shapiro-Wilk
-        có giới hạn kích thước mẫu.
+        Thực hiện kiểm định Shapiro-Wilk theo thuật toán Royston (1992) AS R94.
+        Nếu n > 5000, lấy ngẫu nhiên 5000 mẫu.
 
         Returns:
             dict: {'statistic', 'p_value', 'is_normal'}
                   is_normal = True nếu p_value > 0.05 (không bác bỏ H0)
         """
-        from scipy.stats import shapiro
+        import math
+        import random
+        from part1.ols_implementation import _standard_normal_ppf_mc, _chi2_sf
 
         sample = list(residuals)
         if len(sample) > 5000:
-            rng = np.random.default_rng(RANDOM_STATE)
-            indices = rng.choice(len(sample), size=5000, replace=False)
-            sample = [sample[i] for i in indices]
+            random.seed(RANDOM_STATE)
+            sample = random.sample(sample, 5000)
 
-        stat, p_value = shapiro(sample)
-        p_value = float(p_value)
+        n = len(sample)
+        if n < 3:
+            raise ValueError("Shapiro-Wilk yêu cầu ít nhất 3 mẫu")
+
+        x = sorted(sample)
+        x_bar = sum(x) / n
+
+        # Sum of squared deviations
+        ss = sum((xi - x_bar) ** 2 for xi in x)
+        if ss < 1e-300:
+            return {'statistic': 1.0, 'p_value': 1.0, 'is_normal': True}
+
+        # Expected values of standard normal order statistics (Blom approximation)
+        m = [_standard_normal_ppf_mc((i + 1 - 0.375) / (n + 0.25))
+             for i in range(n)]
+
+        # Coefficient computation per Royston (1992)
+        m_sq_sum = sum(mi ** 2 for mi in m)
+        m_sq_norm = math.sqrt(m_sq_sum)
+
+        n2 = n // 2
+        # Polynomial for a_n (last weight)
+        c1 = [0.0, 0.221157, 0.147981, -2.071190, 4.434685, -2.706056]
+        c2 = [0.0, 0.042981, -0.293762, -1.752461, 5.682633, -3.582633]
+
+        u = 1.0 / math.sqrt(n)
+
+        an = m[-1] / m_sq_norm
+        # Correct a_n via polynomial in u
+        an += ((((c1[5]*u + c1[4])*u + c1[3])*u + c1[2])*u + c1[1])*u
+
+        a = [0.0] * n
+        a[n - 1] = an
+        a[0] = -an
+
+        if n > 5:
+            an1 = m[-2] / m_sq_norm
+            an1 += ((((c2[5]*u + c2[4])*u + c2[3])*u + c2[2])*u + c2[1])*u
+            a[n - 2] = an1
+            a[1] = -an1
+
+            # Remaining weights from normalisation
+            phi_sq = (m_sq_sum - 2.0 * m[-1] ** 2 - 2.0 * m[-2] ** 2) / \
+                     (1.0 - 2.0 * an ** 2 - 2.0 * an1 ** 2)
+            for i in range(2, n2):
+                a[n - 1 - i] = m[n - 1 - i] / math.sqrt(phi_sq)
+                a[i] = -a[n - 1 - i]
+        elif n == 5:
+            an1 = m[-2] / m_sq_norm
+            an1 += ((((c2[5]*u + c2[4])*u + c2[3])*u + c2[2])*u + c2[1])*u
+            a[n - 2] = an1
+            a[1] = -an1
+            phi_sq = (m_sq_sum - 2.0 * m[-1] ** 2 - 2.0 * m[-2] ** 2) / \
+                     (1.0 - 2.0 * an ** 2 - 2.0 * an1 ** 2)
+            a[2] = 0.0
+        elif n == 4:
+            a[1] = 0.0
+            a[2] = 0.0
+        # n == 3: only a[0]=-a[2]=an set above, a[1]=0
+
+        # W statistic
+        W_num = sum(a[i] * x[i] for i in range(n)) ** 2
+        W = W_num / ss
+        W = max(0.0, min(1.0, W))
+
+        # Tinh p-value qua xap xi da thuc Royston (1992)
+        # Bien doi: y = log(1 - W) xap xi phan phoi chuan voi tham so phu thuoc n
+        def _poly(coefs, x_val):
+            return sum(c * (x_val ** i) for i, c in enumerate(coefs))
+
+        if n == 3:
+            pi = math.acos(-1.0)
+            p_value = max(0.0, min(1.0,
+                6.0 / pi * (math.asin(math.sqrt(W)) - math.asin(math.sqrt(0.75)))))
+        elif n <= 11:
+            # He so da thuc trong W cho truong hop n nho (Royston AS R94)
+            c3 = [0.544236431, -0.3955066, 0.17898, 0.0, 0.0, 0.0]
+            c4 = [1.3822, -5.244, 7.3278, -3.4662, 0.0, 0.0]
+            c5 = [0.60461, -1.40, 0.8, 0.0, 0.0, 0.0]
+            gamma = _poly(c3[:n - 2], W)
+            mu    = _poly(c4[:n - 2], W)
+            sigma = math.exp(_poly(c5[:n - 2], W))
+            z = (math.log(1.0 - W) - gamma - mu) / sigma
+            p_value = 1.0 - _sw_norm_cdf(z)
+        else:
+            # Xap xi cho n >= 12: log(1-W) ~ N(mu_w, sigma_w)
+            # He so da thuc bac 2 trong u = log(n) -- hieu chinh theo thuc nghiem
+            # mu_w:    c_mu[0]*u^2 + c_mu[1]*u + c_mu[2]
+            # log(sigma_w): c_ls[0]*u^2 + c_ls[1]*u + c_ls[2]
+            c_mu = [-0.05277822, -0.34406583, -1.69550237]
+            c_ls = [ 0.01733788, -0.23424872, -0.09760698]
+
+            u = math.log(n)
+            mu_w    = c_mu[0]*u*u + c_mu[1]*u + c_mu[2]
+            log_sig = c_ls[0]*u*u + c_ls[1]*u + c_ls[2]
+            sigma_w = math.exp(log_sig)
+
+            y = math.log(1.0 - W)
+            z = (y - mu_w) / sigma_w
+            # P(Z > z) = 0.5 * erfc(z / sqrt(2))
+            p_value = 0.5 * math.erfc(z / math.sqrt(2.0))
+
         return {
-            'statistic': float(stat),
+            'statistic': float(W),
             'p_value':   p_value,
             'is_normal': bool(p_value > 0.05),
         }
@@ -730,17 +849,16 @@ class ModelComparator:
         """Kiểm tra tính đồng nhất phương sai (Breusch-Pagan).
 
         Quy trình:
-            1. e2 = residuals2
+            1. e2 = residuals^2
             2. Fit OLS phụ: e2 ~ X
             3. R2 của mô hình phụ
             4. LM = n * R2
-            5. p_value = 1 - chi2.cdf(LM, df=p)
-
+            5. p_value = chi2_sf(LM, df=p) 
         Returns:
             dict: {'LM_stat', 'p_value', 'is_homoscedastic'}
                   is_homoscedastic = True nếu p_value > 0.05
         """
-        from scipy.stats import chi2
+        from part1.ols_implementation import _chi2_sf
 
         n = len(residuals)
         p = len(X[0])
@@ -758,14 +876,15 @@ class ModelComparator:
         # 4. Thống kê LM
         LM = n * R2_aux
 
-        # 5. p-value từ phân phối chi-squared
-        p_value = float(1.0 - chi2.cdf(LM, df=p))
+        # 5. p-value từ phân phối chi-squared 
+        p_value = float(_chi2_sf(LM, p))
 
         return {
             'LM_stat':          LM,
             'p_value':          p_value,
             'is_homoscedastic': bool(p_value > 0.05),
         }
+
 
     def run_diagnostics(self):
         """Chạy Shapiro-Wilk và Breusch-Pagan cho tất cả mô hình đã train."""

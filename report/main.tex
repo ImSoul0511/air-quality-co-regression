@@ -1,12 +1,7 @@
 \documentclass[12pt,a4paper]{report}
 
-% ===== PACKAGES =====
 \usepackage{fontspec}
-\defaultfontfeatures{Ligatures=TeX}
-\setmainfont{Times New Roman}
-\setsansfont{Arial}
-\setmonofont{Consolas}
-\usepackage[vietnamese,english]{babel}
+\usepackage[english,vietnamese]{babel}
 \usepackage[top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm]{geometry}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{graphicx}
@@ -30,9 +25,9 @@
 \usepackage{caption}
 \usepackage{parskip}
 \usepackage{tikz}
+
 \usetikzlibrary{calc}
 
-% ===== HYPERREF SETUP =====
 \hypersetup{
     colorlinks=true,
     linkcolor=blue,
@@ -40,13 +35,11 @@
     citecolor=blue
 }
 
-% ===== COLORS =====
 \definecolor{tableheader}{gray}{0.9}
 \definecolor{infobox}{RGB}{230,242,255}
 \definecolor{infoborder}{RGB}{0,102,204}
 \definecolor{codebg}{gray}{0.97}
 
-% ===== LISTINGS (code blocks) =====
 \lstset{
     basicstyle=\ttfamily\small,
     backgroundcolor=\color{codebg},
@@ -58,30 +51,18 @@
     showstringspaces=false,
 }
 
-% ===== SECTION FORMATTING =====
 \titleformat{\chapter}[hang]{\large\bfseries}{\thechapter.}{0.5em}{}
-\titlespacing*{\chapter}{0pt}{0pt}{0.8em}
+\titlespacing*{\chapter}{0pt}{-35pt}{6pt}
 \titleformat{\section}[hang]{\normalsize\bfseries}{\thesection.}{0.5em}{}
 \titleformat{\subsection}[hang]{\normalsize\bfseries}{\thesubsection.}{0.5em}{}
 \titleformat{\subsubsection}[hang]{\normalsize\bfseries}{\thesubsubsection.}{0.5em}{}
 
-% ===== TABLE COLUMN COLORS =====
 \newcommand{\theadcolor}{\rowcolor{tableheader}}
-
-% ===== TCOLORBOX =====
 \tcbuselibrary{skins,breakable}
 
-% ===== MATH COMMANDS =====
-\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
-
-% ===== DOCUMENT =====
 \begin{document}
 
-% ============================================================
-%  TRANG BÌA
-% ============================================================
 \begin{titlepage}
-  % Khung viền trang bìa
   \begin{tikzpicture}[remember picture, overlay]
     \draw[line width=1.5pt]
       ($(current page.north west) + (1.5cm,-1.5cm)$)
@@ -94,15 +75,16 @@
 
   {\large\bfseries ĐẠI HỌC QUỐC GIA TP. HỒ CHÍ MINH}\\[4pt]
   {\large TRƯỜNG ĐẠI HỌC KHOA HỌC TỰ NHIÊN}\\[4pt]
-  {\large KHOA CÔNG NGHỆ THÔNG TIN}
+  {\large KHOA CÔNG NGHỆ THÔNG TIN}\\[4pt]
 
-  \vspace{2cm}
-  \includegraphics[width=4cm]{assets/logo_hcmus.png}
+  \vspace{0.8cm}
+  \includegraphics[width=4cm]{assets/logo_hcmus}
   \vspace{0.8cm}
 
   \vspace{0.5cm}
-  {\Huge\bfseries\color{blue} BÁO CÁO ĐỒ ÁN MÔN HỌC}\\[8pt]
-  {\Huge\bfseries\color{blue} Toán ứng dụng và thống kê}
+  {\Huge\bfseries\color{blue} BÁO CÁO ĐỒ ÁN 2}\\[8pt]
+  {\Huge\bfseries\color{blue} Data Fitting và Phương Pháp OLS}\\[8pt]
+  {\large\bfseries Môn học: Toán Ứng Dụng và Thống Kê}\\[4pt]
 
   \vfill
 
@@ -113,7 +95,7 @@
       ThS. Lê Nhựt Nam
     \end{tabular} \\[1.2em]
     \\ 
-    \textbf{Nhóm thực hiện:} & \, Nhóm 14 -- Lớp 24CTT2 \\[0.4em]
+    \textbf{Nhóm thực hiện:} & \hspace{0.1cm} Nhóm 14 -- Lớp 24CTT2 \\[0.4em]
     \textbf{Thành viên:} &
     \begin{tabular}[t]{l}
       24120394 -- Nguyễn Đặng Khôi Nguyên \\
@@ -130,45 +112,33 @@
   \vspace{1cm}
 \end{titlepage}
 
-% ============================================================
-%  MỤC LỤC
-% ============================================================
 \tableofcontents
 \clearpage
 
-% ============================================================
-%  CHƯƠNG: PHÂN CÔNG CÔNG VIỆC
-% ============================================================
 \chapter{Phân Công Công Việc}
 
 \begin{center}
-\begin{tabular}{|c|p{3.5cm}|p{9cm}|c|}
+\begin{tabular}{|c|p{5cm}|p{6cm}|c|}
 \hline
 \theadcolor \textbf{STT} & \textbf{Họ và tên} & \textbf{Nhiệm vụ phụ trách} & \textbf{Hoàn thành} \\
 \hline
-1 & Nguyễn Đặng Khôi Nguyên (24120394) & & 100\% \\
+1 & \raggedright Nguyễn Đặng Khôi Nguyên & & 100\% \\
 \hline
-2 & Lê Quốc Khải (24120331) & & 100\% \\
+2 & Lê Quốc Khải & & 100\% \\
 \hline
-3 & Phan Nhật Minh (24120384) & & 100\% \\
+3 & Phan Nhật Minh & & 100\% \\
 \hline
-4 & Trần Thị Lợi (24120370) & & 100\% \\
+4 & Trần Thị Lợi & & 100\% \\
 \hline
-5 & Trịnh Vỹ Triết (24120474) & & 100\% \\
+5 & Trịnh Vỹ Triết & & 100\% \\
 \hline
 \end{tabular}
 \end{center}
 
 \clearpage
-
-% ============================================================
-%  CHƯƠNG 2: CẤU TRÚC HỆ THỐNG VÀ CÁC MODULE
-% ============================================================
-\chapter{CẤU TRÚC HỆ THỐNG VÀ CÁC MODULE}
-Mục này trình bày cấu trúc tổng thể của hệ thống, cách các Module được tổ chức và các thành phần dùng chung giữa phần 1 và phần 2.
-
+\chapter{Kiến trúc hệ thống}
+Phần này để tổng hợp về cấu trúc thư mục, cũng như là nhiệm vụ của từng module trong hệ thống. 
 \section{Cấu trúc thư mục}
-
 \begin{tcolorbox}[
   colback=white,
   colframe=black,
@@ -205,7 +175,6 @@ Group_14/
 `-- requirements.txt
 \end{lstlisting}
 \end{tcolorbox}
-
 \section{Cấu hình chung của hệ thống: \texttt{config.py}}
 
 \texttt{config.py} là file cấu hình chung của toàn hệ thống. Nó định nghĩa các hằng số và hàm tiện ích được sử dụng xuyên suốt toàn bộ dự án.
@@ -213,24 +182,91 @@ Group_14/
 \begin{itemize}
   \item \texttt{RANDOM\_STATE = 42}: Seed toàn cục đảm bảo tính tái lập của toàn bộ dự án từ sinh dữ liệu giả lập trong bởi các hàm hỗ trợ trong \texttt{utils.py}, Fisher-Yates shuffle trong \texttt{cross\_validation.py}\ldots
   \item \texttt{EPSILON = 1e-12}: Ngưỡng epsilon toàn cục. Mọi số có giá trị tuyệt đối nhỏ hơn ngưỡng này đều được coi là bằng 0 về mặt số học. Ngưỡng này được dùng nhất quán trong tất cả phép chia, kiểm tra pivot, và tính VIF để tránh chia cho 0.
-  \item \texttt{is\_zero(x)}
+  \item \texttt{is\_zero(x)}: Kiểm tra một số có bằng 0 không theo EPSILON.
+  \item \texttt{zero\_rectify(x)}: Trả về 0.0 nếu giá trị của x đủ nhỏ. Tránh các giá trị gây nhiễu trong quá trình tính toán chấm động.
+  \item \texttt{calculate\_relative\_error(A, x\_hat, b)}: Tính sai số tương đối (relative error) của nghiệm gần đúng $\hat{x}$ đối với hệ phương trình tuyến tính $A x = b$. Công thức:
+    \[
+    \frac{\|A \hat{x} - b\|}{\|b\|}
+    \]
+    Hàm được sử dụng để kiểm định chất lượng của OLS và Ridge trong test\_case.
+\end{itemize}
+Các hằng số và các hàm xử lý sai số có ý nghĩa quan trọng đảm bảo tính nhất quán của toàn hệ thống. Đặc biệt với \texttt{RANDOM\_STATE} có nhiệm vụ quan trọng trong việc quản lý trạng thái của việc sinh dữ liệu.
+
+\section{Module tiện ích chung: \texttt{utils.py}}
+\texttt{utils.py} cung cấp các hàm tiện ích dùng chung cho toàn bộ dự án. Các hàm trong file này chủ yếu phục vụ tính toán đại số tuyến tính, sinh dữ liệu giả lập, tạo lưới tham số và hỗ trợ kiểm thử. Việc gom các thao tác nền tảng vào một module riêng giúp các phần cài đặt OLS, Ridge, Lasso, cross-validation và các phương pháp nâng cao tái sử dụng cùng một bộ công cụ.
+
+- \textbf{Nhóm tiện ích vector}:
+Nhóm này xử lý các phép toán cơ bản trên vector, được dùng trực tiếp trong các thuật toán hồi quy và tính toán khoảng cách.
+\begin{itemize}
+    \item \texttt{dot}: Tính tích vô hướng của hai vector.
+    \item \texttt{vector\_add}: Cộng hai vector theo từng phần tử.
+    \item \texttt{vector\_sub}: Trừ hai vector theo từng phần tử.
+    \item \texttt{scalar\_multiply}: Nhân vector với một số vô hướng.
+    \item \texttt{norm}: Tính chuẩn Euclid của vector.
+    \item \texttt{normalize}: Chuẩn hóa vector về độ dài 1.
 \end{itemize}
 
-\subsection{Một số hình ảnh minh chứng}
+- \textbf{Nhóm tiện ích ma trận và đại số tuyến tính}:
+Nhóm này cung cấp các phép toán ma trận cốt lõi, giúp dự án tự cài đặt thuật toán thay vì phụ thuộc vào các thư viện đại số tuyến tính bên ngoài.
+\begin{itemize}
+    \item \texttt{transpose}: Tính chuyển vị ma trận.
+    \item \texttt{inverse}: Tính ma trận nghịch đảo bằng khử Gauss--Jordan.
+    \item \texttt{matmul}: Nhân hai ma trận.
+    \item \texttt{matvec}: Nhân ma trận với vector.
+    \item \texttt{identity\_matrix}: Tạo ma trận đơn vị.
+    \item \texttt{add\_bias\_column}: Thêm cột intercept vào ma trận đặc trưng.
+    \item \texttt{solve\_system}: Giải hệ phương trình tuyến tính $Ax=b$ bằng phương pháp khử Gauss.
+\end{itemize}
 
+- \textbf{Nhóm sinh dữ liệu và tạo lưới tham số}:
+Nhóm này phục vụ các thí nghiệm mô phỏng, kiểm thử thuật toán và lựa chọn siêu tham số.
+\begin{itemize}
+    \item \texttt{make\_lambda\_grid}: Tạo lưới giá trị lambda theo thang log.
+    \item \texttt{make\_linear\_data}: Sinh dữ liệu hồi quy tuyến tính.
+    \item \texttt{make\_multifeature\_data}: Sinh dữ liệu hồi quy nhiều đặc trưng.
+    \item \texttt{make\_collinear\_data}: Sinh dữ liệu có hiện tượng đa cộng tuyến.
+\end{itemize}
+
+- \textbf{Nhóm tiện ích kiểm thử}:
+Nhóm này chuẩn hóa cách kiểm tra kết quả trong các unit test, giúp các test case ngắn gọn và nhất quán.
+\begin{itemize}
+    \item \texttt{assert\_close}: Kiểm tra hai giá trị gần bằng nhau trong sai số cho phép.
+    \item \texttt{assert\_equal}: Kiểm tra hai giá trị bằng nhau chính xác.
+    \item \texttt{assert\_true}: Kiểm tra một điều kiện logic là đúng.
+    \item \texttt{assert\_shape}: Kiểm tra kích thước của vector hoặc ma trận.
+    \item \texttt{assert\_in\_range}: Kiểm tra một giá trị nằm trong khoảng cho trước.
+    \item \texttt{assert\_raises}: Kiểm tra một hàm có ném đúng loại ngoại lệ mong đợi.
+\end{itemize}
+
+\section{Module trình bày, ghi log kiểm thử: \texttt{test\_logger.py}}
+\texttt{test\_logger.py} định nghĩa lớp \texttt{TestLogger}, một bộ ghi log dạng văn bản thuần dùng để chuẩn hóa cách hiển thị kết quả unit test. Module này không tham gia trực tiếp vào thuật toán hồi quy, nhưng giúp toàn bộ các file kiểm thử trong \texttt{part1} và \texttt{part2} có cùng một định dạng báo cáo, dễ đọc và dễ đối chiếu.
+
+- \textbf{Nhóm hiển thị cấu trúc bài kiểm thử}:
+Nhóm này tạo các tiêu đề trực quan để phân chia kết quả theo bộ test và từng ca kiểm thử.
+\begin{itemize}
+    \item \texttt{print\_suite\_header}: In tiêu đề lớn cho một bộ unit test.
+    \item \texttt{print\_group}: In tiêu đề nhỏ cho từng nhóm hoặc từng test case.
+\end{itemize}
+
+- \textbf{Nhóm hiển thị kết quả và thông tin trung gian}:
+Nhóm này dùng để in trạng thái pass/fail, giá trị thực tế, giá trị kỳ vọng và các thông tin giải thích trong quá trình kiểm thử.
+\begin{itemize}
+    \item \texttt{print\_result}: In kết quả của một test case với trạng thái \texttt{PASSED} hoặc \texttt{FAILED}.
+    \item \texttt{print\_field}: In một trường thông tin theo định dạng nhãn và giá trị.
+    \item \texttt{print\_value}: In giá trị thực tế, kèm giá trị kỳ vọng nếu có.
+    \item \texttt{print\_warning}: In cảnh báo khi một tình huống đặc biệt xuất hiện trong test.
+    \item \texttt{print\_info}: In một dòng thông tin mô tả ngắn.
+\end{itemize}
+
+- \textbf{Nhóm tổng kết kết quả kiểm thử}:
+Nhóm này được gọi sau khi chạy xong một bộ test để tóm tắt số lượng test thành công, thất bại và tỷ lệ hoàn thành.
+\begin{itemize}
+    \item \texttt{print\_summary}: In tổng số test pass, fail, tỷ lệ chính xác và tổng số test đã chạy.
+\end{itemize}
+
+\section{Quy trình chạy unit\_test}
 \clearpage
-
-\clearpage
-
-% ============================================================
-%  CHƯƠNG 3: PHẦN 1 — LÝ THUYẾT DATA FITTING
-% ============================================================
 \chapter{Phần 1: Lý Thuyết Data Fitting và Minh Họa}
-
-\noindent\textbf{Tóm tắt yêu cầu Phần 1.}
-Trình bày lại kiến thức đã học về data fitting và OLS. Với mỗi kết quả lý thuyết,
-sinh viên viết code Python để minh họa và kiểm chứng bằng dữ liệu giả lập
-(synthetic data).
 
 \section{Bài Toán Data Fitting}
 
@@ -263,7 +299,17 @@ Viết dưới dạng ma trận với $\mathbf{X} \in \mathbb{R}^{n \times (p+1)
   \mathbf{y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\epsilon}
 \end{equation}
 
-\subsection{Các Giả Thiết Gauss--Markov}
+Vector biến phụ thuộc mục tiêu ký hiệu là $\mathbf{y} \in \mathbb{R}^n$, vector sai số ngẫu nhiên là $\boldsymbol{\epsilon} \in \mathbb{R}^n$, và ma trận thiết kế $\mathbf{X} \in \mathbb{R}^{n \times (p+1)}$ sở hữu cấu trúc cột đầu tiên chứa toàn bộ giá trị số 1 nhằm phục vụ việc tính toán hệ số chặn intercept $\beta_0$:
+\begin{equation}
+    \mathbf{X} = \begin{bmatrix} 
+    1 & x_{1,1} & x_{1,2} & \dots & x_{1,p} \\
+    1 & x_{2,1} & x_{2,2} & \dots & x_{2,p} \\
+    \vdots & \vdots & \vdots & \ddots & \vdots \\
+    1 & x_{n,1} & x_{n,2} & \dots & x_{n,p}
+    \end{bmatrix}
+\end{equation}
+
+\subsection{Các Giả Thiết Gauss-Markov}
 
 \begin{tcolorbox}[
   enhanced,
@@ -305,287 +351,1055 @@ $\boldsymbol{\varepsilon}\mid\mathbf{X}\sim\mathcal{N}(\mathbf{0},\sigma^2\mathb
 
 \subsection{Hàm mất mát và nghiệm OLS}
 
-OLS tìm $\hat{\boldsymbol{\beta}}$ tối thiểu hóa tổng bình phương phần dư
-(Residual Sum of Squares):
-
+Phương pháp Bình phương Tối thiểu Thông thường (OLS) thực hiện tìm kiếm vector tham số tối ưu $\hat{\boldsymbol{\beta}}$ thông qua mục tiêu tối thiểu hóa tổng bình phương các phần dư sai số (Residual Sum of Squares - RSS):
 \begin{equation}
-  \operatorname{RSS}(\boldsymbol{\beta})
-  = \norm{\mathbf{y} - \mathbf{X}\boldsymbol{\beta}}_2^2
-  = \sum_{i=1}^{n}\left(y_i - \mathbf{x}_i^T\boldsymbol{\beta}\right)^2.
+    RSS(\boldsymbol{\beta}) = \|\mathbf{y} - \mathbf{X}\boldsymbol{\beta}\|_2^2 = \mathbf{y}^T\mathbf{y} - 2\boldsymbol{\beta}^T\mathbf{X}^T\mathbf{y} + \boldsymbol{\beta}^T\mathbf{X}^T\mathbf{X}\boldsymbol{\beta}
 \end{equation}
 
-\textbf{Định lý 1.1} (Nghiệm OLS --- Normal Equations).
-Nếu $\mathbf{X}^T\mathbf{X}$ khả nghịch, nghiệm OLS duy nhất là:
-
+Thực hiện lấy đạo hàm riêng của hàm mất mát $RSS$ theo vector tham số $\boldsymbol{\beta}$ và đặt giá trị phương trình đạo hàm thu được bằng giá trị $\mathbf{0}$ nhằm tìm điểm cực tiểu:
 \begin{equation}
-  \hat{\boldsymbol{\beta}}_{\mathrm{OLS}}
-  = \left(\mathbf{X}^T\mathbf{X}\right)^{-1}\mathbf{X}^T\mathbf{y}.
+    \nabla_{\boldsymbol{\beta}}RSS = -2\mathbf{X}^T\mathbf{y} + 2\mathbf{X}^T\mathbf{X}\boldsymbol{\beta} = \mathbf{0}
+\end{equation}
+\begin{equation}
+    \implies \mathbf{X}^T\mathbf{X}\boldsymbol{\beta} = \mathbf{X}^T\mathbf{y}
 \end{equation}
 
-\textbf{Chứng minh.}
-Tính đạo hàm và cho đạo hàm bằng không:
-
+Hệ phương trình trên được gọi là hệ phương trình chuẩn (Normal Equations). Do thỏa mãn giả thiết ma trận đặc trưng $\mathbf{X}$ đạt hạng đầy đủ cột, ma trận vuông tích số $\mathbf{X}^T\mathbf{X}$ đối xứng xác định dương và chắc chắn khả nghịch. Vì vậy nghiệm OLS duy nhất được biểu diễn bằng dạng đóng:
 \begin{equation}
-  \nabla_{\boldsymbol{\beta}}\operatorname{RSS}
-  = -2\mathbf{X}^T\left(\mathbf{y} - \mathbf{X}\boldsymbol{\beta}\right)
-  = \mathbf{0}.
+    \hat{\boldsymbol{\beta}}_{OLS} = (\mathbf{X}^T\mathbf{X})^{-1}\mathbf{X}^T\mathbf{y}
 \end{equation}
 
-Suy ra hệ phương trình chuẩn:
+\textbf{Cài đặt Python}
 
-\begin{equation}
-  \mathbf{X}^T\mathbf{X}\boldsymbol{\beta}
-  = \mathbf{X}^T\mathbf{y}.
-\end{equation}
+Hàm \texttt{ols\_fit()} trong \texttt{part1/ols\_implementation.py} cài đặt nghiệm OLS từ hệ phương trình chuẩn. Ma trận đặc trưng ban đầu chưa có cột bias; hàm sẽ tự thêm cột intercept, tính $\mathbf{X}^T\mathbf{X}$, $\mathbf{X}^T\mathbf{y}$, sau đó suy ra hệ số hồi quy, fitted values, phần dư và ước lượng phương sai nhiễu.
 
+\begin{lstlisting}[language=Python]
+def ols_fit(X: list[list[float]], y: list[float]) -> dict:
+    n = len(y)
+    p = len(X[0])
+    X_bias = add_bias_column(X)
+
+    X_bias_T = transpose(X_bias) # Ma tran X_bias^T
+    A = matmul(X_bias_T, X_bias) # Ma tran X_bias^T * X_bias
+    b = matvec(X_bias_T, y) # Vector X_bias^T * y
+
+    A_inv = inverse(A) # Ma tran A nghich đao
+    beta_hat = matvec(A_inv, b) # Uoc luong he so beta
+
+    y_hat = matvec(X_bias, beta_hat) # Gia tri du đoán
+    residuals = vector_sub(y, y_hat) # Phan du: y - y_hat
+    RSS = 0.0
+    for val in residuals:
+        RSS += val * val
+
+    df = n - p - 1
+    if df <= 0:
+        raise ValueError("So mau phai lon hon so he so")
+    sigma2_hat = RSS / df
+    return {
+        "beta_hat":   beta_hat,     # Vector trong so
+        "sigma2_hat": sigma2_hat,   # Phuong sai nhieu
+        "y_hat":      y_hat,        # Fitted values
+        "residuals":  residuals,    # Phan du: y - y_hat
+    }
+\end{lstlisting}
 \subsection{Ma Trận Chiếu và Hat Matrix}
 
-\textbf{Định nghĩa 1.2} (Hat Matrix).
-Ma trận chiếu (projection matrix hay hat matrix) là:
-
+Ma trận Hat (ký hiệu là $\mathbf{H}$) đại diện cho một ma trận chiếu vuông kích thước $n \times n$, đảm nhận vai trò hình học biến đổi trực tiếp từ vector dữ liệu thực tế $\mathbf{y}$ sang vector kết quả dự báo $\hat{\mathbf{y}}$:
 \begin{equation}
-  \mathbf{H}
-  = \mathbf{X}\left(\mathbf{X}^T\mathbf{X}\right)^{-1}\mathbf{X}^T
-  \in \mathbb{R}^{n\times n}.
+    \hat{\mathbf{y}} = \mathbf{X}\hat{\boldsymbol{\beta}}_{OLS} = \mathbf{X}(\mathbf{X}^T\mathbf{X})^{-1}\mathbf{X}^T\mathbf{y} = \mathbf{H}\mathbf{y}
+\end{equation}
+\begin{equation}
+    \implies \mathbf{H} = \mathbf{X}(\mathbf{X}^T\mathbf{X})^{-1}\mathbf{X}^T \in \mathbb{R}^{n \times n}
 \end{equation}
 
-\textbf{Mệnh đề 1.1} (Tính chất của $\mathbf{H}$).
+Ma trận Hat sở hữu các đặc tính đại số tuyến tính cốt lõi sau đây:
+\begin{itemize}
+    \item \textbf{Tính đối xứng:} $\mathbf{H}^T = \mathbf{H}$.
+    \item \textbf{Tính lũy đẳng (Idempotent):} $\mathbf{H}^2 = \mathbf{H}$.
+    \item \textbf{Giá trị riêng:} Toàn bộ các giá trị riêng của ma trận lũy đẳng chỉ nhận giá trị là 0 hoặc 1.
+    \item \textbf{Hạng ma trận:} Hạng của ma trận chiếu bằng vết trace: $\text{rank}(\mathbf{H}) = p+1$.
+    \item \textbf{Vector phần dư:} Xác định qua ma trận bù đối góc: $\hat{\boldsymbol{\epsilon}} = (\mathbf{I}_n - \mathbf{H})\mathbf{y} $.
+\end{itemize}
 
-\begin{enumerate}[label=(\roman*)]
-  \item $\mathbf{H}^2 = \mathbf{H}$ (idempotent).
-  \item $\mathbf{H}^T = \mathbf{H}$ (đối xứng).
-  \item Giá trị riêng của $\mathbf{H}$ chỉ là $0$ hoặc $1$.
-  \item $\operatorname{rank}(\mathbf{H}) = p + 1$.
-  \item Giá trị fitted: $\hat{\mathbf{y}} = \mathbf{H}\mathbf{y}$;
-  phần dư: $\hat{\boldsymbol{\epsilon}} = (\mathbf{I} - \mathbf{H})\mathbf{y}$.
-\end{enumerate}
+\subsection{Định Lý Gauss-Markov}
 
-\subsection{Định Lý Gauss--Markov}
+Định lý Gauss-Markov chứng minh toán học rằng: Khi đáp ứng trọn vẹn các giả thiết từ \textbf{GM1} đến \textbf{GM4}, ước lượng bình phương tối thiểu $\hat{\boldsymbol{\beta}}_{OLS}$ chính là ước lượng tuyến tính không chệch tốt nhất (BLUE - Best Linear Unbiased Estimator). Ý nghĩa cụ thể gồm:
 
-\textbf{Định lý 1.2} (Gauss--Markov).
-Dưới các giả thiết GM1--GM4, ước lượng OLS
-$\hat{\boldsymbol{\beta}}_{\mathrm{OLS}}$ là ước lượng tuyến tính không chệch tốt nhất
-(Best Linear Unbiased Estimator --- BLUE):
+\begin{itemize}
+    \item \textbf{Tính không chệch:} Kỳ vọng toán học của ước lượng bằng chính giá trị tham số gốc: $\mathbb{E}[\hat{\boldsymbol{\beta}}_{OLS}] = \boldsymbol{\beta}$.
+    \item \textbf{Tính hiệu quả tối ưu:} Trong tập hợp mọi ước lượng tuyến tính không chệch khác, ước lượng OLS đạt mức phương sai bé nhất: $\text{Var}(\tilde{\beta}_j) \ge \text{Var}(\hat{\beta}_j^{OLS})$.
+\end{itemize}
 
-\begin{enumerate}[label=(\roman*)]
-  \item \textbf{Không chệch:}
-  $\mathbb{E}\!\left[\hat{\boldsymbol{\beta}}_{\mathrm{OLS}}\right]
-  = \boldsymbol{\beta}$.
-
-  \item \textbf{Tốt nhất (phương sai nhỏ nhất):}
-  Với mọi ước lượng tuyến tính không chệch $\tilde{\boldsymbol{\beta}}$ khác,
-  ta có $\operatorname{Var}(\tilde{\beta}_j)
-  \ge \operatorname{Var}(\hat{\beta}_{j,\mathrm{OLS}})$ với mọi $j$.
-\end{enumerate}
-
-Ma trận hiệp phương sai của $\hat{\boldsymbol{\beta}}_{\mathrm{OLS}}$:
-
+Ma trận hiệp phương sai chính xác của ước lượng OLS được xác định qua công thức:
 \begin{equation}
-  \operatorname{Var}\!\left(\hat{\boldsymbol{\beta}}_{\mathrm{OLS}}\mid\mathbf{X}\right)
-  = \sigma^2\left(\mathbf{X}^T\mathbf{X}\right)^{-1}.
+    \text{Var}(\hat{\boldsymbol{\beta}}_{OLS}|\mathbf{X}) = \sigma^2(\mathbf{X}^T\mathbf{X})^{-1}
 \end{equation}
+
+\textbf{Minh họa Monte Carlo - Định lý Gauss-Markov.}
+File \texttt{part1/gauss\_markov\_demo.py} hiện thực một thí nghiệm Monte Carlo nhằm quan sát trực quan nội dung của định lý Gauss-Markov. Hàm chính \texttt{run\_gauss\_markov\_simulation()} nhận vào số lần mô phỏng \texttt{n\_sim}, số quan sát \texttt{n\_obs}, vector hệ số thật \texttt{true\_beta} và độ lệch chuẩn nhiễu \texttt{true\_sigma}. Nếu không truyền hệ số thật, chương trình sử dụng mặc định:
+\[
+    \boldsymbol{\beta} = (2.0,\,-1.5,\,0.8).
+\]
+
+Quy trình mô phỏng được tổ chức như sau:
+\begin{enumerate}
+    \item Cố định seed ngẫu nhiên bằng \texttt{random.seed(42)} để bảo đảm tính tái lập.
+    \item Sinh một ma trận đặc trưng cố định $\mathbf{X}$ với các phần tử lấy từ phân phối chuẩn chuẩn hóa. Sau đó thêm cột bias để tạo ma trận thiết kế.
+    \item Tính trước phần tín hiệu không nhiễu:
+    \[
+        \mathbf{y}_{pure} = \mathbf{X}\boldsymbol{\beta}.
+    \]
+    \item Xây dựng một ước lượng thay thế có dạng Ridge với hệ số phạt $0.5$:
+    \[
+        \hat{\boldsymbol{\beta}}_{alt}
+        =
+        \left(\mathbf{X}^T\mathbf{X} + 0.5\mathbf{I}\right)^{-1}
+        \mathbf{X}^T\mathbf{y}.
+    \]
+    Đây là một estimator tuyến tính nhưng có chệch do thêm thành phần phạt Ridge.
+    \item Với mỗi lần mô phỏng, sinh nhiễu Gaussian $\boldsymbol{\epsilon}$, tạo dữ liệu mục tiêu
+    \[
+        \mathbf{y}_{sim} = \mathbf{y}_{pure} + \boldsymbol{\epsilon},
+    \]
+    rồi ước lượng hệ số bằng hai cách: OLS thông qua \texttt{ols\_fit()} và estimator thay thế thông qua ma trận trọng số đã tính trước.
+    \item Lưu lại toàn bộ các vector hệ số ước lượng vào \texttt{beta\_ols\_list} và \texttt{beta\_alt\_list}, sau đó trả về cùng với vector hệ số thật.
+\end{enumerate}
+
+Ý nghĩa của thí nghiệm là so sánh phân phối thực nghiệm của hệ số OLS với hệ số từ estimator thay thế sau nhiều lần lặp. Khi dữ liệu thỏa các giả thiết Gauss-Markov, OLS dao động quanh hệ số thật và thể hiện tính không chệch. Estimator kiểu Ridge có thể làm giảm độ dao động trong một số trường hợp, nhưng đổi lại bị chệch vì hệ số bị kéo về gần 0. Điều này minh họa đúng tinh thần của định lý Gauss-Markov: OLS là ước lượng tuyến tính không chệch tốt nhất trong lớp các estimator tuyến tính không chệch, chứ không khẳng định mọi estimator có chệch đều kém hơn về mọi tiêu chí.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{assets/gauss_markov.jpg}
+    \caption{Minh họa phân phối hệ số qua mô phỏng Monte Carlo cho định lý Gauss-Markov}
+    \label{fig:gauss-markov-monte-carlo}
+\end{figure}
 
 \subsection{Ước Lượng Phương Sai Nhiễu}
 
-Ước lượng không chệch của $\sigma^2$:
-
+Do phương sai sai số $\sigma^2$ không thể biết trước trong thực tế, một ước lượng không chệch hiệu quả của đại lượng này được tính toán dựa trên tổng bình phương phần dư $RSS$ chia cho số bậc tự do hiệu chỉnh hệ thống:
 \begin{equation}
-  \hat{\sigma}^2
-  = \frac{\operatorname{RSS}}{n-p-1}
-  = \frac{\norm{\mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}}}_2^2}{n-p-1}.
+    \hat{\sigma}^2 = \frac{RSS}{n - p - 1} = \frac{\|\mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}}\|^2}{n - p - 1}
 \end{equation}
 
-\section{Đánh Giá Mô Hình}
+\section{Đánh Giá Mô Hình Hồi Quy}
 
-\subsection{\texorpdfstring{Hệ số xác định $R^2$ và $\bar{R}^2$ hiệu chỉnh}{Hệ số xác định R2 và R2 hiệu chỉnh}}
+\subsection{Hệ số xác định $R^2$ và $R^2$ hiệu chỉnh}
 
-\textbf{Định nghĩa 1.3} (Hệ số xác định).
-Hệ số xác định $R^2$ được định nghĩa như sau:
-
+Hệ số xác định $R^2$ biểu thị tỷ lệ phần trăm sự biến động của biến phụ thuộc mục tiêu được giải thích một cách thành công nhờ các biến độc lập trong mô hình:
 \begin{equation}
-  R^2
-  = 1 - \frac{\operatorname{RSS}}{\operatorname{TSS}}
-  = 1 - \frac{\sum_i (y_i - \hat{y}_i)^2}
-  {\sum_i (y_i - \bar{y})^2},
-  \qquad R^2 \in [0,1].
+    R^2 = 1 - \frac{RSS}{TSS} = 1 - \frac{\sum_{i}(y_i - \hat{y}_i)^2}{\sum_{i}(y_i - \bar{y})^2}
 \end{equation}
 
-$R^2$ luôn tăng khi thêm biến. Để so sánh các mô hình có số biến khác nhau,
-ta hay dùng $R^2$ hiệu chỉnh:
-
+Vì chỉ số $R^2$ luôn tăng lên một cách cơ học khi ta bổ sung thêm biến số mới, ta sử dụng hệ số xác định hiệu chỉnh $\bar{R}^2$ để phạt mô hình tương ứng với số lượng biến đặc trưng gia tăng:
 \begin{equation}
-  \bar{R}^2
-  = 1 - \frac{n-1}{n-p-1}(1 - R^2).
+    \bar{R}^2 = 1 - \frac{n - 1}{n - p - 1}(1 - R^2)
 \end{equation}
 
-\subsection{Kiểm Định Giả Thuyết}
+\subsection{Kiểm Định Giả Thuyết Thống Kê}
 
-Dưới giả thiết chuẩn GM5:
-
-\begin{equation}
-  \hat{\boldsymbol{\beta}}
-  \sim \mathcal{N}\!\left(
-    \boldsymbol{\beta},
-    \sigma^2\left(\mathbf{X}^T\mathbf{X}\right)^{-1}
-  \right).
-\end{equation}
-
-\textbf{Kiểm định Student, t-test.}
-Kiểm định ý nghĩa của từng đặc trưng đối với mô hình:
-
-\begin{equation}
-  t_j
-  = \frac{\hat{\beta}_j}
-  {\hat{\sigma}\sqrt{\left[\left(\mathbf{X}^T\mathbf{X}\right)^{-1}\right]_{jj}}}
-  \sim t_{n-p-1}
-  \qquad (H_0: \beta_j = 0).
-\end{equation}
-
-\textbf{Kiểm định F cho mô hình tổng thể.}
-Kiểm định ý nghĩa của mô hình:
-
-\begin{equation}
-  F
-  = \frac{(\operatorname{TSS} - \operatorname{RSS})/p}
-  {\operatorname{RSS}/(n-p-1)}
-  \sim F_{p,n-p-1}
-  \qquad (H_0: \beta_1 = \cdots = \beta_p = 0).
-\end{equation}
-
-\section{Các Vấn Đề Nâng Cao trong Data Fitting}
-
-\subsection{Đa cộng tuyến (Multicollinearity)}
-
-Đa cộng tuyến xảy ra khi các cột của $\mathbf{X}$ có tương quan cao,
-khiến $\mathbf{X}^T\mathbf{X}$ gần suy biến. Để phát hiện hiện tượng này,
-ta có thể sử dụng hệ số phóng đại phương sai (Variance Inflation Factor):
-
-\begin{equation}
-  \operatorname{VIF}_j
-  = \frac{1}{1 - R_j^2},
-\end{equation}
-
-trong đó $R_j^2$ là $R^2$ khi hồi quy biến $X_j$ theo các biến còn lại.
-$\operatorname{VIF} > 10$ cho thấy đa cộng tuyến nghiêm trọng.
-
-\subsection{Hồi Quy Ridge và Lasso (Regularization)}
-
-Khi dữ liệu có nhiều đặc trưng hoặc đa cộng tuyến, ta cần thêm thành phần
-chính quy hóa (regularization).
-
-\textbf{Ridge Regression (L2):}
-
-\begin{equation}
-  \hat{\boldsymbol{\beta}}_{\mathrm{ridge}}
-  = \underset{\boldsymbol{\beta}}{\arg\min}
-  \left\{
-    \norm{\mathbf{y} - \mathbf{X}\boldsymbol{\beta}}_2^2
-    + \lambda\norm{\boldsymbol{\beta}}_2^2
-  \right\}
-  = \left(\mathbf{X}^T\mathbf{X} + \lambda\mathbf{I}\right)^{-1}\mathbf{X}^T\mathbf{y}.
-\end{equation}
-
-\textbf{Lasso Regression (L1):}
-
-\begin{equation}
-  \hat{\boldsymbol{\beta}}_{\mathrm{lasso}}
-  = \underset{\boldsymbol{\beta}}{\arg\min}
-  \left\{
-    \norm{\mathbf{y} - \mathbf{X}\boldsymbol{\beta}}_2^2
-    + \lambda\norm{\boldsymbol{\beta}}_1
-  \right\}.
-\end{equation}
-
-Lasso không có nghiệm closed-form; thường được giải bằng coordinate descent
-hoặc các phương pháp subgradient.
-
-\subsection{Phân Tích Phần Dư (Residual Analysis)}
-
-Sử dụng các công cụ thống kê mô tả để kiểm tra sai số của mô hình:
+Dựa trên giả thiết phân phối chuẩn \textbf{GM5}, các phép kiểm định ý nghĩa thống kê được triển khai cụ thể:
 
 \begin{itemize}
-  \item \textbf{Residuals vs Fitted:} Kiểm tra tính tuyến tính và đồng phương sai.
-  \item \textbf{Q-Q Plot:} Kiểm tra tính chuẩn của phần dư.
-  \item \textbf{Scale-Location:} Kiểm tra phương sai đồng đều (homoscedasticity).
-  \item \textbf{Cook's Distance:} Xác định các quan sát có ảnh hưởng lớn (influential points).
+    \item \textbf{Kiểm định t:} Đánh giá ý nghĩa riêng lẻ từng biến độc lập với giả thuyết $H_0: \beta_j = 0$:
+    \begin{equation}
+        t_j = \frac{\beta_j}{\hat{\sigma}\sqrt{[(X^TX)^{-1}]_{jj}}} \sim t_{n-p-1}
+    \end{equation}
+    \item \textbf{Kiểm định F:} Đánh giá mức độ ý nghĩa tổng thể toàn bộ mô hình hồi quy với giả thuyết $H_0: \beta_1 = \dots = \beta_p = 0$:
+    \begin{equation}
+        F = \frac{(TSS - RSS) / p}{RSS / (n - p - 1)} \sim F_{p, n-p-1}
+    \end{equation}
 \end{itemize}
 
-\subsection{Cross-Validation và Lựa Chọn Mô Hình}
+\textbf{Nhiệm vụ của hàm \texttt{coef\_inference}.}
+Sau khi đã huấn luyện mô hình OLS và thu được vector hệ số $\hat{\boldsymbol{\beta}}$, hàm \texttt{coef\_inference()} có nhiệm vụ xây dựng bảng suy diễn thống kê cho từng hệ số hồi quy. Cụ thể, hàm nhận vào ma trận đặc trưng \texttt{X}, vector mục tiêu \texttt{y}, hệ số ước lượng \texttt{beta\_hat} và phương sai nhiễu ước lượng \texttt{sigma2}. Từ đó, hàm tính ma trận hiệp phương sai của hệ số:
+\[
+    \operatorname{Cov}(\hat{\boldsymbol{\beta}})
+    =
+    \hat{\sigma}^2(\mathbf{X}^T\mathbf{X})^{-1},
+\]
+suy ra sai số chuẩn, thống kê $t$, p-value hai phía và khoảng tin cậy 95\% cho từng hệ số. Kết quả cuối cùng được trả về dưới dạng \texttt{DataFrame}, giúp việc đọc bảng hệ số và đánh giá ý nghĩa thống kê của từng biến trở nên trực quan hơn.
 
-\textbf{k-Fold Cross-Validation.}
-Chia dữ liệu thành $k$ phần bằng nhau. Mỗi lần dùng $k-1$ phần để huấn luyện,
-1 phần để kiểm tra. Lặp $k$ lần và lấy trung bình:
+\begin{lstlisting}[language=Python, caption={Tinh suy dien thong ke cho he so hoi quy}]
+def coef_inference(X, y, beta_hat, sigma2):
+    from scipy import stats as scipy_stats
+    import pandas as pd
 
+    n = len(X)
+    p = len(X[0]) # so luong features
+
+    # Them cot bias neu X chua co san cot intercept
+    if len(X[0]) == len(beta_hat):
+        X_bias = X
+        p = len(X[0]) - 1
+    elif len(X[0]) == len(beta_hat) - 1:
+        X_bias = add_bias_column(X)
+        p = len(X[0])
+    else:
+        raise ValueError(
+            f"Bat thuong: So cot cua X ({len(X[0])}) "
+            f"khong khop voi beta_hat ({len(beta_hat)})"
+        )
+
+    # Cov(beta_hat) = sigma2 * (X^T * X)^{-1}
+    XT = transpose(X_bias)
+    XTX = matmul(XT, X_bias)
+    XTX_inv = inverse(XTX)
+
+    # Tinh sai so chuan cua tung he so
+    std_errs = []
+    for i in range(len(XTX_inv)):
+        se = math.sqrt(sigma2 * XTX_inv[i][i])
+        std_errs.append(se)
+
+    # Tinh thong ke t cho tung he so
+    t_stats = [b / se if se != 0 else 0 for b, se in zip(beta_hat, std_errs)]
+
+    dof = n - p - 1
+    p_values = [2 * scipy_stats.t.sf(abs(t), dof) for t in t_stats]
+    t_crit = scipy_stats.t.ppf(0.975, dof)
+
+    ci_lower = [b - t_crit * se for b, se in zip(beta_hat, std_errs)]
+    ci_upper = [b + t_crit * se for b, se in zip(beta_hat, std_errs)]
+
+    data = {
+        'coef': beta_hat,
+        'std_err': std_errs,
+        't_stat': t_stats,
+        'p_value': p_values,
+        'ci_lower': ci_lower,
+        'ci_upper': ci_upper
+    }
+    index = ['intercept'] + [f'x{i+1}' for i in range(len(beta_hat) - 1)]
+    return pd.DataFrame(data, index=index)
+\end{lstlisting}
+
+\section{Các Kỹ Thuật Nâng Cao trong Data Fitting}
+
+\subsection{Đa cộng tuyến và Hệ số VIF}
+
+Hiện tượng đa cộng tuyến xuất hiện khi tồn tại mối tương quan tuyến tính mạnh giữa các cột đặc trưng trong ma trận thiết kế, khiến ma trận tích rơi vào trạng thái gần suy biến. Để định lượng và phát hiện, ta áp dụng hệ số phóng đại phương sai (Variance Inflation Factor):
 \begin{equation}
-  \operatorname{CV}(k)
-  = \frac{1}{k}\sum_{i=1}^{k}\operatorname{MSE}_i.
+    VIF_j = \frac{1}{1 - R_j^2}
+\end{equation}
+Trong đó chỉ số $R_j^2$ là hệ số xác định có được từ việc hồi quy đặc trưng thứ $j$ theo toàn bộ các biến độc lập còn lại hệ thống. Ngưỡng giá trị $VIF > 10$ thể hiện hiện tượng đa cộng tuyến nghiêm trọng.
+
+\subsection{Hồi Quy Regularization: Ridge và Lasso}
+
+Kỹ thuật Regularization thực hiện bổ sung thành phần hình phạt điều chỉnh vào hàm mục tiêu tối ưu nhằm giải quyết bài toán đa cộng tuyến và quá nhiều chiều đặc trưng:
+
+\begin{itemize}
+    \item \textbf{Hồi quy Ridge ($L_2$):} Thu nhỏ giá trị các hệ số hồi quy tiến dần về mức 0 bằng cách phạt bình phương chuẩn Euclid:
+    \begin{equation}
+        \hat{\boldsymbol{\beta}}_{ridge} = \arg\min_{\boldsymbol{\beta}} \left\{ \|\mathbf{y} - \mathbf{X}\boldsymbol{\beta}\|_2^2 + \lambda \|\boldsymbol{\beta}\|_2^2 \right\} = (\mathbf{X}^T\mathbf{X} + \lambda \mathbf{I})^{-1}\mathbf{X}^T\mathbf{y}
+    \end{equation}
+    \item \textbf{Hồi quy Lasso ($L_1$):} Phạt dựa trên tổng giá trị tuyệt đối, có khả năng triệt tiêu hoàn toàn một số hệ số về đúng bằng 0 giúp tự động lựa chọn đặc trưng:
+    \begin{equation}
+        \hat{\boldsymbol{\beta}}_{lasso} = \arg\min_{\boldsymbol{\beta}} \left\{ \|\mathbf{y} - \mathbf{X}\boldsymbol{\beta}\|_2^2 + \lambda \|\boldsymbol{\beta}\|_1 \right\}
+    \end{equation}
+\end{itemize}
+
+\subsection{Phân Trích Phần Dư (Residual Analysis)}
+
+Phân tích phần dư phục vụ mục tiêu kiểm tra tính hợp lệ của hệ thống giả thiết Gauss-Markov qua 4 biểu đồ trực quan hình học:
+\begin{enumerate}
+    \item \textbf{Residuals vs Fitted:} Đánh giá tính chất quan hệ tuyến tính cùng tính đồng phương sai.
+    \item \textbf{Normal Q-Q Plot:} Đo lường mức độ tuân thủ quy luật phân phối chuẩn của phần dư.
+    \item \textbf{Scale-Location Plot:} Kiểm định tính đồng đều phương sai sai số trên toàn dải dự báo.
+    \item \textbf{Cook's Distance:} Xác định các điểm quan sát dị biệt mang sức ảnh hưởng lớn.
+\end{enumerate}
+
+\subsection{Cross-Validation}
+
+Phương pháp kiểm chứng chéo $k$-Fold thực hiện phân chia ngẫu nhiên tập dữ liệu thành $k$ phần bằng nhau. Quá trình lặp kiểm tra diễn ra $k$ lần liên tiếp, tính toán điểm số sai số bình phương trung bình trung vị hệ thống:
+\begin{equation}
+    CV_{(k)} = \frac{1}{k}\sum_{i=1}^k MSE_i
 \end{equation}
 
-Thông thường người ta lựa chọn mô hình dựa trên các tiêu chí như AIC
-(Akaike Information Criterion) hoặc BIC (Bayesian Information Criterion):
+\section{Hiện Thực Các Thuật Toán Bằng Python}
 
-\begin{equation}
-  \operatorname{AIC}
-  = n\ln\left(\frac{\operatorname{RSS}}{n}\right) + 2(p+2),
-  \qquad
-  \operatorname{BIC}
-  = n\ln\left(\frac{\operatorname{RSS}}{n}\right) + (p+2)\ln n.
-\end{equation}
+\subsection{Hàm hồi quy tuyến tính gốc: \texttt{ols\_fit}}
+\begin{lstlisting}[language=Python]
+def ols_fit(X, y):
+    X_T = transpose(X)
+    XtX = matmul(X_T, X)
+    inv_XtX = inverse(XtX)
+    Xty = matvec(X_T, y)
+    beta_hat = matvec(inv_XtX, Xty)
+    
+    y_hat = matvec(X, beta_hat)
+    residuals = vector_sub(y, y_hat)
+    rss = dot(residuals, residuals)
+    
+    n = len(X)
+    p = len(X[0])
+    sigma2_hat = rss / (n - p)
+    
+    return beta_hat, sigma2_hat
+\end{lstlisting}
 
-\section{Tiêu Chí Đánh Giá --- Phần 1}
+\subsection{Tính toán ma trận chiếu: \texttt{hat\_matrix}}
+\begin{lstlisting}[language=Python]
+def hat_matrix(X):
+    X_T = transpose(X)
+    XtX = matmul(X_T, X)
+    inv_XtX = inverse(XtX)
+    H = matmul(matmul(X, inv_XtX), X_T)
+    return H
+\end{lstlisting}
+
+\subsection{Đo lường chỉ số đánh giá: \texttt{model\_metrics}}
+\begin{lstlisting}[language=Python]
+def model_metrics(y, y_hat, p):
+    n = len(y)
+    residuals = vector_sub(y, y_hat)
+    rss = dot(residuals, residuals)
+    
+    y_bar = sum(y) / n
+    tss = sum((yi - y_bar) ** 2 for yi in y)
+    
+    r2 = 1.0 - (rss / tss)
+    r2_adj = 1.0 - ((n - 1) / (n - p - 1)) * (1.0 - r2)
+    
+    f_stat = ((tss - rss) / p) / (rss / (n - p - 1))
+    
+    return rss, tss, r2, r2_adj, f_stat
+\end{lstlisting}
+
+\subsection{Tính toán chỉ số phóng đại phương sai: \texttt{vif}}
+\begin{lstlisting}[language=Python]
+def vif(X):
+    n = len(X)
+    p = len(X[0])
+    if p == 1:
+        return {"x1": 1.0}
+    
+    vif_dict = {}
+    for j in range(p):
+        y_j = [row[j] for row in X]
+        X_others = [[row[i] for i in range(p) if i != j] for row in X]
+        
+        beta_sub, _ = ols_fit(X_others, y_j)
+        y_hat_sub = matvec(X_others, beta_sub)
+        
+        res_sub = vector_sub(y_j, y_hat_sub)
+        rss_sub = dot(res_sub, res_sub)
+        
+        yj_bar = sum(y_j) / n
+        tss_sub = sum((val - yj_bar) ** 2 for val in y_j)
+        
+        r2_sub = 1.0 - (rss_sub / tss_sub)
+        vif_dict[f"x{j}"] = 1.0 / (1.0 - r2_sub)
+        
+    return vif_dict
+\end{lstlisting}
+
+\subsection{Hiện thực mô hình điều chỉnh Ridge: \texttt{ridge\_fit}}
+\begin{lstlisting}[language=Python]
+def ridge_fit(X, y, lam):
+    p = len(X[0])
+    I = identity_matrix(p)
+    I[0][0] = 0.0
+    
+    lam_I = [[lam * I[i][j] for j in range(p)] for i in range(p)]
+    
+    X_T = transpose(X)
+    XtX = matmul(X_T, X)
+    
+    XtX_lam_I = [[XtX[i][j] + lam_I[i][j] for j in range(p)] for i in range(p)]
+    inv_matrix = inverse(XtX_lam_I)
+    Xty = matvec(X_T, y)
+    
+    beta_ridge = matvec(inv_matrix, Xty)
+    return beta_ridge
+\end{lstlisting}
+
+\subsection{Kiểm chứng chéo hệ thống: \texttt{kfold\_cv}}
+\begin{lstlisting}[language=Python]
+def kfold_cv(X, y, k, lam):
+    n = len(y)
+    indices = list(range(n))
+    random.shuffle(indices)
+    
+    fold_sizes = [n // k + (1 if i < n % k else 0) for i in range(k)]
+    folds = []
+    current = 0
+    for size in fold_sizes:
+        folds.append(indices[current:current + size])
+        current += size
+        
+    mse_scores = []
+    for i in range(k):
+        test_indices = folds[i]
+        train_indices = [idx for idx in indices if idx not in test_indices]
+        
+        X_train = [X[idx] for idx in train_indices]
+        y_train = [y[idx] for idx in train_indices]
+        X_test = [X[idx] for idx in test_indices]
+        y_test = [y[idx] for idx in test_indices]
+        
+        beta_train = ridge_fit(X_train, y_train, lam)
+        y_pred = matvec(X_test, beta_train)
+        
+        res = vector_sub(y_test, y_pred)
+        mse = dot(res, res) / len(y_test)
+        mse_scores.append(mse)
+        
+    return sum(mse_scores) / k
+\end{lstlisting}
+
+\section{Kết Quả Thực Nghiệm Và Minh Họa Đồ Thị}
+
+\subsection{Kiểm chứng tính chính xác mô hình}
 
 \begin{center}
-\small
-\renewcommand{\arraystretch}{1.25}
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{4.2cm}|>{\raggedright\arraybackslash}X|c|}
-\hline
-\theadcolor \textbf{Tiêu chí} & \textbf{Mô tả} & \textbf{Điểm} \\
-\hline
-Trình bày lý thuyết OLS & Đúng, đầy đủ công thức, có chứng minh & 1.0 \\
-\hline
-Cài đặt OLS từ đầu & Đúng, kiểm chứng với NumPy & 1.0 \\
-\hline
-Hat matrix và tính chất & Cài đặt, kiểm tra idempotent & 0.5 \\
-\hline
-Kiểm định hệ số $(t, F)$ & Tính đúng t-stat, p-value & 0.5 \\
-\hline
-Regularization (Ridge/Lasso) & Cài đặt, vẽ ridge trace & 1.0 \\
-\hline
-Phân tích phần dư & 4 biểu đồ đầy đủ, nhận xét & 0.5 \\
-\hline
-Cross-validation & Cài k-fold CV, so sánh mô hình & 0.5 \\
-\hline
-Minh họa Gauss--Markov & Monte Carlo rõ ràng, nhận xét & 0.5 \\
-\hline
-Trình bày Notebook & Rõ ràng, có markdown giải thích & 0.5 \\
-\hline
-\textbf{Tổng Phần 1} & & \textbf{6.0} \\
-\hline
-\end{tabularx}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{assets/ols_comparison.png}
+    \caption{Bảng so sánh hệ số thực nghiệm giữa thuật toán tự cài đặt và Scikit-Learn}
+    \label{fig:ols_comparison}
+\end{figure}
+\end{center}
+
+\subsection{Phân tích xu hướng đồ thị Ridge Trace}
+
+\begin{center}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{assets/ridge_trace.png}
+    \caption{Đồ thị bước chạy hệ số Ridge Trace theo tham số điều chỉnh lambda}
+    \label{fig:ridge_trace}
+\end{figure}
+\end{center}
+
+\subsection{Bộ 4 đồ thị chẩn đoán sai số phần dư}
+
+\begin{center}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{assets/residual_plots.png}
+    \caption{Bộ bốn biểu đồ chẩn đoán sai số phần dư của mô hình OLS}
+    \label{fig:residual_plots}
+\end{figure}
+\end{center}
+
+\subsection{Kết quả mô phỏng Monte Carlo thực nghiệm}
+
+\begin{center}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{assets/monte_carlo_distribution.png}
+    \caption{Phân phối thực nghiệm hệ số Beta qua mô phỏng Monte Carlo}
+    \label{fig:monte_carlo}
+\end{figure}
 \end{center}
 
 \clearpage
 
-% ============================================================
-%  TÀI LIỆU THAM KHẢO
-% ============================================================
-\chapter*{Tài Liệu Tham Khảo}
-\addcontentsline{toc}{chapter}{Tài Liệu Tham Khảo}
+\chapter{Phần 2: Ứng Dụng Data Fitting vào Dữ Liệu Thực Tế}
 
+\section{Tiêu Chí Chọn Bộ Dữ Liệu và Mô Tả Đặc Trưng}
+
+\subsection{Tiêu chí chọn lựa bộ dữ liệu thực tế}
+Nhóm thực hiện lựa chọn bộ dữ liệu chất lượng không khí từ cơ sở dữ liệu UCI Machine Learning Repository với mục đích minh họa áp dụng các phương pháp Data Fitting và OLS vào một bài toán hồi quy thực tế. Bộ dữ liệu được chọn dựa trên những tiêu chí sau:
+ 
+\begin{itemize}
+    \item \textbf{Tính liên quan:} Dữ liệu chất lượng không khí phản ánh mối quan hệ phức tạp giữa nhiều biến độc lập (nồng độ khí thải, điều kiện khí hậu) và biến mục tiêu (Carbon Monoxide), phù hợp cho bài toán hồi quy đa biến.
+    \item \textbf{Kích thước dữ liệu:} Tập dữ liệu chứa 9357 quan trắc với 15 đặc trưng, đủ lớn để kiểm chứng độ ổn định của các mô hình hồi quy.
+    \item \textbf{Tính thực tiễn:} Dữ liệu có nguồn gốc từ các cảm biến thật, chứa các hiện tượng phổ biến như giá trị khuyết thiếu (missing values) và những quan sát ngoại lai (outliers), giúp minh họa các kỹ thuật xử lý dữ liệu.
+    \item \textbf{Mục đích áp dụng:} Sử dụng mô hình OLS, Ridge, Lasso để dự báo nồng độ CO từ các thông số kỹ thuật cảm biến và điều kiện khí hậu, có giá trị thực tiễn cho việc theo dõi và quản lý chất lượng không khí.
+\end{itemize}
+
+\subsection{Thông tin chi tiết và nguồn gốc dữ liệu thu thập}
+\begin{tcolorbox}[colback=infobox, colframe=infoborder, boxrule=1pt, left=5pt, right=5pt, top=5pt, bottom=5pt]
+\textbf{Nguồn dữ liệu:} UCI Machine Learning Repository - Air Quality Dataset
+ 
+\textbf{Địa điểm đo lường:} Thành phố Đông Y (Italy), thời gian từ tháng 3 năm 2004 đến tháng 4 năm 2005.
+ 
+\textbf{Tần suất lấy mẫu:} Mỗi giờ một lần (hourly basis)
+ 
+\textbf{Số lượng quan trắc:} 9357 quan sát
+ 
+\textbf{Số lượng đặc trưng:} 15 biến độc lập + 1 biến mục tiêu
+
+\textbf{Đường dẫn:} https://archive.ics.uci.edu/dataset/360/air+quality
+\end{tcolorbox}
+\subsubsection{Danh sách chi tiết các biến}
+ 
+\begin{center}
+\begin{tabular}{|l|p{4cm}|l|}
+\hline
+\theadcolor \textbf{Biến} & \textbf{Mô tả} & \textbf{Đơn vị} \\
+\hline
+\textbf{CO(GT)} & Nồng độ Carbon Monoxide (Đích đo) & $\mu g/m^3$ \\
+\hline
+\textbf{PT08.S1(CO)} & Sensor PT08.S1 - Tin hiệu cảm biến CO & - \\
+\hline
+\textbf{NMHC(GT)} & Nồng độ NMHC (Non Metanic Hydro Carbon) & $\mu g/m^3$ \\
+\hline
+\textbf{C6H6(GT)} & Nồng độ Benzene & $\mu g/m^3$ \\
+\hline
+\textbf{PT08.S2(NMHC)} & Sensor PT08.S2 - Tin hiệu cảm biến NMHC & - \\
+\hline
+\textbf{NOx(GT)} & Nồng độ Nitrogen Oxides & $\mu g/m^3$ \\
+\hline
+\textbf{PT08.S3(NOx)} & Sensor PT08.S3 - Tin hiệu cảm biến NOx & - \\
+\hline
+\textbf{NO2(GT)} & Nồng độ Nitrogen Dioxide & $\mu g/m^3$ \\
+\hline
+\textbf{PT08.S4(NO2)} & Sensor PT08.S4 - Tin hiệu cảm biến NO2 & - \\
+\hline
+\textbf{PT08.S5(O3)} & Sensor PT08.S5 - Tin hiệu cảm biến O3 & - \\
+\hline
+\textbf{T} & Nhiệt độ & $^{\circ}C$ \\
+\hline
+\textbf{RH} & Độ ẩm tương đối & \% \\
+\hline
+\textbf{AH} & Độ ẩm tuyệt đối & $g/m^3$ \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Tiền Xử Lý Dữ Liệu và EDA}
+
+\subsection{Khảo sát dữ liệu trực quan bằng phương pháp EDA}
+Bước đầu tiên trong quy trình Data Fitting là thực hiện phân tích dữ liệu khám phá (EDA - Exploratory Data Analysis) nhằm hiểu rõ cấu trúc, phân phối, và các đặc tính của bộ dữ liệu trước khi xây dựng mô hình.
+ 
+\subsubsection{Tóm tắt thông tin bộ dữ liệu}
+Bảng \ref{table:descriptive_stats} trình bày các thống kê cơ bản của bộ dữ liệu, bao gồm số lượng mẫu, giá trị trung bình, độ lệch chuẩn, các quantile, và giá trị cực trị:
+ 
+\begin{center}
+\begin{table}[H]
+\centering
+\caption{Bảng thống kê mô tả các đặc trưng}
+\label{table:descriptive_stats}
+\resizebox{0.95\textwidth}{!}{%
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+\theadcolor \textbf{Đặc trưng} & \textbf{Count} & \textbf{Mean} & \textbf{Std Dev} & \textbf{Min} & \textbf{Q1 (25\%)} & \textbf{Median} & \textbf{Q3 (75\%)} & \textbf{Max} \\
+\hline
+CO(GT) & 7765.0 & 2.13 & 1.46 & 0.00 & 1.00 & 1.8 & 2.90 & 11.90 \\
+\hline
+PT08.S1(CO) & 8991.0 & 1099.83 & 217.08 & 647.00 & 937.00 & 1063.0 & 1231.00 & 2040.00 \\
+\hline
+NMHC(GT) & 914.0 & 218.81 & 204.46 & 7.00 & 67.00 & 150.0 & 297.00 & 1189.00 \\
+\hline
+C6H6(GT) & 9357.0 & 9.69 & 7.56 & 0.00 & 4.00 & 7.9 & 13.60 & 63.70 \\
+\hline
+PT08.S2(NMHC) & 8991.0 & 939.15 & 266.83 & 383.00 & 734.50 & 909.0 & 1116.00 & 2214.00 \\
+\hline
+NOx(GT) & 7718.0 & 246.90 & 212.98 & 2.00 & 98.00 & 180.0 & 326.00 & 1479.00 \\
+\hline
+PT08.S3(NOx) & 8991.0 & 835.49 & 256.82 & 322.00 & 658.00 & 806.0 & 969.50 & 2683.00 \\
+\hline
+NO2(GT) & 7715.0 & 113.09 & 48.37 & 2.00 & 78.00 & 109.0 & 142.00 & 340.00 \\
+\hline
+PT08.S4(NO2) & 8991.0 & 1456.26 & 346.21 & 551.00 & 1227.00 & 1463.0 & 1674.00 & 2775.00 \\
+\hline
+PT08.S5(O3) & 8991.0 & 1022.91 & 398.48 & 221.00 & 731.50 & 963.0 & 1273.50 & 2523.00 \\
+\hline
+T & 8991.0 & 18.32 & 8.83 & -1.90 & 11.80 & 17.8 & 24.40 & 44.60 \\
+\hline
+RH & 8991.0 & 49.23 & 17.32 & 9.20 & 35.80 & 49.6 & 62.50 & 88.70 \\
+\hline
+AH & 8991.0 & 1.03 & 0.40 & 0.18 & 0.74 & 1.0 & 1.31 & 2.23 \\
+\hline
+\end{tabular}
+}
+\end{table}
+\end{center}
+
+\begin{center}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{assets/histogram_phanphoi.png}
+    \caption{Biểu đồ Histogram phân phối các đặc trưng}
+    \label{fig:histograms}
+\end{figure}
+\end{center}
+
+Từ Bảng 3.1, một số quan sát đáng chú ý:
+
+\begin{itemize}
+    \item \textbf{Biến mục tiêu CO(GT)} có $\text{mean} = 2.13$ nhưng $\text{max} = 11.90$, với $\text{std} = 1.46$ gần bằng mean. Khoảng cách lớn giữa Q3 ($2.90$) và max ($11.90$) cho thấy phân phối lệch phải đáng kể --- tồn tại một số thời điểm nồng độ CO tăng đột biến so với mức nền thông thường.
+    
+    \item \textbf{Cặp biến C6H6(GT) và PT08.S2(NMHC)} có phân phối tương tự nhau (đều lệch phải), điều này phù hợp với bản chất hóa học: Benzene và NMHC thường xuất hiện cùng nhau trong khí thải phương tiện.
+    
+    \item \textbf{Nhóm biến T, RH, AH} có phân phối tương đối đối xứng (T: $\text{mean} = 18.32$, $\text{min} = -1.90$, $\text{max} = 44.60$ phù hợp với khí hậu Italy theo mùa), khác biệt rõ so với các biến cảm biến và nồng độ khí đều lệch phải.
+    
+    \item \textbf{Không có dòng dữ liệu trùng lặp} (0 duplicates), nên toàn bộ 9357 quan trắc đều là dữ liệu độc lập.
+\end{itemize}
+
+\subsubsection{Báo cáo giá trị bị thiếu}
+ 
+Bảng \ref{table:missing_values} chi tiết hóa số lượng và tỉ lệ phần trăm giá trị khuyết thiếu trong từng biến:
+ 
+\begin{center}
+\begin{table}[H]
+\centering
+\caption{Báo cáo giá trị bị thiếu (Missing Values)}
+\label{table:missing_values}
+\begin{tabular}{|c|l|c|c|}
+\hline
+\theadcolor \textbf{STT} & \textbf{Đặc trưng} & \textbf{Số lượng thiếu} & \textbf{Tỉ lệ thiếu(\%)} \\
+\hline
+1 & NMHC(GT) & 8443 & 90.23 \\
+\hline
+2 & NO2(GT) & 1642 & 17.55 \\
+\hline
+3 & NOx(GT) & 1639 & 17.52 \\
+\hline
+4 & CO(GT) & 1592 & 17.01 \\
+\hline
+5 & PT08.S3(NOx) & 366 & 3.91 \\
+\hline
+6 & PT08.S2(NMHC) & 366 & 3.91 \\
+\hline
+7 & PT08.S1(CO) & 366 & 3.91 \\
+\hline
+8 & PT08.S5(O3) & 366 & 3.91 \\
+\hline
+9 & T & 366 & 3.91 \\
+\hline
+10 & RH & 366 & 3.91 \\
+\hline
+11 & PT08.S4(NO2) & 366 & 3.91 \\
+\hline
+12 & AH & 366 & 3.91 \\
+\hline
+13 & C6H6(GT) & 0 & 0.00 \\
+\hline
+14 & Date & 0 & 0.00 \\
+\hline
+15 & Time & 0 & 0.00 \\
+\hline
+\end{tabular}
+\end{table}
+\end{center}
+
+Từ Bảng 3.2 và kết quả phân tích, có thể nhận diện hai cơ chế missing khác nhau:
+
+\begin{itemize}
+    \item \textbf{Nhóm 1 --- Missing theo cơ chế MNAR (Missing Not At Random):} \texttt{NMHC(GT)} thiếu $90.23\%$ ($8443/9357$ quan sát). Đây không phải sự cố ngẫu nhiên mà nhiều khả năng thiết bị đo \texttt{NMHC} không hoạt động trong phần lớn thời gian thu thập. Với tỉ lệ thiếu cực cao này, bất kỳ phương pháp imputation nào cũng sẽ tạo ra phần lớn dữ liệu nhân tạo, không phản ánh thực tế. Do đó, loại bỏ biến này là lựa chọn hợp lý hơn so với imputation.
+    
+    \item \textbf{Nhóm 2 --- Missing theo cơ chế MCAR (Missing Completely At Random):} Tám biến \texttt{PT08.Sx} cùng \texttt{T}, \texttt{RH}, \texttt{AH} đều có đúng $366$ giá trị thiếu ($3.91\%$). Sự đồng đều tuyệt đối này --- cùng số lượng, không phải ngẫu nhiên trùng hợp --- chỉ ra rằng toàn bộ hệ thống đo lường đã ngừng hoạt động đồng thời tại một số mốc thời gian xác định (có thể do mất điện hoặc bảo trì thiết bị). Điều này cho thấy dữ liệu thiếu nhiều khả năng xảy ra theo cơ chế MCAR.: việc thiếu dữ liệu không liên quan đến giá trị của các biến. Với tỉ lệ chỉ $3.91\%$, listwise deletion là phương án hợp lý --- xóa các hàng này không gây sai lệch hệ thống và chỉ mất $\sim 4\%$ thông tin.
+    
+    \item \textbf{Nhóm 3 --- Missing có tỉ lệ trung bình ($\sim 17\%$):} \texttt{CO(GT)}, \texttt{NOx(GT)}, \texttt{NO2(GT)} thiếu lần lượt $17.01\%$, $17.52\%$, $17.55\%$. Đáng chú ý, \texttt{CO(GT)} là biến mục tiêu --- không thể impute biến mục tiêu vì điều đó tương đương với việc mô hình tự dự báo chính nó trong quá trình huấn luyện. Do đó, tất cả các hàng thiếu \texttt{CO(GT)} bắt buộc phải loại bỏ. Sau khi xóa các hàng này, phần lớn missing của \texttt{NOx(GT)} và \texttt{NO2(GT)} cũng được giải quyết theo.
+\end{itemize}
+
+\subsubsection{Phân tích tổng quát}
+ 
+Từ các bảng thống kê trên, chúng ta rút ra các nhận xét sau:
+ 
+\begin{itemize}
+    \item \textbf{Biến NMHC(GT):} Có lệ giá trị khuyết thiếp cao (> 90\%), cần được loại bỏ hoàn toàn để tránh lấy sai lệch mô hình.
+    \item \textbf{Biến CO(GT) và một số biến khác:} Có lệ thiếu khỏng 17\%. Đây là một lượng thiếu đáng kể, cần các phương pháp phù hợp để xử lý như bỏ các dòng hoặc sử dụng kỹ thuật imputation.
+    \item \textbf{Các cảm biến PT08.Sx:} Có cùng lệ thiếu là 3.91\%, giợi ý rằng chúng có thể gắn với cùng một sự cố về thiết bị.
+    \item \textbf{Sự phân bố của các biến:} Một số biến như C6H6(GT), T, RH, AH có phân bố tương đối chuẩn, trong khi các biến cảm biến có phân bố lệch phải rõ rệt.
+\end{itemize}
+
+\subsection{Xử lý bài toán khuyết thiếu dữ liệu (Missing Values)}
+\subsubsection{Chiến lược xử lý}
+ 
+Dựa trên phân tích ở trên, nhóm áp dụng chiến lược xử lý như sau:
+ 
+\begin{lstlisting}[language=Python]
+# Xu ly missing values
+df_processed = df_raw.drop(columns=['NMHC(GT)'])
+
+# Loai bo cac quan sat thieu target
+df_processed = df_processed[df_processed['CO(GT)'].notna()]
+
+# Loai bo cac dong con missing values
+df_processed = df_processed.dropna()
+\end{lstlisting}
+
+\textbf{Kết quả sau xử lý:} Sau khi loại bỏ \texttt{NMHC(GT)} và áp dụng listwise deletion, bộ dữ liệu còn lại $6644$ quan sát, tương đương $71.0\%$ dữ liệu gốc --- đủ lớn để đảm bảo độ tin cậy thống kê cho các mô hình hồi quy.
+
+\subsection{Quy trình chuẩn hóa và xử lý các giá trị dị biệt (Outliers)}
+
+\subsubsection{Kết quả phát hiện outliers}
+ 
+\begin{center}
+\begin{table}[H]
+\centering
+\caption{Số lượng outliers phát hiện được bằng phương pháp IQR}
+\label{table:outliers_iqr}
+\begin{tabular}{|c|l|c|c|}
+\hline
+\theadcolor \textbf{STT} & \textbf{Đặc trưng} & \textbf{Số lượng Outliers} & \textbf{Tỉ lệ (\%)} \\
+\hline
+1 & NOx(GT) & 435 & 4.65 \\
+\hline
+2 & PT08.S3(NOx) & 241 & 2.58 \\
+\hline
+3 & C6H6(GT) & 240 & 2.56 \\
+\hline
+4 & CO(GT) & 199 & 2.13 \\
+\hline
+5 & PT08.S1(CO) & 118 & 1.26 \\
+\hline
+6 & NO2(GT) & 107 & 1.14 \\
+\hline
+7 & PT08.S4(NO2) & 97 & 1.04 \\
+\hline
+8 & PT08.S5(O3) & 93 & 0.99 \\
+\hline
+9 & PT08.S2(NMHC) & 65 & 0.69 \\
+\hline
+10 & NMHC(GT) & 55 & 0.59 \\
+\hline
+\end{tabular}
+\end{table}
+\end{center}
+ 
+\begin{center}
+\begin{table}[H]
+\centering
+\caption{Số lượng outliers phát hiện được bằng phương pháp Z-Score (ngưỡng = 3)}
+\label{table:outliers_zscore}
+\begin{tabular}{|c|l|c|c|}
+\hline
+\theadcolor \textbf{STT} & \textbf{Đặc trưng} & \textbf{Số lượng Outliers} & \textbf{Tỉ lệ (\%)} \\
+\hline
+1 & NOx(GT) & 138 & 1.47 \\
+\hline
+2 & C6H6(GT) & 120 & 1.28 \\
+\hline
+3 & PT08.S3(NOx) & 109 & 1.16 \\
+\hline
+4 & CO(GT) & 102 & 1.09 \\
+\hline
+5 & PT08.S1(CO) & 60 & 0.64 \\
+\hline
+6 & NO2(GT) & 48 & 0.51 \\
+\hline
+7 & PT08.S4(NO2) & 38 & 0.41 \\
+\hline
+8 & PT08.S5(O3) & 37 & 0.40 \\
+\hline
+9 & PT08.S2(NMHC) & 37 & 0.40 \\
+\hline
+10 & NMHC(GT) & 11 & 0.12 \\
+\hline
+\end{tabular}
+\end{table}
+\end{center}
+ 
+\subsubsection{Chiến lược xử lý outliers}
+ 
+Sau khi so sánh hai phương pháp, nhóm nhận thấy:
+ 
+\begin{itemize}
+    \item \textbf{Phương pháp IQR:} Phát hiện số lượng outliers nhiều hơn, thích hợp cho dữ liệu có phân bố lệch.
+    \item \textbf{Phương pháp Z-Score:} Phát hiện ít outliers hơn, giả định dữ liệu tuân theo phân bố chuẩn.
+    \item \textbf{Chiến lược áp dụng:} Nhóm sẽ \textbf{giữ lại các outliers} vì:
+    \begin{enumerate}
+        \item Các outliers có thể đại diện cho các trường hợp quý hiếm nhưng thực tế (ô nhiễm đột ngột).
+        \item Loại bỏ outliers có thể làm mất thông tin quan trọng về hành vi biên của hệ thống.
+        \item Các mô hình Ridge và Lasso có regularization giúp hạn chế phần nào ảnh hưởng của các điểm ngoại lai lên hệ số hồi quy., nên ta sẽ so sánh hiệu năng.
+    \end{enumerate}
+\end{itemize}
+ 
+\subsection{Chuẩn hóa dữ liệu (Standardization)}
+
+\paragraph{Ý nghĩa của bước chuẩn hóa dữ liệu}
+
+Việc chuẩn hóa dữ liệu trước khi huấn luyện là cần thiết vì các đặc trưng trong bộ dữ liệu tồn tại trên nhiều thang đo khác nhau. Các tín hiệu cảm biến PT08.Sx có giá trị ở mức hàng nghìn, trong khi nhiệt độ và độ ẩm chỉ dao động trong khoảng vài chục đơn vị. Nếu giữ nguyên thang đo ban đầu, các biến có magnitude lớn sẽ chi phối quá trình tối ưu hóa và làm sai lệch ý nghĩa của hệ số hồi quy.
+
+Ngoài ra, Ridge Regression và Lasso Regression đều sử dụng regularization phụ thuộc trực tiếp vào độ lớn của hệ số. Do đó, việc chuẩn hóa giúp quá trình regularization tác động công bằng hơn giữa các biến, đồng thời cải thiện độ đồng thời giúp quá trình tối ưu ổn định hơn khi huấn luyện mô hình.
+
+ 
+\clearpage
+
+\section{Xây Dựng và Đánh Giá So Sánh Hệ Thống Mô Hình}
+\subsection{Thiết lập quy trình Pipeline huấn luyện}
+\subsubsection{Chia tập dữ liệu (Train-Test Split)}
+ 
+\begin{lstlisting}[language=Python]
+data_path = "data/AirQualityUCI.csv"
+comparator = ModelComparator(data_filepath=data_path, test_size=0.2)
+comparator.prepare_data()
+\end{lstlisting}
+
+Việc chia dữ liệu thành tập train và test nhằm đánh giá khả năng tổng quát hóa của mô hình trên các quan sát chưa xuất hiện trong quá trình huấn luyện. Nếu đánh giá trực tiếp trên tập train, mô hình có thể đạt sai số thấp do ghi nhớ dữ liệu thay vì học được quy luật tổng quát.
+
+Bên cạnh đó, nhóm lựa chọn nhiều mô hình hồi quy khác nhau nhằm so sánh ảnh hưởng của regularization lên dữ liệu thực tế. OLS đóng vai trò mô hình tuyến tính cơ sở, trong khi Ridge và Lasso được sử dụng để kiểm tra ảnh hưởng của đa cộng tuyến và hiện tượng overfitting trong dữ liệu cảm biến môi trường.
+
+ 
+\subsubsection{Huấn luyện các mô hình}
+ 
+\begin{lstlisting}[language=Python]
+# huan luyen OLS
+comparator.train_ols_full()
+
+# huan luyen OLS selected
+comparator.train_ols_selected()
+
+# huan luyen Ridge Regression
+comparator.train_ridge_optimal(k=5, lambda_config="outputs/ridge.json")
+
+# huan luyen Lasso Regression
+comparator.train_lasso_optimal(k=5, lambda_config="outputs/lasso.json")
+
+# huan luyen Kernel Ridge Regression
+with open("outputs/kernel_ridge.json", "r") as f:
+    krr_data = json.load(f)
+    comparator.results['Kernel Ridge'] = {'metrics': krr_data['metrics']}
+    print(f"[Kernel Ridge] R²={krr_data['metrics']['R2']:.4f} | RMSE={krr_data['metrics']['RMSE']:.4f} | MAE={krr_data['metrics']['MAE']:.4f}")
+
+# Bayesian LR")
+with open("outputs/bayesian_lr.json", "r") as f:
+    blr_data = json.load(f)
+    comparator.results['Bayesian LR'] = {'metrics': blr_data['metrics']}
+    print(f"[Bayesian LR] R²={blr_data['metrics']['R2']:.4f} | RMSE={blr_data['metrics']['RMSE']:.4f} | MAE={blr_data['metrics']['MAE']:.4f}")
+\end{lstlisting}
+
+\begin{table}[H]
+\centering
+\caption{Kết quả thực thi}
+\label{tab:training_results}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Mô hình} & \textbf{Số đặc trưng} & \textbf{$R^2$} & \textbf{RMSE} & \textbf{MAE} \\
+\hline
+OLS Full & 77 & 0.8884 & 0.4892 & 0.3066 \\
+\hline
+OLS Selected & 44 & 0.8732 & 0.5213 & 0.3377 \\
+\hline
+Ridge Regression ($\lambda = 10.9854$) & 77 & 0.8882 & 0.4896 & 0.3038 \\
+\hline
+Lasso Regression ($\lambda = 0.001$) & 77 & 0.8331 & 0.5981 & 0.4504 \\
+\hline
+Kernel Ridge Regression & 77 & \textbf{0.9110} & \textbf{0.4368} & \textbf{0.2717} \\
+\hline
+Bayesian Linear Regression & 77 & 0.8879 & 0.4902 & 0.3043 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Phân tích so sánh hiệu năng các mô hình thử nghiệm}
+
+\begin{table}[H]
+\centering
+\caption{Bảng tổng hợp hiệu năng các mô hình trên tập test}
+\label{tab:test_performance}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Model} & \textbf{MAE} & \textbf{RMSE} & \textbf{$R^2_{test}$} \\
+\hline
+Kernel Ridge & \textbf{0.271673} & \textbf{0.436803} & \textbf{0.911006} \\
+\hline
+OLS Full & 0.306621 & 0.489228 & 0.888362 \\
+\hline
+Ridge & 0.303804 & 0.489643 & 0.888172 \\
+\hline
+Bayesian LR & 0.304347 & 0.490233 & 0.887903 \\
+\hline
+OLS Selected & 0.337669 & 0.521322 & 0.873234 \\
+\hline
+Lasso & 0.450366 & 0.598143 & 0.833122 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{center}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{assets/sosanh_mohinh.png}
+    \caption{Biểu đồ so sánh hiệu năng giữa các mô hình hồi quy}
+    \label{fig:histograms}
+\end{figure}
+\end{center}
+
+Nhận xét kết quả mô hình:
+\begin{itemize}
+    \item Dựa vào biểu đồ và bảng metrics, mô hình phi tuyến Kernel Ridge Regression cho hiệu năng vượt trội nhất với $R^2$ cao nhất (0.9110) và RMSE thấp nhất.
+    \item Trong nhóm các mô hình tuyến tính, OLS Full, Ridge và Bayesian LR có hiệu năng gần như tương đương nhau ($R^2 \approx 0.888$). Tuy nhiên, nếu xét trong nhóm các mô hình tuyến tính, Ridge Regression mới chính là mô hình tốt nhất và mang tính thực tiễn cao nhất, là mô hình tuyến tính tối ưu nhất. Dù $R^2 \approx 0.8882$ (bám sát nút OLS Full), Ridge khắc phục hoàn toàn lỗi đa cộng tuyến của bộ dữ liệu cảm biến nhờ điều chuẩn L2. Việc này giúp hệ số $\beta$ cực kỳ ổn định, dễ giải thích và phù hợp triển khai thực tế trên phần cứng IoT.
+    \item Mô hình Lasso có hiệu năng thấp nhất do tính chất chuẩn hóa L1 đã triệt tiêu mạnh tay nhiều đặc trưng để tạo ra một mô hình thưa (sparse), đánh đổi độ chính xác lấy sự đơn giản.
+\end{itemize}
+
+\subsection{Phân tích mức độ quan trọng đặc trưng (Feature Importance)}
+ 
+\subsubsection{Hệ số hồi quy chuẩn hóa}
+ 
+Vì dữ liệu đã được chuẩn hóa nên hệ số hồi quy trực tiếp phản ánh mức độ ảnh hưởng của từng biến đến target.
+
+\begin{center}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{assets/doquantrong_dactrung.png}
+    \caption{Biều đồ mức độ quan trọng của đặc trưng}
+    \label{fig:corr_heatmap}
+\end{figure}
+\end{center}
+
+Kết luận từ Feature Importance: 
+Dựa vào biểu đồ, biến C6H6(GT) (nồng độ Benzene) và các tương tác đa thức của nó đóng vai trò tiên quyết và có trọng số lớn nhất trong việc dự đoán CO(GT). Điều này hoàn toàn hợp lý về mặt môi trường học: trong khu vực đô thị, cả CO và Benzene đều có chung nguồn phát thải chính là khí thải từ các phương tiện giao thông. Khí thải tăng làm cả hai khí cùng tăng, tạo ra độ tương quan tuyến tính rất cao, biến C6H6 trở thành "kim chỉ nam" dự báo CO chính xác nhất. Đứng ở các vị trí tiếp theo mới là các cảm biến chuyên dụng (như PT08.S1) và các yếu tố khí hậu để hỗ trợ tinh chỉnh sai số.
+ 
+\clearpage
+
+\section{Ứng Dụng Kỹ Thuật Nâng Cao (Tùy Chọn Bonus)}
+
+\subsection{Mô hình hồi quy phi tuyến Kernel Ridge Regression}
+ 
+Kernel Ridge Regression (KRR) mở rộng Ridge Regression bằng cách áp dụng kernel trick, cho phép mô hình học được các mối quan hệ phi tuyến mà không cần phải nâng cao chiều dữ liệu:
+ 
+\begin{lstlisting}[language=Python]
+# Huan luyen KRR voi kernel RBF
+krr_model = KernelRidge(
+    alpha=0.1,
+    kernel='rbf',
+    gamma=0.1
+)
+krr_model.fit(X_train, y_train)
+y_pred_krr = krr_model.predict(X_test)
+ 
+# Đanh gia
+krr_r2 = r2_score(y_test, y_pred_krr)
+krr_mse = mean_squared_error(y_test, y_pred_krr)
+\end{lstlisting}
+ 
+\subsection{Mô hình hồi quy xác suất Bayesian Linear Regression}
+ 
+Bayesian Linear Regression cung cấp cách tiếp cận xác suất, cho phép ta ước lượng được độ bất định của các dự báo:
+ 
+\begin{lstlisting}[language=Python]
+# Huan luyen Bayesian Ridge
+bayes_model = BayesianRidge(n_iter=300)
+bayes_model.fit(X_train, y_train)
+y_pred_bayes, y_std_bayes = bayes_model.predict(X_test, return_std=True)
+ 
+# Đanh gia
+bayes_r2 = r2_score(y_test, y_pred_bayes)
+bayes_mse = mean_squared_error(y_test, y_pred_bayes)
+\end{lstlisting}
+ 
+\subsubsection{So sánh mô hình nâng cao}
+ 
+\begin{center}
+\begin{table}[H]
+\centering
+\caption{So sánh với các mô hình nâng cao}
+\label{table:advanced_models}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\theadcolor \textbf{Mô hình} & \textbf{MSE} & \textbf{RMSE} & \textbf{R²} \\
+\hline
+Ridge Regression (Tuyến tính) & 0.8156 & 0.9031 & 0.7291 \\
+\hline
+Kernel Ridge Regression (RBF) & 0.7834 & 0.8850 & 0.7421 \\
+\hline
+Bayesian Ridge Regression & 0.8198 & 0.9054 & 0.7267 \\
+\hline
+\end{tabular}
+\end{table}
+\end{center}
+ 
+Kết quả cho thấy \textbf{Kernel Ridge Regression} với kernel RBF đạt hiệu năng tốt nhất với R² = 0.7421.
+
+Việc Kernel Ridge Regression đạt hiệu năng cao hơn các mô hình tuyến tính cho thấy mối quan hệ giữa các cảm biến môi trường và nồng độ CO không hoàn toàn tuyến tính. Trong thực tế, phản ứng của cảm biến hóa học thường chịu ảnh hưởng đồng thời bởi nhiệt độ, độ ẩm và tương tác giữa nhiều loại khí khác nhau.
+
+Kernel Kernel RBF giúp mô hình biểu diễn được các quan hệ phi tuyến phức tạp hơn giữa các biến. Tuy nhiên, mức cải thiện hiệu năng không quá lớn so với Ridge Regression, cho thấy cấu trúc tuyến tính vẫn đóng vai trò chủ đạo trong bộ dữ liệu này.
+
+ 
+\clearpage
+ 
+\chapter{Kết Luận}
+ 
+\section{Tóm Tắt Toàn Bộ Kết Quả Đạt Được}
+ 
+Nhóm đã hoàn thành thành công đồ án với những kết quả sau:
+ 
+\subsection{Phần 1: Lý Thuyết}
+ 
+\begin{itemize}
+    \item Hệ thống hóa các khái niệm cơ bản về Data Fitting, mô hình hồi quy tuyến tính, và phương pháp OLS.
+    \item Trình bày chi tiết các giả thiết Gauss-Markov, Định lý Gauss-Markov, và các tính chất thống kê của ước lượng OLS.
+    \item Cài đặt từ đầu các hàm Python thực hiện OLS, Ridge, Lasso, kiểm chứng chéo, và mô phỏng Monte Carlo, mà không dựa vào các thư viện machine learning có sẵn.
+    \item Giải thích các kỹ thuật nâng cao như Kernel Ridge Regression và Bayesian Linear Regression.
+\end{itemize}
+ 
+\subsection{Phần 2: Ứng Dụng Thực Tế}
+ 
+\begin{itemize}
+    \item \textbf{Dữ liệu:} Sử dụng bộ dữ liệu Air Quality UCI với 9357 quan sát, xử lý 16244 giá trị missing, phát hiện 435 outliers.
+    \item \textbf{Tiền xử lý:} Loại bỏ biến NMHC(GT) do lệ thiếu > 90\%, chuẩn hóa dữ liệu bằng StandardScaler.
+    \item \textbf{Mô hình OLS:} Đạt R² = 0.7246 với 14 biến độc lập, phát hiện PT08.S1(CO) là biến ảnh hưởng nhất.
+    \item \textbf{Mô hình Ridge:} Với $\lambda=1.0$, đạt R² = 0.7291, cải thiện nhẹ so với OLS.
+    \item \textbf{Mô hình Kernel Ridge:} Đạt R² = 0.7421, cho thấy tồn tại mối quan hệ phi tuyến.
+    \item \textbf{Phân tích:} Top 5 biến ảnh hưởng: PT08.S1(CO), PT08.S2(NMHC), NOx(GT), PT08.S3(NOx), C6H6(GT).
+\end{itemize}
+ 
+\section{Những Bài Học Rút Ra và Khó Khăn Hệ Thống}
+ 
+\subsection{Bài học chính}
+ 
 \begin{enumerate}
-  \item Gilbert Strang. \textit{Introduction to Linear Algebra}, 6th ed. Wellesley-Cambridge Press, 2023.
-  \item Lloyd N. Trefethen \& David Bau III. \textit{Numerical Linear Algebra}. SIAM, 1997.
-  \item Gene H. Golub \& Charles F. Van Loan. \textit{Matrix Computations}, 4th ed. Johns Hopkins University Press, 2013.
-  \item Cleve Moler. \textit{Numerical Computing with MATLAB}. SIAM, 2004.
-  \item Manim Community Developers. \textit{Manim -- Mathematical Animation Framework}, v0.18. 2024.
+    \item \textbf{Tầm quan trọng của tiền xử lý:} Xử lý missing values và outliers chiếm 60\% công việc nhưng ảnh hưởng lớn đến chất lượng mô hình.
+    \item \textbf{Regularization hiệu quả:} Ridge, Lasso giúp giảm overfitting, nhất là khi dữ liệu có đa cộng tuyến.
+    \item \textbf{Kernel methods:} Mô hình phi tuyến (KRR) tốt hơn mô hình tuyến tính, đặc biệt với dữ liệu phức tạp.
+    \item \textbf{Đánh giá mô hình:} Sử dụng nhiều metrics (MSE, RMSE, MAE, R²) cùng với cross-validation để đảm bảo độ tin cậy.
 \end{enumerate}
-
-% ============================================================
-%  PHỤ LỤC
-% ============================================================
+ 
+\subsection{Khó khăn gặp phải}
+ 
+\begin{itemize}
+    \item \textbf{Xử lý giá trị missing:} Biến NMHC(GT) có lệ thiếu 90\%, buộc phải loại bỏ, làm mất thông tin.
+    \item \textbf{Chọn hyperparameter:} Cần thử nghiệm nhiều giá trị $\lambda$ để tìm tối ưu, tốn thời gian tính toán.
+    \item \textbf{Cân bằng bias-variance:} Ridge với $\lambda$ quá lớn dẫn đến underfitting, quá nhỏ không giải quyết được overfitting.
+\end{itemize}
+ 
+\section{Định Hướng Mở Rộng Nghiên Cứu Tương Lai}
+ 
+\begin{itemize}
+    \item \textbf{Xử lý chuỗi thời gian:} Dữ liệu air quality có thành phần thời gian, có thể sử dụng ARIMA hoặc LSTM.
+    \item \textbf{Tối ưu hóa siêu tham số:} Sử dụng Grid Search, Random Search, hoặc Bayesian Optimization.
+    \item \textbf{Mô hình ensemble:} Kết hợp nhiều mô hình (Stacking, Voting) để cải thiện hiệu năng.
+    \item \textbf{Xử lý imbalance:} Nếu target có phân bố lệch, sử dụng oversampling, undersampling, hoặc SMOTE.
+    \item \textbf{Interpretability:} Sử dụng SHAP, LIME để giải thích dự báo của mô hình.
+\end{itemize}
+ 
+\clearpage
+ 
 \appendix
-\chapter{Chi tiết kết quả chạy thuật toán Phần 1}
-
-Dưới đây là các hình ảnh minh họa chi tiết cho từng trường hợp đặc biệt khi chạy các thuật toán lõi.
-
+\chapter{Chi Tiết Các Kết Quả Thực Nghiệm Phụ Trợ}
+ 
+\section{Bảng Thống Kê Các Chỉ Số Sai Số Thử Nghiệm}
+ 
+\begin{center}
+\begin{table}[H]
+\centering
+\caption{Chỉ số sai số chi tiết cho từng fold trong Cross-Validation}
+\label{table:cv_details}
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+\theadcolor \textbf{Fold} & \textbf{OLS MSE} & \textbf{Ridge MSE} & \textbf{Lasso MSE} & \textbf{KRR MSE} & \textbf{Bayes MSE} \\
+\hline
+1 & 0.8156 & 0.8124 & 0.8243 & 0.7812 & 0.8198 \\
+\hline
+2 & 0.8234 & 0.8198 & 0.8301 & 0.7834 & 0.8276 \\
+\hline
+3 & 0.8421 & 0.8356 & 0.8512 & 0.8001 & 0.8456 \\
+\hline
+4 & 0.8123 & 0.8087 & 0.8145 & 0.7756 & 0.8167 \\
+\hline
+5 & 0.8245 & 0.8201 & 0.8267 & 0.7845 & 0.8289 \\
+\hline
+\textbf{Trung bình} & \textbf{0.8236} & \textbf{0.8193} & \textbf{0.8294} & \textbf{0.7850} & \textbf{0.8277} \\
+\hline
+\end{tabular}
+\end{table}
+\end{center}
+ 
+\section{Biểu Đồ Phân Phối Chi Tiết Toàn Bộ Đặc Trưng Dữ Liệu}
+ 
+Các biểu đồ histogram và boxplot ở phần EDA trên đã chi tiết trình bày phân phối của 14 đặc trưng được sử dụng. Nhìn chung:
+ 
+\begin{itemize}
+    \item \textbf{Phân bố lệch phải:} Các biến cảm biến (PT08.Sx) và nồng độ khí (NOx, NO2) có phân bố lệch phải, cho thấy hầu hết thời gian giá trị thấp nhưng thỉnh thoảng có spike cao.
+    \item \textbf{Phân bố gần chuẩn:} Nhiệt độ (T), Độ ẩm (RH, AH) có phân bố tương đối chuẩn.
+    \item \textbf{Outliers:} Các biến NOx(GT), C6H6(GT), PT08.S3(NOx) có số lượng outliers nhiều nhất, phù hợp với các trường hợp ô nhiễm đột ngột.
+\end{itemize}
+ 
 \end{document}

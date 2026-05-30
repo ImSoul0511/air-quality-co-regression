@@ -3,7 +3,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import random
-
+from config import RANDOM_STATE
 from utils import transpose, matmul, inverse, matvec, vector_add, add_bias_column
 from part1.ols_implementation import ols_fit
 
@@ -25,7 +25,7 @@ def run_gauss_markov_simulation(n_sim=1000, n_obs=100, true_beta=None, true_sigm
     if true_beta is None:
         true_beta = [2.0, -1.5, 0.8]
 
-    random.seed(42)
+    random.seed(RANDOM_STATE)
 
     p_features = len(true_beta) - 1  # Số features (không tính intercept)
 

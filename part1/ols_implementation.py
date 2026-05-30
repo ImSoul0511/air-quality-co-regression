@@ -46,6 +46,249 @@ def _eigenvalues_symmetric(M: list[list[float]]) -> list[float]:
 
     return eigenvalues
 
+
+def _log_beta(a: float, b: float) -> float:
+    """Tính ln(B(a, b)) = lgamma(a) + lgamma(b) - lgamma(a+b) dùng stdlib math."""
+    return math.lgamma(a) + math.lgamma(b) - math.lgamma(a + b)
+
+
+def _betainc_cf(a: float, b: float, x: float) -> float:
+    """Regularized incomplete beta I_x(a, b) qua khai triển phân số liên tục Lentz.
+
+    Tham số
+    -------
+    a, b : float -- tham số dương của hàm beta.
+    x    : float -- điểm tính giá trị, 0 <= x <= 1.
+
+    Trả về
+    ------
+    float -- giá trị I_x(a, b) xấp xỉ đến độ chính xác máy tính.
+    """
+    if x < 0.0 or x > 1.0:
+        raise ValueError("x phải nằm trong [0, 1]")
+    if x == 0.0:
+        return 0.0
+    if x == 1.0:
+        return 1.0
+
+    # Dùng phương trình đối xứng để cải thiện tốc độ hội tụ
+    if x > (a + 1.0) / (a + b + 2.0):
+        return 1.0 - _betainc_cf(b, a, 1.0 - x)
+
+    lbeta_ab = _log_beta(a, b)
+    front = math.exp(math.log(x) * a + math.log(1.0 - x) * b - lbeta_ab) / a
+
+    # Phương pháp Lentz: tính phân số liên tục
+    TINY = 1e-300
+    f = TINY
+    C = f
+    D = 0.0
+    for m in range(200):
+        for j in (0, 1):
+            if m == 0 and j == 0:
+                d = 1.0
+            elif j == 0:
+                d = m * (b - m) * x / ((a + 2.0 * m - 1.0) * (a + 2.0 * m))
+            else:
+                d = -(a + m) * (a + b + m) * x / ((a + 2.0 * m) * (a + 2.0 * m + 1.0))
+            D = 1.0 + d * D
+            if abs(D) < TINY:
+                D = TINY
+            D = 1.0 / D
+            C = 1.0 + d / C
+            if abs(C) < TINY:
+                C = TINY
+            delta = C * D
+            f *= delta
+            if abs(delta - 1.0) < 1e-15:
+                return front * f
+    return front * f
+
+
+def _t_cdf(t_val: float, dof: int) -> float:
+    """CDF của phân phối Student-t với bậc tự do dof.
+
+    Sử dụng hàm beta không hoàn chỉnh chính quy:
+        CDF(t, v) = 1 - 0.5 * I_x(v/2, 0.5),  x = v / (v + t^2)
+
+    Tham số
+    -------
+    t_val : float -- giá trị t-statistic.
+    dof   : int   -- bậc tự do (degrees of freedom).
+
+    Trả về
+    ------
+    float -- P(T <= t_val) theo phân phối Student-t(dof).
+    """
+    if dof <= 0:
+        raise ValueError("dof phải là số nguyên dương")
+    if t_val == 0.0:
+        return 0.5
+    x = dof / (dof + t_val * t_val)
+    beta_tail = 0.5 * _betainc_cf(dof / 2.0, 0.5, x)
+    return 1.0 - beta_tail if t_val > 0.0 else beta_tail
+
+
+def _t_ppf(prob: float, dof: int) -> float:
+    """Nghịch đảo CDF (hàm phân vị) của Student-t qua bisection trên _t_cdf.
+
+    Tham số
+    -------
+    prob : float -- xác suất mục tiêu, 0 < prob < 1.
+    dof  : int   -- bậc tự do.
+
+    Trả về
+    ------
+    float -- t sao cho CDF(t, dof) = prob.
+    """
+    if not (0.0 < prob < 1.0):
+        raise ValueError("prob phải nằm trong khoảng (0, 1)")
+    lo, hi = -1000.0, 1000.0
+    for _ in range(100):
+        mid = (lo + hi) / 2.0
+        if _t_cdf(mid, dof) < prob:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2.0
+
+
+def _standard_normal_ppf_mc(p: float) -> float:
+    """
+    Nghịch đảo CDF chuẩn N(0,1) qua xấp xỉ hữu tỷ Acklam (sai số < 3.65e-9).
+
+    Tham số:
+        p : float -- xác suất, 0 < p < 1.
+
+    Trả về:
+        float -- z sao cho Phi(z) == p.
+    """
+    a = [-3.969683028665376e+01,  2.209460984245205e+02,
+         -2.759285104469687e+02,  1.383577518672690e+02,
+         -3.066479806614716e+01,  2.506628277459239e+00]
+    b = [-5.447609879822406e+01,  1.615858368580409e+02,
+         -1.556989798598866e+02,  6.680131188771972e+01,
+         -1.328068155288572e+01]
+    c = [-7.784894002430293e-03, -3.223964580411365e-01,
+         -2.400758277161838e+00, -2.549732539343734e+00,
+          4.374664141464968e+00,  2.938163982698783e+00]
+    d = [ 7.784695709041462e-03,  3.224671290700398e-01,
+          2.445134137142996e+00,  3.754408661907416e+00]
+    lo, hi = 0.02425, 1.0 - 0.02425
+    if p <= 0.0:
+        return float('-inf')
+    if p >= 1.0:
+        return float('inf')
+    if p < lo:
+        q = math.sqrt(-2.0 * math.log(p))
+        return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / \
+               ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1.0)
+    elif p <= hi:
+        q = p - 0.5
+        r = q * q
+        return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / \
+               (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1.0)
+    else:
+        q = math.sqrt(-2.0 * math.log(1.0 - p))
+        return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / \
+                ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1.0)
+
+
+def _gammainc_series(a: float, x: float) -> float:
+    """Lower regularized incomplete gamma P(a,x) qua series expansion."""
+    if x == 0.0:
+        return 0.0
+    ap = a
+    delta = 1.0 / a
+    s = delta
+    for _ in range(300):
+        ap += 1.0
+        delta *= x / ap
+        s += delta
+        if abs(delta) < abs(s) * 1e-15:
+            break
+    return s * math.exp(-x + a * math.log(x) - math.lgamma(a))
+
+
+def _gammainc_cf(a: float, x: float) -> float:
+    """
+    Upper regularized incomplete gamma Q(a, x) qua tiếp phân liên tục (Lentz).
+
+    Sử dụng phương pháp Lentz từ Numerical Recipes section 6.2.
+    Q(a, x) = exp(-x) * x^a / Gamma(a) * cf   với cf = 1/(x+1-a-1*(1-a)/(x+3-a-...))
+
+    Tham số:
+        a : float -- tham số dáng của hàm gamma (a > 0).
+        x : float -- cụm tích phân (x >= 0).
+
+    Trả về:
+        float -- giá trị Q(a, x) trong khoảng [0, 1].
+    """
+    if x <= 0.0:
+        return 1.0
+    if x < a + 1.0:
+        # Sử dụng chuỗi lũy thừa cho P(a,x), sau đó Q = 1 - P
+        return 1.0 - _gammainc_series(a, x)
+    # Tiếp phân liên tục sử dụng Lentz (NR section 6.2 Algorithm)
+    FPMIN = 1e-300
+    b = x + 1.0 - a
+    C = 1.0 / FPMIN
+    D = 1.0 / b
+    h = D
+    for i in range(1, 300):
+        an = -i * (i - a)
+        b += 2.0
+        D = b + an * D
+        if abs(D) < FPMIN:
+            D = FPMIN
+        C = b + an / C
+        if abs(C) < FPMIN:
+            C = FPMIN
+        D = 1.0 / D
+        delta = C * D
+        h *= delta
+        if abs(delta - 1.0) < 1e-15:
+            break
+    return math.exp(-x + a * math.log(x) - math.lgamma(a)) * h
+
+
+def _chi2_sf(x: float, k: int) -> float:
+    """
+    Hàm survival P(chi2(k) > x).
+
+    Tham số:
+        x : float -- điểm cần tính xác suất.
+        k : int   -- bậc tự do.
+
+    Trả về:
+        float -- P(X > x) với X == chi2(k).
+    """
+    if x <= 0.0:
+        return 1.0
+    return _gammainc_cf(k / 2.0, x / 2.0)
+
+
+def _f_sf(f_val: float, d1: int, d2: int) -> float:
+    """
+    Hàm survival P(F(d1, d2) > f_val).
+
+    Tham số:
+        f_val : float -- giá trị thống kê F.
+        d1    : int   -- bậc tự do tử số.
+        d2    : int   -- bậc tự do mẫu số.
+
+    Trả về:
+        float -- P(F(d1,d2) > f_val).
+    """
+    if f_val <= 0.0:
+        return 1.0
+    if math.isinf(f_val):
+        return 0.0
+    # y = d2 / (d2 + d1 * f_val)
+    y = d2 / (d2 + d1 * f_val)
+    return _betainc_cf(d2 / 2.0, d1 / 2.0, y)
+
+
 def ols_fit(X: list[list[float]], y: list[float]) -> dict:
     """Giải hệ phương trình chuẩn: beta_hat = (X^T X)^{-1} X^T y.
 
@@ -167,8 +410,6 @@ def model_metrics(y: list[float], y_hat: list[float], p: int) -> dict:
         'MAE'      : float -- sai số tuyệt đối trung bình (Mean Absolute Error)
         'RMSE'     : float -- căn sai số bình phương trung bình (Root Mean Squared Error)
     """
-    from scipy.stats import f as f_dist
-
     n = len(y)
 
     RSS = sum((y[i] - y_hat[i]) ** 2 for i in range(n))
@@ -187,7 +428,7 @@ def model_metrics(y: list[float], y_hat: list[float], p: int) -> dict:
 
     F_stat = (MSS / p) / (RSS / df) if RSS > 1e-14 else float("inf")
 
-    F_pvalue = float(f_dist.sf(F_stat, dfn=p, dfd=df))
+    F_pvalue = _f_sf(F_stat, p, df)
 
     MAE = sum(abs(y[i] - y_hat[i]) for i in range(n)) / n
 
@@ -269,14 +510,18 @@ def coef_inference(X, y, beta_hat, sigma2):
 
     Trả về
     ------
-    pd.DataFrame -- bảng chứa các cột: coef, std_err, t_stat, p_value, ci_lower, ci_upper.
+    dict -- từ điển chứa:
+        'index'    : list[str]   -- nhãn hàng ['intercept', 'x1', ...]
+        'coef'     : list[float] -- hệ số beta_hat
+        'std_err'  : list[float] -- sai số chuẩn
+        't_stat'   : list[float] -- thống kê t
+        'p_value'  : list[float] -- p-value hai phía
+        'ci_lower' : list[float] -- cận dưới khoảng tin cậy 95%
+        'ci_upper' : list[float] -- cận trên khoảng tin cậy 95%
     """
-    from scipy import stats as scipy_stats
-    import pandas as pd
-
     n = len(X)
-    p = len(X[0]) # số lượng features
-    
+    p = len(X[0])  # số lượng features
+
     # 1. Thêm cột bias (cột 1 đầu tiên)
     # Kiểm tra số lượng cột của X so với số lượng hệ số beta_hat
     if len(X[0]) == len(beta_hat):
@@ -288,46 +533,45 @@ def coef_inference(X, y, beta_hat, sigma2):
         X_bias = add_bias_column(X)
         p = len(X[0])      # p là số lượng features hiện tại
     else:
-        raise ValueError(f"Bất thường: Số cột của X ({len(X[0])}) không khớp với beta_hat ({len(beta_hat)})")
-    
-    # 2. Tính Ma trận hiệp phương sai của beta: Cov = sigma2 * (X^T * X)^{-1}
+        raise ValueError(
+            f"Bất thường: Số cột của X ({len(X[0])}) không khớp với beta_hat ({len(beta_hat)})"
+        )
+
+    # 2. Tính ma trận hiệp phương sai của beta: Cov = sigma2 * (X^T X)^{-1}
     XT = transpose(X_bias)
     XTX = matmul(XT, X_bias)
     XTX_inv = inverse(XTX)
-    
-    # 3. Tính Standard Errors 
-    std_errs = []
-    for i in range(len(XTX_inv)):
-        se = math.sqrt(sigma2 * XTX_inv[i][i])
-        std_errs.append(se)
-        
-    # 4. Tính t-statistics: t = beta / std_err
-    t_stats = [b / se if se != 0 else 0 for b, se in zip(beta_hat, std_errs)]
-    
-    # 5. Tra bảng thống kê
-    # Bậc tự do: dof = n - (p + 1) vì có p features + 1 intercept
+
+    # 3. Tính Standard Errors: SE_i = sqrt(sigma2 * (X^T X)^{-1}_{ii})
+    std_errs = [math.sqrt(sigma2 * XTX_inv[i][i]) for i in range(len(XTX_inv))]
+
+    # 4. Tính t-statistics: t_i = beta_i / SE_i
+    t_stats = [b / se if se != 0.0 else 0.0 for b, se in zip(beta_hat, std_errs)]
+
+    # 5. Tính p-value và khoảng tin cậy dùng phân phối Student-t thuần Python
+    # Bậc tự do: dof = n - (p + 1)
     dof = n - p - 1
-    
-    # p-value = 2 * (1 - CDF(|t|))
-    p_values = [2 * scipy_stats.t.sf(abs(t), dof) for t in t_stats]
-    
-    # t_critical cho khoảng tin cậy 95% (alpha = 0.05)
-    t_crit = scipy_stats.t.ppf(0.975, dof)
-    
+
+    # p-value hai phía: 2 * P(T > |t|) = 2 * (1 - CDF(|t|))
+    p_values = [2.0 * (1.0 - _t_cdf(abs(t), dof)) for t in t_stats]
+
+    # Giá trị t tới hạn cho khoảng tin cậy 95% (alpha = 0.05)
+    t_crit = _t_ppf(0.975, dof)
+
     ci_lower = [b - t_crit * se for b, se in zip(beta_hat, std_errs)]
     ci_upper = [b + t_crit * se for b, se in zip(beta_hat, std_errs)]
-    
-    # 6. Tạo DataFrame kết quả
-    data = {
-        'coef': beta_hat,
-        'std_err': std_errs,
-        't_stat': t_stats,
-        'p_value': p_values,
-        'ci_lower': ci_lower,
-        'ci_upper': ci_upper
-    }
+
+    # 6. Trả về dict thuần Python (không phụ thuộc pandas)
     index = ['intercept'] + [f'x{i+1}' for i in range(len(beta_hat) - 1)]
-    return pd.DataFrame(data, index=index)
+    return {
+        'index':    index,
+        'coef':     list(beta_hat),
+        'std_err':  std_errs,
+        't_stat':   t_stats,
+        'p_value':  p_values,
+        'ci_lower': ci_lower,
+        'ci_upper': ci_upper,
+    }
 
 def vif(X):
     """Tính hệ số phóng đại phương sai (Variance Inflation Factor - VIF).
