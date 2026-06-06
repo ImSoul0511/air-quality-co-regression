@@ -1403,6 +1403,50 @@ Nhận xét:
     \item \textbf{Cook's Distance} (ngưỡng $4/n = 0{,}0026$): Một điểm dị biệt tại index $\approx 0$ có Cook's D $\approx 0{,}26$ -- vượt ngưỡng gần 100 lần. Khoảng 15--20 điểm khác có Cook's D $\approx 0{,}05$--$0{,}15$, tương ứng các giờ cao điểm hoặc điều kiện thời tiết bất thường.
 \end{itemize}
 
+\subsubsection{Kiểm định định lượng: Shapiro--Wilk và Breusch--Pagan}
+
+Bên cạnh phân tích đồ thị, nhóm thực hiện hai kiểm định thống kê chính thức trên phần dư của từng mô hình. Cả hai kiểm định đều được cài đặt từ đầu trong \texttt{model\_comparison.py} (không dùng \texttt{scipy}).
+
+\begin{itemize}
+    \item \textbf{Shapiro--Wilk (kiểm tra GM5):} $H_0$: phần dư có phân phối chuẩn. Thống kê $W \in (0,1]$ --- giá trị càng gần 1 thì phân phối càng chuẩn. Kiểm định lấy mẫu ngẫu nhiên 5000 quan sát nếu $n > 5000$.
+    \item \textbf{Breusch--Pagan (kiểm tra GM4):} $H_0$: phương sai sai số đồng nhất. Thống kê $LM = n \cdot R^2_{aux}$ (với $R^2_{aux}$ từ hồi quy phụ $\hat{\varepsilon}^2 \sim \mathbf{X}$) theo phân phối $\chi^2_p$.
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{Kết quả kiểm định Shapiro--Wilk và Breusch--Pagan trên phần dư tập test ($n = 1553$)}
+\label{tab:sw_bp_tests}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+\theadcolor \textbf{Mô hình} & \textbf{SW $W$} & \textbf{SW $p$-value} & \textbf{BP $LM$} & \textbf{BP $p$-value} & \textbf{Kết luận} \\
+\hline
+OLS Full     & 0.8559 & $1.06 \times 10^{-35}$ & 552.86 & $4.39 \times 10^{-73}$ & Non-normal, Heteroscedastic \\
+\hline
+OLS Selected & 0.8854 & $9.25 \times 10^{-33}$ & 610.99 & $4.39 \times 10^{-84}$ & Non-normal, Heteroscedastic \\
+\hline
+Ridge        & 0.8514 & $4.19 \times 10^{-36}$ & 567.54 & $7.59 \times 10^{-76}$ & Non-normal, Heteroscedastic \\
+\hline
+Lasso        & 0.8535 & $6.49 \times 10^{-36}$ & 550.35 & $1.30 \times 10^{-72}$ & Non-normal, Heteroscedastic \\
+\hline
+Bayesian LR  & 0.8527 & $8.95 \times 10^{-36}$ & 571.49 & $\approx 0$             & Non-normal, Heteroscedastic \\
+\hline
+Kernel Ridge & \multicolumn{4}{c|}{Không tính (kernel fit trên toàn bộ train set quá tốn kém trong pure Python)} & --- \\
+\hline
+\end{tabular}
+}
+\end{table}
+
+Cả hai kiểm định đều bác bỏ $H_0$ với xác suất cực nhỏ ($p \ll 10^{-30}$) cho tất cả mô hình. Điều này là \textbf{kỳ vọng} và có thể giải thích bằng các nguyên nhân vật lý:
+
+\begin{itemize}
+    \item \textbf{Tại sao Shapiro--Wilk fail (vi phạm GM5):} CO(GT) có phân phối lệch phải mạnh ($\text{mean} = 2{,}13$, $\text{max} = 11{,}90$ mg/m$^3$). Dù Winsorization giới hạn ngoại lai, phần dư của mô hình tuyến tính vẫn kế thừa đuôi phải dài của biến mục tiêu --- các đợt ô nhiễm đột biến tạo ra phần dư dương lớn không thể mô tả bằng phân phối chuẩn. Ngoài ra, $n = 1553$ đủ lớn để kiểm định phát hiện mọi lệch nhỏ khỏi chuẩn, dẫn đến $W \approx 0{,}85$ thay vì $1{,}0$.
+
+    \item \textbf{Tại sao Breusch--Pagan fail (vi phạm GM4):} Phương sai phần dư tăng theo mức CO dự đoán là tính chất vật lý của cảm biến điện hóa: ở nồng độ thấp (điều kiện bình thường), tín hiệu cảm biến ổn định và sai số nhỏ; ở nồng độ cao (giờ cao điểm giao thông, thời tiết bất lợi), cảm biến hoạt động ở vùng phi tuyến và phần dư dao động mạnh hơn. Thống kê $LM > 550$ cho tất cả mô hình xác nhận dị phương sai hệ thống.
+\end{itemize}
+
+\textbf{Hàm ý thực tiễn:} Vi phạm GM4 và GM5 không làm vô hiệu hóa các mô hình đối với bài toán \textbf{dự đoán} --- Ridge và Lasso đạt $R^2 \geq 0{,}83$ và không yêu cầu phần dư chuẩn để tối ưu hóa. Tuy nhiên, đối với \textbf{suy diễn thống kê} (kiểm định $t$, khoảng tin cậy 95\%), kết quả chỉ mang tính tham khảo vì sai số chuẩn của hệ số ước lượng dựa trên giả thiết đồng phương sai. Đây là giới hạn cố hữu của hồi quy tuyến tính trên dữ liệu cảm biến môi trường thực tế.
+
 \section{Ứng Dụng Kỹ Thuật Nâng Cao (Tùy Chọn Bonus)}
 
 \subsection{Mô hình hồi quy phi tuyến Kernel Ridge Regression}
@@ -1413,7 +1457,7 @@ Kernel Ridge Regression (KRR) mở rộng Ridge Regression bằng cách áp dụ
  
 Bayesian Linear Regression cung cấp cách tiếp cận xác suất, cho phép ta ước lượng được độ bất định của các dự báo:
  
-Kết quả cho thấy \textbf{Kernel Ridge Regression} với kernel RBF đạt hiệu năng tốt nhất với R² = 0.7421.
+Kết quả cho thấy \textbf{Kernel Ridge Regression} với kernel RBF ($\lambda = 0{,}01$, $\ell = 5{,}0$) đạt hiệu năng tốt nhất với $R^2 = 0{,}9110$, RMSE $= 0{,}4368$.
 
 Việc Kernel Ridge Regression đạt hiệu năng cao hơn các mô hình tuyến tính cho thấy mối quan hệ giữa các cảm biến môi trường và nồng độ CO không hoàn toàn tuyến tính. Trong thực tế, phản ứng của cảm biến hóa học thường chịu ảnh hưởng đồng thời bởi nhiệt độ, độ ẩm và tương tác giữa nhiều loại khí khác nhau.
 
@@ -1447,10 +1491,11 @@ Kernel Kernel RBF giúp mô hình biểu diễn được các quan hệ phi tuy�
 \begin{itemize}
     \item \textbf{Dữ liệu:} Sử dụng bộ dữ liệu Air Quality UCI với 9357 quan sát, xử lý 16244 giá trị missing, phát hiện 435 outliers.
     \item \textbf{Tiền xử lý:} Loại bỏ biến NMHC(GT) do lệ thiếu > 90\%, chuẩn hóa dữ liệu bằng StandardScaler.
-    \item \textbf{Mô hình OLS:} Đạt R² = 0.7246 với 14 biến độc lập, phát hiện PT08.S1(CO) là biến ảnh hưởng nhất.
-    \item \textbf{Mô hình Ridge:} Với $\lambda=1.0$, đạt R² = 0.7291, cải thiện nhẹ so với OLS.
-    \item \textbf{Mô hình Kernel Ridge:} Đạt R² = 0.7421, cho thấy tồn tại mối quan hệ phi tuyến.
-    \item \textbf{Phân tích:} Top 5 biến ảnh hưởng: PT08.S1(CO), PT08.S2(NMHC), NOx(GT), PT08.S3(NOx), C6H6(GT).
+    \item \textbf{Mô hình OLS Full:} Đạt $R^2 = 0{,}8884$, RMSE $= 0{,}4892$ trên 77 đặc trưng bậc hai. C6H6(GT) và các tương tác đa thức của nó là nhóm biến có trọng số lớn nhất.
+    \item \textbf{Mô hình Ridge} ($\lambda = 10{,}985$): $R^2 = 0{,}8882$, RMSE $= 0{,}4896$ --- hiệu năng bám sát OLS Full nhưng hệ số ổn định hơn nhờ điều chuẩn $L_2$, phù hợp triển khai thực tế.
+    \item \textbf{Mô hình Kernel Ridge} ($\lambda = 0{,}01$, $\ell = 5{,}0$): Đạt $R^2 = 0{,}9110$, RMSE $= 0{,}4368$ --- mô hình tốt nhất tổng thể, cho thấy tồn tại quan hệ phi tuyến giữa tín hiệu cảm biến và CO.
+    \item \textbf{Kiểm định giả thiết:} Shapiro--Wilk ($W \approx 0{,}85$) và Breusch--Pagan ($LM > 550$) bác bỏ $H_0$ với $p \ll 10^{-30}$ cho tất cả mô hình, xác nhận vi phạm GM4 (dị phương sai) và GM5 (phần dư không chuẩn) --- kỳ vọng với dữ liệu cảm biến môi trường có phân phối lệch phải.
+    \item \textbf{Đặc trưng quan trọng:} C6H6(GT) (Benzene), PT08.S1(CO), NOx(GT), PT08.S3(NOx), PT08.S4(NO2) và các tương tác đa thức bậc hai của chúng.
 \end{itemize}
  
 \section{Những Bài Học Rút Ra và Khó Khăn Hệ Thống}

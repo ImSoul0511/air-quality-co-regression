@@ -10,5 +10,15 @@
     "MAE": 0.45036598717357107,
     "RMSE": 0.5981433123077868
   },
-  "lambda_opt": 0.001
+  "lambda_opt": 0.001,
+  "shapiro": {
+    "statistic": 0.8535321882856495,
+    "p_value": 6.494492016695914e-36,
+    "is_normal": false
+  },
+  "bp_test": {
+    "LM_stat": 550.35115136339,
+    "p_value": 1.3009971361807603e-72,
+    "is_homoscedastic": false
+  }
 }
