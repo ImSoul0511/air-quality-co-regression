@@ -93,7 +93,7 @@
   {\large KHOA CÔNG NGHỆ THÔNG TIN}\\[4pt]
 
   \vspace{0.8cm}
-  %\includegraphics[width=4cm]{assets/logo_hcmus}
+  \includegraphics[width=4cm]{assets/logo_hcmus}
   \vspace{0.8cm}
 
   \vspace{0.5cm}
@@ -450,16 +450,15 @@ Ma trận hiệp phương sai chính xác của ước lượng OLS được xá
 \begin{equation}
     \text{Var}(\hat{\boldsymbol{\beta}}_{OLS}|\mathbf{X}) = \sigma^2(\mathbf{X}^T\mathbf{X})^{-1}
 \end{equation}
-
 \textbf{Minh họa Monte Carlo - Định lý Gauss-Markov.}
-File \texttt{part1/gauss\_markov\_demo.py} hiện thực một thí nghiệm Monte Carlo nhằm quan sát trực quan nội dung của định lý Gauss-Markov. Hàm chính \texttt{run\_gauss\_markov\_simulation()} nhận vào số lần mô phỏng \texttt{n\_sim}, số quan sát \texttt{n\_obs}, vector hệ số thật \texttt{true\_beta} và độ lệch chuẩn nhiễu \texttt{true\_sigma}. Nếu không truyền hệ số thật, chương trình sử dụng mặc định:
+Module \texttt{gauss\_markov\_demo.py} hiện thực một thí nghiệm Monte Carlo nhằm quan sát trực quan nội dung của định lý Gauss-Markov. Hàm chính \texttt{run\_gauss\_markov\_simulation()} nhận vào số lần mô phỏng \texttt{n\_sim}, số quan sát \texttt{n\_obs}, vector hệ số thật \texttt{true\_beta} và độ lệch chuẩn nhiễu \texttt{true\_sigma}. Nếu không truyền hệ số thật, chương trình sử dụng mặc định:
 \[
     \boldsymbol{\beta} = (2.0,\,-1.5,\,0.8).
 \]
 
 Quy trình mô phỏng được tổ chức như sau:
 \begin{enumerate}
-    \item Cố định seed ngẫu nhiên bằng \texttt{random.seed(42)} để bảo đảm tính tái lập.
+    \item Cố định seed ngẫu nhiên bằng \texttt{random.seed(RANDOM\_STATE)} để bảo đảm tính tái lập.
     \item Sinh một ma trận đặc trưng cố định $\mathbf{X}$ với các phần tử lấy từ phân phối chuẩn chuẩn hóa. Sau đó thêm cột bias để tạo ma trận thiết kế.
     \item Tính trước phần tín hiệu không nhiễu:
     \[
@@ -485,7 +484,7 @@ Quy trình mô phỏng được tổ chức như sau:
 
 \begin{figure}[H]
     \centering
-    %\includegraphics[width=0.5\linewidth]{assets/gauss_markov.jpg}
+    \includegraphics[width=1\linewidth]{assets/gauss_markov.jpg}
     \caption{Minh họa phân phối hệ số qua mô phỏng Monte Carlo cho định lý Gauss-Markov}
     \label{fig:gauss-markov-monte-carlo}
 \end{figure}
@@ -525,7 +524,6 @@ Dựa trên giả thiết phân phối chuẩn \textbf{GM5}, các phép kiểm �
         F = \frac{(TSS - RSS) / p}{RSS / (n - p - 1)} \sim F_{p, n-p-1}
     \end{equation}
 \end{itemize}
-
 \textbf{Nhiệm vụ của hàm \texttt{coef\_inference}.}
 Sau khi đã huấn luyện mô hình OLS và thu được vector hệ số $\hat{\boldsymbol{\beta}}$, hàm \texttt{coef\_inference()} có nhiệm vụ xây dựng bảng suy diễn thống kê cho từng hệ số hồi quy. Cụ thể, hàm nhận vào ma trận đặc trưng \texttt{X}, vector mục tiêu \texttt{y}, hệ số ước lượng \texttt{beta\_hat} và phương sai nhiễu ước lượng \texttt{sigma2}. Từ đó, hàm tính ma trận hiệp phương sai của hệ số:
 \[
@@ -533,17 +531,14 @@ Sau khi đã huấn luyện mô hình OLS và thu được vector hệ số $\ha
     =
     \hat{\sigma}^2(\mathbf{X}^T\mathbf{X})^{-1},
 \]
-suy ra sai số chuẩn, thống kê $t$, p-value hai phía và khoảng tin cậy 95\% cho từng hệ số. Kết quả cuối cùng được trả về dưới dạng \texttt{DataFrame}, giúp việc đọc bảng hệ số và đánh giá ý nghĩa thống kê của từng biến trở nên trực quan hơn.
-
+suy ra sai số chuẩn, thống kê $t$, p-value hai phía và khoảng tin cậy 95\% cho từng hệ số. Phiên bản hiện tại không dùng \texttt{scipy} hay \texttt{pandas}; p-value và giá trị tới hạn được tính thông qua các hàm phân phối Student-t tự cài đặt \texttt{\_t\_cdf()} và \texttt{\_t\_ppf()}. Kết quả cuối cùng được trả về dưới dạng \texttt{dict} thuần Python, gồm các khóa \texttt{index}, \texttt{coef}, \texttt{std\_err}, \texttt{t\_stat}, \texttt{p\_value}, \texttt{ci\_lower} và \texttt{ci\_upper}.
+\pagebreak
 \begin{lstlisting}[language=Python, caption={Tinh suy dien thong ke cho he so hoi quy}]
 def coef_inference(X, y, beta_hat, sigma2):
-    from scipy import stats as scipy_stats
-    import pandas as pd
-
     n = len(X)
-    p = len(X[0]) # so luong features
+    p = len(X[0])
 
-    # Them cot bias neu X chua co san cot intercept
+    # Them cot bias neu X chua co cot intercept
     if len(X[0]) == len(beta_hat):
         X_bias = X
         p = len(X[0]) - 1
@@ -552,43 +547,43 @@ def coef_inference(X, y, beta_hat, sigma2):
         p = len(X[0])
     else:
         raise ValueError(
-            f"Bat thuong: So cot cua X ({len(X[0])}) "
-            f"khong khop voi beta_hat ({len(beta_hat)})"
+            f"Bat thuong: So cot cua X ({len(X[0])}) khong khop "
+            f"voi beta_hat ({len(beta_hat)})"
         )
 
-    # Cov(beta_hat) = sigma2 * (X^T * X)^{-1}
+    # Cov(beta_hat) = sigma2 * (X^T X)^{-1}
     XT = transpose(X_bias)
     XTX = matmul(XT, X_bias)
     XTX_inv = inverse(XTX)
 
-    # Tinh sai so chuan cua tung he so
-    std_errs = []
-    for i in range(len(XTX_inv)):
-        se = math.sqrt(sigma2 * XTX_inv[i][i])
-        std_errs.append(se)
+    # Tinh sai so chuan SE_i
+    std_errs = [math.sqrt(sigma2 * XTX_inv[i][i]) for i in range(len(XTX_inv))]
 
-    # Tinh thong ke t cho tung he so
-    t_stats = [b / se if se != 0 else 0 for b, se in zip(beta_hat, std_errs)]
+    # Tinh thong ke t_i = beta_i / SE_i
+    t_stats = [b / se if se != 0.0 else 0.0 for b, se in zip(beta_hat, std_errs)]
 
     dof = n - p - 1
-    p_values = [2 * scipy_stats.t.sf(abs(t), dof) for t in t_stats]
-    t_crit = scipy_stats.t.ppf(0.975, dof)
+
+    # p-value hai phia dung Student-t tu cai dat
+    p_values = [2.0 * (1.0 - _t_cdf(abs(t), dof)) for t in t_stats]
+
+    # Gia tri toi han cho khoang tin cay 95%
+    t_crit = _t_ppf(0.975, dof)
 
     ci_lower = [b - t_crit * se for b, se in zip(beta_hat, std_errs)]
     ci_upper = [b + t_crit * se for b, se in zip(beta_hat, std_errs)]
 
-    data = {
-        'coef': beta_hat,
-        'std_err': std_errs,
-        't_stat': t_stats,
-        'p_value': p_values,
-        'ci_lower': ci_lower,
-        'ci_upper': ci_upper
-    }
     index = ['intercept'] + [f'x{i+1}' for i in range(len(beta_hat) - 1)]
-    return pd.DataFrame(data, index=index)
+    return {
+        'index':    index,
+        'coef':     list(beta_hat),
+        'std_err':  std_errs,
+        't_stat':   t_stats,
+        'p_value':  p_values,
+        'ci_lower': ci_lower,
+        'ci_upper': ci_upper,
+    }
 \end{lstlisting}
-
 \section{Các Kỹ Thuật Nâng Cao trong Data Fitting}
 
 \subsection{Đa cộng tuyến và Hệ số VIF}
@@ -770,7 +765,7 @@ def kfold_cv(X, y, k, lam):
 \begin{center}
     \begin{figure}[H]
     \centering
-    %\includegraphics[width=0.85\textwidth]{assets/ols_comparison.png}
+    \includegraphics[width=0.85\textwidth]{assets/ols_comparison.png}
     \caption{Bảng so sánh hệ số thực nghiệm giữa thuật toán tự cài đặt và Scikit-Learn}
     \label{fig:ols_comparison}
 \end{figure}
@@ -781,7 +776,7 @@ def kfold_cv(X, y, k, lam):
 \begin{center}
     \begin{figure}[H]
     \centering
-    %\includegraphics[width=0.8\textwidth]{assets/ridge_trace.png}
+    \includegraphics[width=0.8\textwidth]{assets/ridge_trace.png}
     \caption{Đồ thị bước chạy hệ số Ridge Trace theo tham số điều chỉnh lambda}
     \label{fig:ridge_trace}
 \end{figure}
@@ -792,7 +787,7 @@ def kfold_cv(X, y, k, lam):
 \begin{center}
     \begin{figure}[H]
     \centering
-    %\includegraphics[width=0.9\textwidth]{assets/residual_plots.png}
+    \includegraphics[width=0.9\textwidth]{assets/residual_plots.png}
     \caption{Bộ bốn biểu đồ chẩn đoán sai số phần dư của mô hình OLS}
     \label{fig:residual_plots}
 \end{figure}
@@ -803,7 +798,7 @@ def kfold_cv(X, y, k, lam):
 \begin{center}
     \begin{figure}[H]
     \centering
-    %\includegraphics[width=0.8\textwidth]{assets/monte_carlo_distribution.png}
+    \includegraphics[width=0.8\textwidth]{assets/monte_carlo_distribution.png}
     \caption{Phân phối thực nghiệm hệ số Beta qua mô phỏng Monte Carlo}
     \label{fig:monte_carlo}
 \end{figure}
@@ -927,13 +922,13 @@ AH & 8991.0 & 1.03 & 0.40 & 0.18 & 0.74 & 1.0 & 1.31 & 2.23 \\
 \begin{center}
 \begin{figure}[H]
     \centering
-    %\includegraphics[width=\textwidth]{assets/histogram_phanphoi.png}
+    \includegraphics[width=\textwidth]{assets/histogram_phanphoi.png}
     \caption{Biểu đồ Histogram phân phối các đặc trưng}
     \label{fig:histograms}
 \end{figure}
 \end{center}
 
-Từ Bảng 3.1, một số quan sát đáng chú ý:
+Ta có một số quan sát đáng chú ý:
 
 \begin{itemize}
     \item \textbf{Biến mục tiêu CO(GT)} có $\text{mean} = 2.13$ nhưng $\text{max} = 11.90$, với $\text{std} = 1.46$ gần bằng mean. Khoảng cách lớn giữa Q3 ($2.90$) và max ($11.90$) cho thấy phân phối lệch phải đáng kể --- tồn tại một số thời điểm nồng độ CO tăng đột biến so với mức nền thông thường.
@@ -945,7 +940,35 @@ Từ Bảng 3.1, một số quan sát đáng chú ý:
     \item \textbf{Không có dòng dữ liệu trùng lặp} (0 duplicates), nên toàn bộ 9357 quan trắc đều là dữ liệu độc lập.
 \end{itemize}
 
-\subsubsection{Báo cáo giá trị bị thiếu}
+\begin{center}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{assets/matranhesotuongquan.png}
+    \caption{Ma trận hệ số tương quan}
+    \label{fig:histograms}
+\end{figure}
+\end{center}
+
+\begin{center}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{assets/top5.png}
+    \caption{Top 5 đặc trưng tương quan mạnh với CO(GT)}
+    \label{fig:histograms}
+\end{figure}
+\end{center}
+
+Nhận xét Ma trận tương quan (Heatmap) và Scatter Plot:
+
+\begin{itemize}
+    \item \textbf{Đa cộng tuyến: } Quan sát trên Heatmap cho thấy có sự tương quan tuyến tính rất mạnh giữa nhiều biến độc lập, đặc biệt là trong cụm các cảm biến PT08.Sx hoặc giữa C6H6(GT) và PT08.S2(NMHC). Trong hồi quy OLS, hiện tượng đa cộng tuyến sẽ làm tăng phương sai của các hệ số hồi quy, khiến mô hình mất tính ổn định. Điều này đòi hỏi phải chọn lọc đặc trưng (Feature Selection) hoặc sử dụng hồi quy có điều chuẩn (Ridge, Lasso).
+    
+    \item \textbf{Mối quan hệ với biến mục tiêu CO(GT):} Dựa vào Heatmap và Scatter Plot của top 5 biến tương quan mạnh nhất, ta thấy CO(GT) có tương quan dương khá rõ ràng với C6H6(GT), PT08.S1(CO), PT08.S2(NMHC), PT08.S5(O3), và NOx(GT). Khi nồng độ của các chất/chỉ số này tăng, nồng độ CO cũng có xu hướng tăng theo.
+    
+    \item \textbf{Sự phân tán của dữ liệu (Scatter Plot): } Ở các mức nồng độ CO cao, dữ liệu có độ phân tán lớn hơn (hình phễu). Điều này cho thấy có khả năng xảy ra hiện tượng phương sai sai số thay đổi (heteroscedasticity) - một giả định quan trọng của OLS cần được kiểm tra sau này.
+\end{itemize}
+
+\subsubsection{Báo cáo giá trị bị thiếu (missing values)}
  
 Bảng \ref{table:missing_values} chi tiết hóa số lượng và tỉ lệ phần trăm giá trị khuyết thiếu trong từng biến:
  
@@ -992,7 +1015,7 @@ Bảng \ref{table:missing_values} chi tiết hóa số lượng và tỉ lệ ph
 \end{table}
 \end{center}
 
-Từ Bảng 3.2 và kết quả phân tích, có thể nhận diện hai cơ chế missing khác nhau:
+Từ Bảng 4.2 và kết quả phân tích, có thể nhận diện hai cơ chế missing khác nhau:
 
 \begin{itemize}
     \item \textbf{Nhóm 1 --- Missing theo cơ chế MNAR (Missing Not At Random):} \texttt{NMHC(GT)} thiếu $90.23\%$ ($8443/9357$ quan sát). Đây không phải sự cố ngẫu nhiên mà nhiều khả năng thiết bị đo \texttt{NMHC} không hoạt động trong phần lớn thời gian thu thập. Với tỉ lệ thiếu cực cao này, bất kỳ phương pháp imputation nào cũng sẽ tạo ra phần lớn dữ liệu nhân tạo, không phản ánh thực tế. Do đó, loại bỏ biến này là lựa chọn hợp lý hơn so với imputation.
@@ -1057,7 +1080,7 @@ for idx, row_scaled in X_scaled.loc[missing_rows.index].iterrows():
 
 \subsection{Quy trình chuẩn hóa và xử lý các giá trị dị biệt (Outliers)}
 
-\subsubsection{Kết quả phát hiện outliers}
+\subsubsection{Kết quả phát hiện outliers bằng 2 phương pháp}
  
 \begin{center}
 \begin{table}[H]
@@ -1095,7 +1118,7 @@ for idx, row_scaled in X_scaled.loc[missing_rows.index].iterrows():
 \begin{center}
 \begin{table}[H]
 \centering
-\caption{Số lượng outliers phát hiện được bằng phương pháp Z-Score (ngưỡng = 3)}
+\caption{Số lượng outliers phát hiện được bằng phương pháp Z-Score (ngưỡng > 3)}
 \label{table:outliers_zscore}
 \begin{tabular}{|c|l|c|c|}
 \hline
@@ -1125,14 +1148,16 @@ for idx, row_scaled in X_scaled.loc[missing_rows.index].iterrows():
 \end{table}
 \end{center}
  
-\subsubsection{Chiến lược xử lý outliers}
-
 Sau khi so sánh hai phương pháp, nhóm nhận thấy:
-
+ 
 \begin{itemize}
     \item \textbf{Phương pháp IQR:} Phát hiện số lượng outliers nhiều hơn, thích hợp cho dữ liệu có phân bố lệch.
     \item \textbf{Phương pháp Z-Score:} Phát hiện ít outliers hơn, giả định dữ liệu tuân theo phân bố chuẩn.
-    \item \textbf{Chiến lược áp dụng:} Nhóm áp dụng \textbf{Winsorization} tại ngưỡng percentile 1\% và 99\% cho từng đặc trưng. Các giá trị nằm ngoài khoảng $[q_{0.01},\, q_{0.99}]$ được cắt cụt về đúng ngưỡng đó thay vì bị xóa hoàn toàn:
+\end{itemize}
+\subsubsection{Chiến lược xử lý outliers}
+
+\begin{itemize}
+    \item Nhóm áp dụng \textbf{Winsorization} tại ngưỡng percentile 1\% và 99\% cho từng đặc trưng. Các giá trị nằm ngoài khoảng $[q_{0.01},\, q_{0.99}]$ được cắt cụt về đúng ngưỡng đó thay vì bị xóa hoàn toàn:
     \begin{enumerate}
         \item Winsorization giữ lại toàn bộ số lượng quan sát, tránh mất thông tin do xóa hàng.
         \item Bằng cách cắt cụt thay vì xóa, các sự kiện ô nhiễm đột ngột vẫn được phản ánh trong dữ liệu nhưng không kéo quá lớn hệ số hồi quy.
@@ -1228,8 +1253,6 @@ X_test_poly  = poly_features(X_test_scaled)   # 1553 x 77
 
 \textbf{Kết quả:} Tập dữ liệu cuối cùng có kích thước $6212 \times 77$ (train) và $1553 \times 77$ (test). Số đặc trưng tăng từ 11 lên 77, tạo không gian biểu diễn phong phú hơn cho các mô hình hồi quy.
 
-\clearpage
-
 \section{Xây Dựng và Đánh Giá So Sánh Hệ Thống Mô Hình}
 \subsection{Thiết lập quy trình Pipeline huấn luyện}
 \subsubsection{Chia tập dữ liệu (Train-Test Split)}
@@ -1241,11 +1264,9 @@ comparator.prepare_data()
 \end{lstlisting}
 
 Việc chia dữ liệu thành tập train và test nhằm đánh giá khả năng tổng quát hóa của mô hình trên các quan sát chưa xuất hiện trong quá trình huấn luyện. Nếu đánh giá trực tiếp trên tập train, mô hình có thể đạt sai số thấp do ghi nhớ dữ liệu thay vì học được quy luật tổng quát.
-
-Bên cạnh đó, nhóm lựa chọn nhiều mô hình hồi quy khác nhau nhằm so sánh ảnh hưởng của regularization lên dữ liệu thực tế. OLS đóng vai trò mô hình tuyến tính cơ sở, trong khi Ridge và Lasso được sử dụng để kiểm tra ảnh hưởng của đa cộng tuyến và hiện tượng overfitting trong dữ liệu cảm biến môi trường.
-
  
 \subsubsection{Huấn luyện các mô hình}
+Nhóm thực hiện so sánh trên nhiều cấu trúc mô hình hồi quy: từ các mô hình tuyến tính cơ sở (OLS) đến các kỹ thuật có chính quy hóa (Ridge, Lasso) nhằm xử lý đa cộng tuyến và overfitting. Đồng thời, các mô hình phi tuyến tính và xác suất như Kernel Ridge và Bayesian Linear Regression cũng được áp dụng để tối ưu hóa khả năng dự báo trên tập dữ liệu cảm biến phức tạp.
  
 \begin{lstlisting}[language=Python]
 # huan luyen OLS
@@ -1324,7 +1345,7 @@ Lasso & 0.450366 & 0.598143 & 0.833122 \\
 \begin{center}
 \begin{figure}[H]
     \centering
-    %\includegraphics[width=\textwidth]{assets/sosanh_mohinh.png}
+    \includegraphics[width=\textwidth]{assets/sosanh_mohinh.png}
     \caption{Biểu đồ so sánh hiệu năng giữa các mô hình hồi quy}
     \label{fig:histograms}
 \end{figure}
@@ -1346,16 +1367,41 @@ Vì dữ liệu đã được chuẩn hóa nên hệ số hồi quy trực tiế
 \begin{center}
 \begin{figure}[H]
     \centering
-    %\includegraphics[width=0.9\textwidth]{assets/doquantrong_dactrung.png}
+    \includegraphics[width=0.9\textwidth]{assets/doquantrong_dactrung.png}
     \caption{Biều đồ mức độ quan trọng của đặc trưng}
     \label{fig:corr_heatmap}
 \end{figure}
 \end{center}
+Nhận xét:
+\begin{itemize}
+    \item Biến C6H6(GT) (nồng độ Benzene) và các tương tác đa thức của nó đóng vai trò tiên quyết và có trọng số lớn nhất trong việc dự đoán CO(GT). Điều này hoàn toàn hợp lý về mặt môi trường học: trong khu vực đô thị, cả CO và Benzene đều có chung nguồn phát thải chính là khí thải từ các phương tiện giao thông.
+    \item Khí thải tăng làm cả hai khí cùng tăng, tạo ra độ tương quan tuyến tính rất cao, biến C6H6 trở thành dự báo CO chính xác nhất.
+    \item Đứng ở các vị trí tiếp theo mới là các cảm biến chuyên dụng (như PT08.S1) và các yếu tố khí hậu để hỗ trợ tinh chỉnh sai số.
+\end{itemize}
 
-Kết luận từ Feature Importance: 
-Dựa vào biểu đồ, biến C6H6(GT) (nồng độ Benzene) và các tương tác đa thức của nó đóng vai trò tiên quyết và có trọng số lớn nhất trong việc dự đoán CO(GT). Điều này hoàn toàn hợp lý về mặt môi trường học: trong khu vực đô thị, cả CO và Benzene đều có chung nguồn phát thải chính là khí thải từ các phương tiện giao thông. Khí thải tăng làm cả hai khí cùng tăng, tạo ra độ tương quan tuyến tính rất cao, biến C6H6 trở thành "kim chỉ nam" dự báo CO chính xác nhất. Đứng ở các vị trí tiếp theo mới là các cảm biến chuyên dụng (như PT08.S1) và các yếu tố khí hậu để hỗ trợ tinh chỉnh sai số.
- 
-\clearpage
+\subsection{Phần dư (Residual Analysis) & Kiểm định Gauss-Markov}
+
+\begin{center}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{assets/doquantrong_dactrung.png}
+    \caption{4 biều đồ chuẩn đoán phần dư}
+    \label{fig:corr_heatmap}
+\end{figure}
+\end{center}
+
+Nhận xét:
+
+\begin{itemize}
+    \item \textbf{Residuals vs Fitted:} Phần dư phân bố không đồng đều quanh $\hat{\epsilon} = 0$. Ở vùng CO thấp ($\hat{y} \in [0,2]$ mg/m$^3$), phần dư tập trung chặt; ở vùng CO cao ($\hat{y} > 4$ mg/m$^3$), phần dư mở rộng theo hình phễu -- phản ánh việc mô hình tuyến tính không bắt kịp các đợt ô nhiễm đột biến. $\Rightarrow$ \textbf{Vi phạm GM4.}
+
+    \item \textbf{Normal Q-Q Plot:} Vùng giữa bám sát đường chuẩn, nhưng cả hai đuôi lệch mạnh (thực tế tới $\pm 8$ so với lý thuyết $\approx \pm 3$), do phân phối CO(GT) lệch phải mạnh (max $= 11{,}90$ mg/m$^3$). $\Rightarrow$ \textbf{Vi phạm GM5.}
+
+    \item \textbf{Scale-Location:} $\sqrt{|\hat{\epsilon}_{\text{std}}|}$ tăng dần theo $\hat{y}$, xác nhận phương sai sai số tăng theo mức 
+    CO dự đoán -- nhất quán với biểu đồ Residuals vs Fitted.
+
+    \item \textbf{Cook's Distance} (ngưỡng $4/n = 0{,}0026$): Một điểm dị biệt tại index $\approx 0$ có Cook's D $\approx 0{,}26$ -- vượt ngưỡng gần 100 lần. Khoảng 15--20 điểm khác có Cook's D $\approx 0{,}05$--$0{,}15$, tương ứng các giờ cao điểm hoặc điều kiện thời tiết bất thường.
+\end{itemize}
 
 \section{Ứng Dụng Kỹ Thuật Nâng Cao (Tùy Chọn Bonus)}
 
@@ -1363,56 +1409,9 @@ Dựa vào biểu đồ, biến C6H6(GT) (nồng độ Benzene) và các tương
  
 Kernel Ridge Regression (KRR) mở rộng Ridge Regression bằng cách áp dụng kernel trick, cho phép mô hình học được các mối quan hệ phi tuyến mà không cần phải nâng cao chiều dữ liệu:
  
-\begin{lstlisting}[language=Python]
-# Huan luyen KRR voi kernel RBF
-krr_model = KernelRidge(
-    alpha=0.1,
-    kernel='rbf',
-    gamma=0.1
-)
-krr_model.fit(X_train, y_train)
-y_pred_krr = krr_model.predict(X_test)
- 
-# Đanh gia
-krr_r2 = r2_score(y_test, y_pred_krr)
-krr_mse = mean_squared_error(y_test, y_pred_krr)
-\end{lstlisting}
- 
 \subsection{Mô hình hồi quy xác suất Bayesian Linear Regression}
  
 Bayesian Linear Regression cung cấp cách tiếp cận xác suất, cho phép ta ước lượng được độ bất định của các dự báo:
- 
-\begin{lstlisting}[language=Python]
-# Huan luyen Bayesian Ridge
-bayes_model = BayesianRidge(n_iter=300)
-bayes_model.fit(X_train, y_train)
-y_pred_bayes, y_std_bayes = bayes_model.predict(X_test, return_std=True)
- 
-# Đanh gia
-bayes_r2 = r2_score(y_test, y_pred_bayes)
-bayes_mse = mean_squared_error(y_test, y_pred_bayes)
-\end{lstlisting}
- 
-\subsubsection{So sánh mô hình nâng cao}
- 
-\begin{center}
-\begin{table}[H]
-\centering
-\caption{So sánh với các mô hình nâng cao}
-\label{table:advanced_models}
-\begin{tabular}{|l|c|c|c|}
-\hline
-\theadcolor \textbf{Mô hình} & \textbf{MSE} & \textbf{RMSE} & \textbf{R²} \\
-\hline
-Ridge Regression (Tuyến tính) & 0.8156 & 0.9031 & 0.7291 \\
-\hline
-Kernel Ridge Regression (RBF) & 0.7834 & 0.8850 & 0.7421 \\
-\hline
-Bayesian Ridge Regression & 0.8198 & 0.9054 & 0.7267 \\
-\hline
-\end{tabular}
-\end{table}
-\end{center}
  
 Kết quả cho thấy \textbf{Kernel Ridge Regression} với kernel RBF đạt hiệu năng tốt nhất với R² = 0.7421.
 
@@ -1420,14 +1419,19 @@ Việc Kernel Ridge Regression đạt hiệu năng cao hơn các mô hình tuy�
 
 Kernel Kernel RBF giúp mô hình biểu diễn được các quan hệ phi tuyến phức tạp hơn giữa các biến. Tuy nhiên, mức cải thiện hiệu năng không quá lớn so với Ridge Regression, cho thấy cấu trúc tuyến tính vẫn đóng vai trò chủ đạo trong bộ dữ liệu này.
 
- 
+\section{Kết luận phần 2}
+Đối chiếu kết quả của các mô hình Data Fitting với ngữ cảnh thực tế của bộ dữ liệu AirQualityUCI, nhóm rút ra các kết luận sau:
+\begin{itemize}
+    \item \textbf{Đặc thù dữ liệu môi trường:} Dữ liệu cảm biến đo chất lượng không khí ngoài trời chịu ảnh hưởng rất mạnh bởi các yếu tố nhiễu (như nhiệt độ, độ ẩm tuyệt đối) và có tỉ lệ khuyết/ngoại lai cao. Quá trình xây dựng Data Pipeline cẩn thận (giới hạn ngoại lai bằng Winsorize, điền khuyết bằng KNN) là nhân tố quyết định giúp mô hình OLS không bị sai lệch.
+    \item \textbf{Sự tương quan vật lý (Feature Importance):} Kết quả từ mô hình Lasso chỉ ra rằng nồng độ Benzene (C6H6) và cảm biến oxit kim loại (PT08.S1) là các biến dự báo mạnh mẽ nhất cho CO. Điều này hoàn toàn chính xác với tính chất hóa học môi trường, vì cả CO và Benzene tại các đô thị đều chung một nguồn phát thải chính là khí thải giao thông.
+    \item \textbf{Lựa chọn mô hình tối ưu:} Các mô hình có điều chuẩn (Ridge, Lasso) cho thấy sự ổn định hơn OLS thuần túy khi đối mặt với hiện tượng đa cộng tuyến của cảm biến. Mặc dù Kernel Ridge Regression cho hiệu năng dự đoán cao nhất ($R^2 > 0,91$), nhưng nếu xét trên khía cạnh triển khai vào các trạm quan trắc IoT yêu cầu tính toán nhanh và dễ giải thích, mô hình Ridge Linear vẫn là sự cân bằng hoàn hảo nhất giữa độ chính xác và tính đơn giản.
+\end{itemize}
+
 \clearpage
  
 \chapter{Kết Luận}
  
 \section{Tóm Tắt Toàn Bộ Kết Quả Đạt Được}
- 
-Nhóm đã hoàn thành thành công đồ án với những kết quả sau:
  
 \subsection{Phần 1: Lý Thuyết}
  
@@ -1519,4 +1523,5 @@ Các biểu đồ histogram và boxplot ở phần EDA trên đã chi tiết tr�
     \item \textbf{Phân bố gần chuẩn:} Nhiệt độ (T), Độ ẩm (RH, AH) có phân bố tương đối chuẩn.
     \item \textbf{Outliers:} Các biến NOx(GT), C6H6(GT), PT08.S3(NOx) có số lượng outliers nhiều nhất, phù hợp với các trường hợp ô nhiễm đột ngột.
 \end{itemize}
+ 
 \end{document}
