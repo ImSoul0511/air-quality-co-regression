@@ -39,6 +39,11 @@
 \definecolor{infobox}{RGB}{230,242,255}
 \definecolor{infoborder}{RGB}{0,102,204}
 \definecolor{codebg}{gray}{0.97}
+\definecolor{pyKeyword}{RGB}{207,34,46}
+\definecolor{pyString}{RGB}{163,21,21}
+\definecolor{pyComment}{RGB}{106,153,85}
+\definecolor{pyBuiltin}{RGB}{121,94,38}
+\definecolor{linenum}{gray}{0.5}
 
 \lstset{
     basicstyle=\ttfamily\small,
@@ -49,6 +54,16 @@
     columns=fullflexible,
     keepspaces=true,
     showstringspaces=false,
+    numbers=left,
+    numberstyle=\tiny\color{linenum},
+    numbersep=8pt,
+    keywordstyle=\color{pyKeyword},
+    keywordstyle=[2]\color{pyBuiltin},
+    stringstyle=\color{pyString},
+    commentstyle=\color{pyComment}\itshape,
+    language=Python,
+    morekeywords={True,False,None,self,cls},
+    morekeywords=[2]{float,int,bool,str,list,dict,tuple,set},
 }
 
 \titleformat{\chapter}[hang]{\large\bfseries}{\thechapter.}{0.5em}{}
@@ -78,7 +93,7 @@
   {\large KHOA CÔNG NGHỆ THÔNG TIN}\\[4pt]
 
   \vspace{0.8cm}
-  \includegraphics[width=4cm]{assets/logo_hcmus}
+  %\includegraphics[width=4cm]{assets/logo_hcmus}
   \vspace{0.8cm}
 
   \vspace{0.5cm}
@@ -470,7 +485,7 @@ Quy trình mô phỏng được tổ chức như sau:
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{assets/gauss_markov.jpg}
+    %\includegraphics[width=0.5\linewidth]{assets/gauss_markov.jpg}
     \caption{Minh họa phân phối hệ số qua mô phỏng Monte Carlo cho định lý Gauss-Markov}
     \label{fig:gauss-markov-monte-carlo}
 \end{figure}
@@ -755,7 +770,7 @@ def kfold_cv(X, y, k, lam):
 \begin{center}
     \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{assets/ols_comparison.png}
+    %\includegraphics[width=0.85\textwidth]{assets/ols_comparison.png}
     \caption{Bảng so sánh hệ số thực nghiệm giữa thuật toán tự cài đặt và Scikit-Learn}
     \label{fig:ols_comparison}
 \end{figure}
@@ -766,7 +781,7 @@ def kfold_cv(X, y, k, lam):
 \begin{center}
     \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{assets/ridge_trace.png}
+    %\includegraphics[width=0.8\textwidth]{assets/ridge_trace.png}
     \caption{Đồ thị bước chạy hệ số Ridge Trace theo tham số điều chỉnh lambda}
     \label{fig:ridge_trace}
 \end{figure}
@@ -777,7 +792,7 @@ def kfold_cv(X, y, k, lam):
 \begin{center}
     \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{assets/residual_plots.png}
+    %\includegraphics[width=0.9\textwidth]{assets/residual_plots.png}
     \caption{Bộ bốn biểu đồ chẩn đoán sai số phần dư của mô hình OLS}
     \label{fig:residual_plots}
 \end{figure}
@@ -788,7 +803,7 @@ def kfold_cv(X, y, k, lam):
 \begin{center}
     \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{assets/monte_carlo_distribution.png}
+    %\includegraphics[width=0.8\textwidth]{assets/monte_carlo_distribution.png}
     \caption{Phân phối thực nghiệm hệ số Beta qua mô phỏng Monte Carlo}
     \label{fig:monte_carlo}
 \end{figure}
@@ -912,7 +927,7 @@ AH & 8991.0 & 1.03 & 0.40 & 0.18 & 0.74 & 1.0 & 1.31 & 2.23 \\
 \begin{center}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{assets/histogram_phanphoi.png}
+    %\includegraphics[width=\textwidth]{assets/histogram_phanphoi.png}
     \caption{Biểu đồ Histogram phân phối các đặc trưng}
     \label{fig:histograms}
 \end{figure}
@@ -1001,20 +1016,44 @@ Từ các bảng thống kê trên, chúng ta rút ra các nhận xét sau:
 \subsection{Xử lý bài toán khuyết thiếu dữ liệu (Missing Values)}
 \subsubsection{Chiến lược xử lý}
  
-Dựa trên phân tích ở trên, nhóm áp dụng chiến lược xử lý như sau:
- 
+Dựa trên phân tích ở trên, nhóm áp dụng chiến lược xử lý ba bước như sau:
+
+\textbf{Bước 1 --- Tự động loại bỏ các cột có tỉ lệ missing vượt ngưỡng 70\%.}
+Pipeline tính tỉ lệ missing của từng cột trong tập train và loại bỏ bất kỳ cột nào vượt ngưỡng 70\%. Biến \texttt{NMHC(GT)} (90.23\%) bị loại theo quy tắc này mà không cần hardcode tên cột, đảm bảo tính tổng quát.
+
 \begin{lstlisting}[language=Python]
-# Xu ly missing values
-df_processed = df_raw.drop(columns=['NMHC(GT)'])
-
-# Loai bo cac quan sat thieu target
-df_processed = df_processed[df_processed['CO(GT)'].notna()]
-
-# Loai bo cac dong con missing values
-df_processed = df_processed.dropna()
+# Buoc 1: Tu dong loai cot co ti le missing > 70% (hoc tren train)
+missing_pct = X_tmp.isnull().mean()
+high_missing_cols = missing_pct[missing_pct > 0.7].index.tolist()
+X_tmp = X_tmp.drop(columns=high_missing_cols)
 \end{lstlisting}
 
-\textbf{Kết quả sau xử lý:} Sau khi loại bỏ \texttt{NMHC(GT)} và áp dụng listwise deletion, bộ dữ liệu còn lại $6644$ quan sát, tương đương $71.0\%$ dữ liệu gốc --- đủ lớn để đảm bảo độ tin cậy thống kê cho các mô hình hồi quy.
+\textbf{Bước 2 --- Loại bỏ các hàng thiếu giá trị biến mục tiêu.}
+Các hàng thiếu \texttt{CO(GT)} bị loại trước khi chia tập train/test. Đây là bước bắt buộc vì không thể impute biến mục tiêu --- điều đó tương đương với việc mô hình tự dự báo chính nó. Sau bước này còn lại 7765 quan sát.
+
+\begin{lstlisting}[language=Python]
+# Buoc 2: Loai hang thieu target truoc khi chia train/test
+df = df.dropna(subset=['CO(GT)'])  # 9357 - 1592 = 7765 quan sat
+\end{lstlisting}
+
+\textbf{Bước 3 --- KNN Imputation cho các đặc trưng còn thiếu.}
+Thay vì xóa toàn bộ hàng còn lại có giá trị NaN (listwise deletion), nhóm sử dụng phương pháp KNN Imputation ($k=5$) để phục hồi các giá trị thiếu trong nhóm cảm biến PT08.Sx và các biến khí hậu (tỉ lệ missing 3.91\%). Với mỗi hàng có NaN, pipeline tìm $k=5$ hàng gần nhất trong tập train dựa trên khoảng cách Euclidean tính trên các đặc trưng không bị thiếu, sau đó điền bằng giá trị trung bình của $k$ hàng đó. Trường hợp đặc biệt, nếu hàng có ít hơn $\texttt{MIN\_COMMON\_FEATURES} = 3$ đặc trưng hợp lệ, hệ thống fallback về median của cột. Toàn bộ tham số KNN (mean, std chuẩn hóa, dữ liệu train làm tham chiếu) được học \textbf{chỉ từ tập train}, đảm bảo không xảy ra data leakage sang tập test.
+
+\begin{lstlisting}[language=Python]
+# Buoc 3: KNN Imputation (k=5), hoc tren train, ap dung len ca test
+# Chuan hoa truoc de tinh khoang cach cong bang giua cac features
+X_scaled = (X - knn_means) / knn_stds
+for idx, row_scaled in X_scaled.loc[missing_rows.index].iterrows():
+    valid_features = row_scaled.dropna().index
+    if len(valid_features) < MIN_COMMON_FEATURES:
+        X_out.loc[idx, col] = medians_[col]  # fallback median
+        continue
+    sq_dist = ((X_train_scaled[valid_features] - row_scaled[valid_features]) ** 2).sum(axis=1)
+    k_nearest = sq_dist.nsmallest(5).index
+    X_out.loc[idx, col] = X_train_raw.loc[k_nearest, col].mean()
+\end{lstlisting}
+
+\textbf{Kết quả sau xử lý:} Sau ba bước trên, bộ dữ liệu còn lại $7765$ quan sát (tương đương $83.0\%$ dữ liệu gốc), được chia thành $6212$ mẫu train và $1553$ mẫu test theo tỉ lệ 80/20 --- đủ lớn để đảm bảo độ tin cậy thống kê cho các mô hình hồi quy.
 
 \subsection{Quy trình chuẩn hóa và xử lý các giá trị dị biệt (Outliers)}
 
@@ -1087,19 +1126,28 @@ df_processed = df_processed.dropna()
 \end{center}
  
 \subsubsection{Chiến lược xử lý outliers}
- 
+
 Sau khi so sánh hai phương pháp, nhóm nhận thấy:
- 
+
 \begin{itemize}
     \item \textbf{Phương pháp IQR:} Phát hiện số lượng outliers nhiều hơn, thích hợp cho dữ liệu có phân bố lệch.
     \item \textbf{Phương pháp Z-Score:} Phát hiện ít outliers hơn, giả định dữ liệu tuân theo phân bố chuẩn.
-    \item \textbf{Chiến lược áp dụng:} Nhóm sẽ \textbf{giữ lại các outliers} vì:
+    \item \textbf{Chiến lược áp dụng:} Nhóm áp dụng \textbf{Winsorization} tại ngưỡng percentile 1\% và 99\% cho từng đặc trưng. Các giá trị nằm ngoài khoảng $[q_{0.01},\, q_{0.99}]$ được cắt cụt về đúng ngưỡng đó thay vì bị xóa hoàn toàn:
     \begin{enumerate}
-        \item Các outliers có thể đại diện cho các trường hợp quý hiếm nhưng thực tế (ô nhiễm đột ngột).
-        \item Loại bỏ outliers có thể làm mất thông tin quan trọng về hành vi biên của hệ thống.
-        \item Các mô hình Ridge và Lasso có regularization giúp hạn chế phần nào ảnh hưởng của các điểm ngoại lai lên hệ số hồi quy., nên ta sẽ so sánh hiệu năng.
+        \item Winsorization giữ lại toàn bộ số lượng quan sát, tránh mất thông tin do xóa hàng.
+        \item Bằng cách cắt cụt thay vì xóa, các sự kiện ô nhiễm đột ngột vẫn được phản ánh trong dữ liệu nhưng không kéo quá lớn hệ số hồi quy.
+        \item Ngưỡng Winsorize ($q_{0.01}$, $q_{0.99}$) được học \textbf{chỉ từ tập train} rồi áp dụng lên tập test, đảm bảo không có data leakage.
     \end{enumerate}
 \end{itemize}
+
+\begin{lstlisting}[language=Python]
+# Winsorization tai nguong 1% va 99% (hoc tren train, ap dung len test)
+for col in numeric_cols:
+    q01 = X_tmp[col].quantile(0.01)
+    q99 = X_tmp[col].quantile(0.99)
+    winsorize_bounds[col] = (q01, q99)
+    X_tmp[col] = X_tmp[col].clip(lower=q01, upper=q99)
+\end{lstlisting}
  
 \subsection{Chuẩn hóa dữ liệu (Standardization)}
 
@@ -1109,7 +1157,77 @@ Việc chuẩn hóa dữ liệu trước khi huấn luyện là cần thiết v�
 
 Ngoài ra, Ridge Regression và Lasso Regression đều sử dụng regularization phụ thuộc trực tiếp vào độ lớn của hệ số. Do đó, việc chuẩn hóa giúp quá trình regularization tác động công bằng hơn giữa các biến, đồng thời cải thiện độ đồng thời giúp quá trình tối ưu ổn định hơn khi huấn luyện mô hình.
 
- 
+\paragraph{Phương pháp chuẩn hóa Z-score}
+
+Nhóm áp dụng chuẩn hóa Z-score (Standard Scaler) cho tất cả các đặc trưng số. Với mỗi đặc trưng $j$, giá trị chuẩn hóa $z_{ij}$ được tính theo công thức:
+
+\[
+z_{ij} = \frac{x_{ij} - \hat{\mu}_j}{\hat{\sigma}_j}
+\]
+
+trong đó $\hat{\mu}_j$ và $\hat{\sigma}_j$ là giá trị trung bình và độ lệch chuẩn (với $\text{ddof}=1$) của đặc trưng $j$ \textbf{chỉ tính trên tập train}. Sau đó cùng một cặp $(\hat{\mu}_j, \hat{\sigma}_j)$ được áp dụng lên tập test mà không tính lại --- đây là điều kiện bắt buộc để tránh data leakage.
+
+\begin{lstlisting}[language=Python]
+# Chuan hoa Z-score: hoc mean/std tren train, ap dung ca train va test
+n = len(X_train)
+for j in range(len(X_train[0])):
+    col = [X_train[i][j] for i in range(n)]
+    mu = sum(col) / n
+    std = (sum((v - mu) ** 2 for v in col) / (n - 1)) ** 0.5
+    scaler_params[j] = (mu, std if std > EPSILON else 1.0)
+
+# Ap dung len ca train va test
+X_train_scaled = [[(X_train[i][j] - scaler_params[j][0]) / scaler_params[j][1]
+                   for j in range(p)] for i in range(n_train)]
+X_test_scaled  = [[(X_test[i][j]  - scaler_params[j][0]) / scaler_params[j][1]
+                   for j in range(p)] for i in range(n_test)]
+\end{lstlisting}
+
+\textbf{Kết quả:} Sau chuẩn hóa, tất cả 11 đặc trưng đều có $\hat{\mu} = 0$ và $\hat{\sigma} = 1$ trên tập train. Đặc trưng \texttt{EPSILON} ($= 10^{-12}$) được dùng làm guard để tránh chia cho 0 khi cột có phương sai bằng không.
+
+\subsection{Mở rộng đặc trưng đa thức (Polynomial Feature Expansion)}
+
+\subsubsection{Động lực và ý nghĩa}
+
+Mối quan hệ giữa tín hiệu cảm biến và nồng độ CO không nhất thiết là tuyến tính thuần túy. Chẳng hạn, tương tác giữa nhiệt độ và độ ẩm có thể ảnh hưởng phi tuyến đến phản ứng cảm biến. Mở rộng đặc trưng bậc hai cho phép mô hình tuyến tính nắm bắt các mối quan hệ phi tuyến và tương tác bậc hai mà không cần thay đổi thuật toán hồi quy.
+
+\subsubsection{Công thức mở rộng bậc 2}
+
+Với $n$ đặc trưng gốc, mở rộng bậc 2 sinh ra tất cả các đơn thức bậc $\leq 2$:
+
+\[
+\Phi(\mathbf{x}) = \bigl[\,x_1,\; x_2,\; \ldots,\; x_n,\; x_1^2,\; x_1 x_2,\; x_1 x_3,\; \ldots,\; x_n^2\,\bigr]
+\]
+
+Số đặc trưng sau mở rộng (không tính bias) là $\binom{n+2}{2} - 1 = \dfrac{(n+1)(n+2)}{2} - 1$.
+
+Với $n = 11$ đặc trưng gốc (sau khi loại bỏ \texttt{NMHC(GT)}, \texttt{Date}, \texttt{Time} và biến mục tiêu):
+\[
+\frac{12 \times 13}{2} - 1 = 78 - 1 = 77 \text{ đặc trưng}
+\]
+
+\subsubsection{Cài đặt}
+
+\begin{lstlisting}[language=Python]
+# Mo rong dac trung bac 2: tu 11 -> 77 features
+def poly_features(X, degree=2):
+    n, p = len(X), len(X[0])
+    result = []
+    for row in X:
+        expanded = list(row)                  # n features bac 1
+        for i in range(p):
+            expanded.append(row[i] ** 2)      # x_i^2
+            for j in range(i + 1, p):
+                expanded.append(row[i] * row[j])  # x_i * x_j
+        result.append(expanded)
+    return result
+
+X_train_poly = poly_features(X_train_scaled)  # 6212 x 77
+X_test_poly  = poly_features(X_test_scaled)   # 1553 x 77
+\end{lstlisting}
+
+\textbf{Kết quả:} Tập dữ liệu cuối cùng có kích thước $6212 \times 77$ (train) và $1553 \times 77$ (test). Số đặc trưng tăng từ 11 lên 77, tạo không gian biểu diễn phong phú hơn cho các mô hình hồi quy.
+
 \clearpage
 
 \section{Xây Dựng và Đánh Giá So Sánh Hệ Thống Mô Hình}
@@ -1206,7 +1324,7 @@ Lasso & 0.450366 & 0.598143 & 0.833122 \\
 \begin{center}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{assets/sosanh_mohinh.png}
+    %\includegraphics[width=\textwidth]{assets/sosanh_mohinh.png}
     \caption{Biểu đồ so sánh hiệu năng giữa các mô hình hồi quy}
     \label{fig:histograms}
 \end{figure}
@@ -1228,7 +1346,7 @@ Vì dữ liệu đã được chuẩn hóa nên hệ số hồi quy trực tiế
 \begin{center}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{assets/doquantrong_dactrung.png}
+    %\includegraphics[width=0.9\textwidth]{assets/doquantrong_dactrung.png}
     \caption{Biều đồ mức độ quan trọng của đặc trưng}
     \label{fig:corr_heatmap}
 \end{figure}
@@ -1401,5 +1519,4 @@ Các biểu đồ histogram và boxplot ở phần EDA trên đã chi tiết tr�
     \item \textbf{Phân bố gần chuẩn:} Nhiệt độ (T), Độ ẩm (RH, AH) có phân bố tương đối chuẩn.
     \item \textbf{Outliers:} Các biến NOx(GT), C6H6(GT), PT08.S3(NOx) có số lượng outliers nhiều nhất, phù hợp với các trường hợp ô nhiễm đột ngột.
 \end{itemize}
- 
 \end{document}
