@@ -1361,8 +1361,10 @@ Nhận xét kết quả mô hình:
 \subsection{Phân tích mức độ quan trọng đặc trưng (Feature Importance)}
  
 \subsubsection{Hệ số hồi quy chuẩn hóa}
- 
-Vì dữ liệu đã được chuẩn hóa nên hệ số hồi quy trực tiếp phản ánh mức độ ảnh hưởng của từng biến đến target.
+
+\textbf{Lý do chọn Lasso để phân tích Feature Importance:} Trong số các mô hình tuyến tính đã huấn luyện, Lasso Regression được chọn làm cơ sở phân tích tầm quan trọng đặc trưng vì tính chất đặc thù của chuẩn $L_1$: phạt nghiệm khuyến khích nhiều hệ số $\hat{\beta}_j$ co về đúng bằng 0, tạo ra mô hình thưa (sparse). Với $\lambda = 0{,}001$ tối ưu qua 5-Fold CV, Lasso giữ lại các đặc trưng thực sự có đóng góp trong khi triệt tiêu các đặc trưng dư thừa. Các hệ số còn lại do đó là \textit{lựa chọn có chủ đích} của thuật toán tối ưu hóa, phản ánh tầm quan trọng tương đối trực tiếp và rõ ràng hơn so với OLS hay Ridge (vốn giữ lại tất cả đặc trưng với hệ số khác 0, khó phân biệt biến quan trọng và nhiễu).
+
+Vì dữ liệu đã được chuẩn hóa Z-score trước khi huấn luyện nên hệ số hồi quy trực tiếp phản ánh mức độ ảnh hưởng của từng biến đến target theo cùng đơn vị đo lường.
 
 \begin{center}
 \begin{figure}[H]
@@ -1379,7 +1381,9 @@ Nhận xét:
     \item Đứng ở các vị trí tiếp theo mới là các cảm biến chuyên dụng (như PT08.S1) và các yếu tố khí hậu để hỗ trợ tinh chỉnh sai số.
 \end{itemize}
 
-\subsection{Phần dư (Residual Analysis) & Kiểm định Gauss-Markov}
+\subsection{Phần dư (Residual Analysis) \& Kiểm định Gauss-Markov}
+
+\textbf{Lý do chọn Ridge để chẩn đoán phần dư:} Mặc dù Kernel Ridge Regression cho hiệu năng dự báo cao nhất ($R^2 = 0{,}9110$), mô hình này ánh xạ dữ liệu vào không gian đặc trưng ẩn phi tuyến thông qua hàm kernel RBF. Trong không gian đó, khái niệm phần dư không còn tuân theo cấu trúc tuyến tính mà các kiểm định Shapiro--Wilk và Breusch--Pagan giả định --- cụ thể là hồi quy phụ $\hat{\varepsilon}^2 \sim \mathbf{X}$ trong BP mất ý nghĩa thống kê khi $\mathbf{X}$ không còn là ma trận đặc trưng gốc. Do đó, nhóm sử dụng \textbf{Ridge Regression} ($\lambda = 10{,}985$) --- mô hình tuyến tính đạt hiệu năng tốt nhất và ổn định nhất --- để thực hiện chẩn đoán, đảm bảo kết quả kiểm định giữ nguyên ý nghĩa thống kê trong khung lý thuyết OLS.
 
 \begin{center}
 \begin{figure}[H]
